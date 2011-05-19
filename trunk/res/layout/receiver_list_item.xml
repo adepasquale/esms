@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+  This file is part of Ermete SMS.
+  
+  Ermete SMS is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  Ermete SMS is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+ 
+  You should have received a copy of the GNU General Public License
+  along with Ermete SMS.  If not, see <http://www.gnu.org/licenses/>.
+  
+-->
+<LinearLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+    android:background="@android:color/white"
+	android:orientation="vertical"
+	android:layout_width="fill_parent"
+	android:layout_height="wrap_content"
+    android:paddingLeft="5dp"
+    android:paddingRight="5dp"
+>
+
+    <View
+    	android:layout_width="fill_parent"
+    	android:layout_height="2dp"
+    	android:background="@drawable/divider_horizontal"
+    />
+    	
+	<LinearLayout
+		android:orientation="horizontal"
+		android:layout_width="fill_parent"
+		android:layout_height="wrap_content"
+	>
+	
+		<TextView
+			android:id="@+id/list_item_name"
+			android:layout_weight="1.0"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_vertical"
+			android:paddingLeft="5dp"
+			android:paddingRight="5dp"
+			android:textColor="#000000"
+			android:textSize="16sp"
+			android:singleLine="true"
+		/>
+		
+		<TextView
+			android:id="@+id/list_item_number"
+			android:layout_width="wrap_content"
+			android:layout_height="wrap_content"
+			android:layout_gravity="center_vertical"
+			android:textColor="#666666"
+			android:textSize="13sp"
+			android:singleLine="true"
+			gravity="right"
+		/>
+		
+		<ImageButton
+            android:id="@+id/list_item_button"
+        	android:layout_width="wrap_content"
+        	android:layout_height="wrap_content"
+        	android:layout_marginLeft="10dp"
+        	android:layout_marginRight="10dp"
+        	android:src="@drawable/ic_btn_minus"
+        	android:background="@drawable/round_button"
+        />
+
+	</LinearLayout>
+	
+</LinearLayout>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string-array name="account_dialog">
+		<item>Rinomina</item>
+		<item>Modifica</item>
+		<item>Elimina</item>
+	</string-array>
+	<string-array name="receiver_filtering_entries">
+		<item>Mostra solo cellulari</item>
+		<item>Escludi numeri fissi</item>
+		<item>Mostra tutti i numeri</item>
+	</string-array>
+	<string-array name="receiver_filtering_values">
+		<item>M</item>
+		<item>H</item>
+		<item></item>
+	</string-array>
+	<string-array name="notification_vibration_entries">
+		<item>Sempre</item>
+		<item>Solo in modalità silenziosa</item>
+		<item>Mai</item>
+	</string-array>
+	<string-array name="notification_vibration_values">
+		<item>A</item>
+		<item>S</item>
+		<item></item>
+	</string-array>
+	<string-array name="clear_message_entries">
+		<item>Destinatario e messaggio</item>
+		<item>Soltanto il destinatario</item>
+		<item>Soltanto il messaggio</item>
+		<item>Nessuno dei due</item>
+	</string-array>
+	<string-array name="clear_message_values">
+		<item>RM</item>
+		<item>R</item>
+		<item>M</item>
+		<item></item>
+	</string-array>
+</resources>

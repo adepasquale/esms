@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+  This file is part of Ermete SMS.
+  
+  Ermete SMS is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  Ermete SMS is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+ 
+  You should have received a copy of the GNU General Public License
+  along with Ermete SMS.  If not, see <http://www.gnu.org/licenses/>.
+  
+-->
+<PreferenceScreen
+	xmlns:android="http://schemas.android.com/apk/res/android"
+>
+
+	<PreferenceCategory
+		android:title="@string/receiver_settings"
+	>
+	
+		<ListPreference
+			android:title="@string/filter_receiver_setting"
+			android:key="filter_receiver" 
+			android:entries="@array/receiver_filtering_entries" 
+			android:entryValues="@array/receiver_filtering_values"
+			android:defaultValue="H"
+		/>
+		
+		<CheckBoxPreference
+			android:title="@string/show_pictures_setting"
+			android:key="show_pictures"
+			android:defaultValue="true"
+		/>
+		
+	</PreferenceCategory>
+	
+	<PreferenceCategory
+		android:title="@string/sending_settings"
+	>
+	
+		<CheckBoxPreference
+			android:title="@string/show_progress_setting"
+			android:key="show_progress"
+			android:defaultValue="false"
+		/>
+			
+		<CheckBoxPreference
+			android:title="@string/enable_notifications_setting"
+			android:key="enable_notifications"
+			android:defaultValue="true"
+		/>
+			
+		<RingtonePreference
+			android:title="@string/notification_ringtone_setting"
+			android:key="notification_ringtone"
+			android:ringtoneType="notification"
+		/>
+		
+		<ListPreference
+			android:title="@string/notification_vibration_setting"
+			android:key="notification_vibration" 
+			android:entries="@array/notification_vibration_entries" 
+			android:entryValues="@array/notification_vibration_values"
+			android:defaultValue="S"
+		/>
+		
+	</PreferenceCategory>
+	
+	<PreferenceCategory android:title="@string/conversation_settings">
+	
+		<CheckBoxPreference
+			android:title="@string/save_message_setting"
+			android:key="save_message"
+			android:defaultValue="true"
+		/>
+			
+		<ListPreference
+			android:title="@string/clear_message_setting"
+			android:key="clear_message" 
+			android:entries="@array/clear_message_entries" 
+			android:entryValues="@array/clear_message_values"
+			android:defaultValue=""
+		/>
+		
+	</PreferenceCategory>
+	
+</PreferenceScreen>
