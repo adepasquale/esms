@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+
+  This file is part of Ermete SMS.
+  
+  Ermete SMS is free software: you can redistribute it and/or modify
+  it under the terms of the GNU General Public License as published by
+  the Free Software Foundation, either version 3 of the License, or
+  (at your option) any later version.
+  
+  Ermete SMS is distributed in the hope that it will be useful,
+  but WITHOUT ANY WARRANTY; without even the implied warranty of
+  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+  GNU General Public License for more details.
+ 
+  You should have received a copy of the GNU General Public License
+  along with Ermete SMS.  If not, see <http://www.gnu.org/licenses/>.
+  
+-->
+<resources>
+	<string name="app_name">Ermete SMS</string>
+	<string name="sender_prompt">Mittente</string>
+	<string name="no_label_text">(etichetta)</string>
+	<string name="receiver_hint">Destinatario</string>
+	<string name="receiver_toast">Il destinatario è già inserito nella lista</string>
+	<string name="message_hint">Messaggio</string>
+	<string name="send_button">Invia</string>
+	<string name="sending_toast">Invio in corso...</string>
+	<string name="sending_notification_1">Invio del messaggio per</string>
+	<string name="sending_notification_2">in corso</string>
+	<string name="sending_progress_dialog">Invio in corso...</string>
+	<string name="menu_item_accounts">Accounts</string>
+	<string name="menu_item_settings">Impostazioni</string>
+	<string name="menu_item_information">Informazioni</string>
+	<string name="account_display_activity">Gestione account</string>
+	<string name="account_rename_message">Rinomina l\'etichetta dell\'account:</string>
+	<string name="account_delete_message">Sei sicuro di voler eliminare l\'account?</string>
+	<string name="account_create_button">Nuovo account</string>
+	<string name="account_create_activity">Aggiungi un account</string>
+	<string name="account_modify_activity">Account</string>
+	<string name="login_text">Nome utente e password:</string>
+	<string name="username_hint">Nome utente</string>
+	<string name="password_hint">Password</string>
+	<string name="login_disclaimer">I dati inseriti saranno memorizzati sul telefono al solo scopo di automatizzare la procedura di invio.</string>
+	<string name="login_progress_dialog">Accesso in corso...</string>
+	<string name="login_error_toast">Nome utente o password non validi</string>
+	<string name="network_error_toast">Errore durante la connessione</string>
+	<string name="sender_text">Seleziona SIM:</string>
+	<string name="label_text">Assegna un\'etichetta:</string>
+	<string name="settings_activity">Impostazioni di Ermete SMS</string>
+	<string name="information_activity">Informazioni su Ermete SMS</string>
+	<string name="information_credits">Andrea De Pasquale\nAlberto Gasparin</string>
+	<string name="rename_button">Rinomina</string>
+	<string name="cancel_button">Annulla</string>
+	<string name="ok_button">OK</string>
+	<string name="yes_button">Sì</string>
+	<string name="no_button">No</string>
+	<string name="prev_button">Indietro</string>
+	<string name="next_button">Avanti</string>
+	<string name="receiver_settings">Prima dell\'invio</string>
+	<string name="filter_receiver_setting">Filtraggio rubrica</string>
+	<string name="show_pictures_setting">Visualizza fotografie</string>
+	<string name="sending_settings">Durante l\'invio</string>
+	<string name="show_progress_setting">Mostra avanzamento</string>
+	<string name="enable_notifications_setting">Attiva notifiche</string>
+	<string name="notification_ringtone_setting">Suoneria notifiche</string>
+	<string name="notification_vibration_setting">Vibrazione notifiche</string>
+	<string name="conversation_settings">Dopo l\'invio</string>
+	<string name="save_message_setting">Salva messaggi inviati</string>
+	<string name="clear_message_setting">Cancella automaticamente</string>
+</resources>
