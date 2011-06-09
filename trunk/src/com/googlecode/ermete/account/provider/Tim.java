@@ -1,49 +1,70 @@
+/*
+ *  This file is part of Ermete SMS.
+ *  
+ *  Ermete SMS is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  
+ *  Ermete SMS is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *  
+ *  You should have received a copy of the GNU General Public License
+ *  along with Ermete SMS.  If not, see <http://www.gnu.org/licenses/>.
+ *  
+ */
+
 package com.googlecode.ermete.account.provider;
 
 import com.googlecode.ermete.R;
 import com.googlecode.ermete.account.Account;
+import com.googlecode.ermete.account.AccountConnector;
 import com.googlecode.ermete.sms.SMS;
 
 public class Tim extends Account {
-    private static final long serialVersionUID = 1L;
-    
-    static final String PROVIDER = "TIM";
+  private static final long serialVersionUID = 1L;
 
-    public Tim() {
-	label = PROVIDER;
-	provider = PROVIDER;
-	logoID = R.drawable.ic_logo_vodafone;
-	limit = 5;
-    }
-    
-    @Override
-    public int calcRemaining(int length) {
-	// TODO Auto-generated method stub
-	return 0;
-    }
+  static final String PROVIDER = "TIM";
 
-    @Override
-    public int calcFragments(int length) {
-	// TODO Auto-generated method stub
-	return 0;
-    }
+  public Tim(AccountConnector connector) {
+    super(connector);
 
-    @Override
-    public Result login() {
-	// TODO Auto-generated method stub
-	return Result.LOGIN_ERROR;
-    }
+    label = PROVIDER;
+    provider = PROVIDER;
+    logoID = R.drawable.ic_logo_vodafone;
+    limit = 5;
+  }
 
-    @Override
-    public String[] info() {
-	// TODO Auto-generated method stub
-	return null;
-    }
+  @Override
+  public int calcRemaining(int length) {
+    // TODO Auto-generated method stub
+    return 0;
+  }
 
-    @Override
-    public Result send(SMS sms) {
-	// TODO Auto-generated method stub
-	return Result.NETWORK_ERROR;
-    }
+  @Override
+  public int calcFragments(int length) {
+    // TODO Auto-generated method stub
+    return 0;
+  }
+
+  @Override
+  public Result login() {
+    // TODO Auto-generated method stub
+    return Result.LOGIN_ERROR;
+  }
+
+  @Override
+  public String[] info() {
+    // TODO Auto-generated method stub
+    return null;
+  }
+
+  @Override
+  public Result send(SMS sms) {
+    // TODO Auto-generated method stub
+    return Result.NETWORK_ERROR;
+  }
 
 }

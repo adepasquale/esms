@@ -16,14 +16,21 @@
  *  
  */
 
-package com.googlecode.ermete.sms.captcha;
+package com.googlecode.ermete.account;
 
-public class CaptchaDecoderAndroid extends CaptchaDecoder {
+import java.io.Serializable;
 
-  @Override
-  public String decode(byte[] image) {
-    // TODO Auto-generated method stub
-    return null;
-  }
+import org.apache.http.client.CookieStore;
+import org.apache.http.client.HttpClient;
+import org.apache.http.protocol.HttpContext;
+
+public abstract class AccountConnector implements Serializable {
+  private static final long serialVersionUID = 1L;
+
+  public abstract HttpClient getHttpClient();
+
+  public abstract HttpContext getHttpContext();
+
+  public abstract CookieStore getCookieStore();
 
 }

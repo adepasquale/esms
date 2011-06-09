@@ -27,35 +27,36 @@ import com.googlecode.ermete.R;
 
 public class SettingsActivity extends PreferenceActivity {
 
-    CheckBoxPreference enableNotifications;
-    Preference notificationRingtone;
-    Preference notificationVibration;
+  CheckBoxPreference enableNotifications;
+  Preference notificationRingtone;
+  Preference notificationVibration;
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-	super.onCreate(savedInstanceState);
-	addPreferencesFromResource(R.layout.settings_activity);
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    addPreferencesFromResource(R.layout.settings_activity);
 
-	enableNotifications = (CheckBoxPreference) findPreference("enable_notifications");
-	enableNotifications.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-	    public boolean onPreferenceClick(Preference preference) {
-		toggleNotificationSettings();
-		return false;
-	    }
-	});
+    enableNotifications = (CheckBoxPreference) findPreference("enable_notifications");
+    enableNotifications
+        .setOnPreferenceClickListener(new OnPreferenceClickListener() {
+          public boolean onPreferenceClick(Preference preference) {
+            toggleNotificationSettings();
+            return false;
+          }
+        });
 
-	notificationRingtone = (Preference) findPreference("notification_ringtone");
-	notificationVibration = (Preference) findPreference("notification_vibration");
-	toggleNotificationSettings();
+    notificationRingtone = (Preference) findPreference("notification_ringtone");
+    notificationVibration = (Preference) findPreference("notification_vibration");
+    toggleNotificationSettings();
+  }
+
+  private void toggleNotificationSettings() {
+    if (enableNotifications.isChecked()) {
+      notificationRingtone.setEnabled(true);
+      notificationVibration.setEnabled(true);
+    } else {
+      notificationRingtone.setEnabled(false);
+      notificationVibration.setEnabled(false);
     }
-
-    private void toggleNotificationSettings() {
-	if (enableNotifications.isChecked()) {
-	    notificationRingtone.setEnabled(true);
-	    notificationVibration.setEnabled(true);
-	} else {
-	    notificationRingtone.setEnabled(false);
-	    notificationVibration.setEnabled(false);
-	}
-    }
+  }
 }
