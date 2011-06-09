@@ -42,182 +42,180 @@ import com.googlecode.ermete.account.AccountManagerAndroid;
 
 public class AccountDisplayActivity extends Activity {
 
-    AccountManager accountManager;
-    
-    LinearLayout accountsLinear;
-    Button createButton;
-    
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-	super.onCreate(savedInstanceState);
-	setContentView(R.layout.account_display_activity);
+  AccountManager accountManager;
 
-	accountManager = new AccountManagerAndroid();
+  LinearLayout accountsLinear;
+  Button createButton;
 
-	accountsLinear = (LinearLayout) findViewById(R.id.accounts_linear);
-	refreshAccountsList();
-	
-	createButton = (Button) findViewById(R.id.create_button);
-	createButton.setOnClickListener(new OnClickListener() {
-	    @Override
-	    public void onClick(View v) {
-		startActivity(new Intent(
-			AccountDisplayActivity.this, 
-			AccountCreateActivity.class));
-	    }
-	});
-    }
-    
-    private void refreshAccountsList() {
-	accountsLinear.removeAllViews();
-	
-	for (final Account account : accountManager.getAccounts()) {
-	    View listItem = getLayoutInflater().inflate(
-		    R.layout.account_display_list_item, null);
-	    LinearLayout listItemLinear = 
-		(LinearLayout) listItem.findViewById(R.id.list_item_linear);
-	    TextView listItemLabel = 
-		(TextView) listItem.findViewById(R.id.list_item_label);
-	    TextView listItemSender = 
-		(TextView) listItem.findViewById(R.id.list_item_sender);
-	    ImageView listItemLogo = 
-		(ImageView) listItem.findViewById(R.id.list_item_logo);
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.account_display_activity);
 
-            String label = account.getLabel();
-            if (label == null || label.equals("")) 
-        	label = getString(R.string.no_label_text);
-	    listItemLabel.setText(label);
-	    listItemSender.setText(account.getSender());
-	    listItemLogo.setImageBitmap(BitmapFactory.decodeResource(
-		    getResources(), account.getLogoID()));
+    accountManager = new AccountManagerAndroid(AccountDisplayActivity.this);
 
-	    listItemLinear.setOnClickListener(new OnClickListener() {
-		public void onClick(View v) {
-		    showModifyActivity(account);
-		}
-	    });
-	    
-	    listItemLinear.setOnLongClickListener(new OnLongClickListener() {
-		public boolean onLongClick(View v) {
-		    showAccountDialog(account);
-		    return true;
-		}
-	    });
-	    
-	    accountsLinear.addView(listItem);
-	}
-	
-	accountsLinear.invalidate();
-    }
-    
-    private void showAccountDialog(final Account account) {
-	AlertDialog.Builder builder = 
-	    new AlertDialog.Builder(AccountDisplayActivity.this);
+    accountsLinear = (LinearLayout) findViewById(R.id.accounts_linear);
+    refreshAccountsList();
 
-	Resources resources = getResources();
-	CharSequence[] items = resources.getTextArray(R.array.account_dialog);
+    createButton = (Button) findViewById(R.id.create_button);
+    createButton.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        startActivity(new Intent(AccountDisplayActivity.this,
+            AccountCreateActivity.class));
+      }
+    });
+  }
 
-        String label = account.getLabel();
-        if (label == null || label.equals("")) 
-            label = getString(R.string.no_label_text);
-        
-	builder.setTitle(label);
-	builder.setItems(items, new DialogInterface.OnClickListener() {
-	    public void onClick(DialogInterface dialog, int item) {
-		switch (item) {
-		case 0: // rename
-		    showRenameDialog(account);
-		    break;
+  private void refreshAccountsList() {
+    accountsLinear.removeAllViews();
 
-		case 1: // modify
-		    showModifyActivity(account);
-		    break;
+    for (final Account account : accountManager.getAccounts()) {
+      View listItem = getLayoutInflater().inflate(
+          R.layout.account_display_list_item, null);
+      LinearLayout listItemLinear = (LinearLayout) listItem
+          .findViewById(R.id.list_item_linear);
+      TextView listItemLabel = (TextView) listItem
+          .findViewById(R.id.list_item_label);
+      TextView listItemSender = (TextView) listItem
+          .findViewById(R.id.list_item_sender);
+      ImageView listItemLogo = (ImageView) listItem
+          .findViewById(R.id.list_item_logo);
 
-		case 2: // delete
-		    showDeleteDialog(account);
-		    break;
-		}
-	    }
-	});
+      String label = account.getLabel();
+      if (label == null || label.equals(""))
+        label = getString(R.string.no_label_text);
+      listItemLabel.setText(label);
+      listItemSender.setText(account.getSender());
+      listItemLogo.setImageBitmap(BitmapFactory.decodeResource(getResources(),
+          account.getLogoID()));
 
-	builder.show();
-    }
-    
-    private void showRenameDialog(final Account account) {
-	AlertDialog.Builder builder = new AlertDialog.Builder(this);
+      listItemLinear.setOnClickListener(new OnClickListener() {
+        public void onClick(View v) {
+          showModifyActivity(account);
+        }
+      });
 
-	LayoutInflater inflater = (LayoutInflater) 
-		this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-	LinearLayout renameLinear = (LinearLayout) 
-		inflater.inflate(R.layout.account_rename_dialog, null);
-	final EditText labelText = (EditText) 
-		renameLinear.findViewById(R.id.label_text);
+      listItemLinear.setOnLongClickListener(new OnLongClickListener() {
+        public boolean onLongClick(View v) {
+          showAccountDialog(account);
+          return true;
+        }
+      });
 
-	String label = account.getLabel();
-	labelText.setText(label);
-	
-        if (label == null || label.equals(""))
-            label = getString(R.string.no_label_text);
-	
-	builder.setTitle(label);
-	builder.setView(renameLinear);
-	
-	builder.setPositiveButton(R.string.rename_button,  
-		new DialogInterface.OnClickListener() {
-	    public void onClick(DialogInterface dialog, int which) {
-		account.setLabel(labelText.getText().toString());
-		accountManager.modify(account);
-		refreshAccountsList();
-	    }
-	});
-	
-	builder.setNegativeButton(R.string.cancel_button,  
-		new DialogInterface.OnClickListener() {
-	    public void onClick(DialogInterface dialog, int which) {
-		// do nothing
-	    }
-	});
-
-	builder.show();
-	labelText.setSelection(0, labelText.length());
-	labelText.requestFocus();
+      accountsLinear.addView(listItem);
     }
 
-    private void showModifyActivity(Account account) {
-	Intent intent = new Intent(
-		AccountDisplayActivity.this,
-		AccountModifyActivity.class);
-	intent.setAction("com.googlecode.ermete.DO_AUTHENTICATION");
-	intent.putExtra("com.googlecode.ermete.ACCOUNT", account);
-	startActivity(intent);
-    }
-    
-    private void showDeleteDialog(final Account account) {
-	AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    accountsLinear.invalidate();
+  }
 
-	String label = account.getLabel();
-        if (label == null || label.equals(""))
-            label = getString(R.string.no_label_text);
-	
-	builder.setTitle(label);
-	builder.setMessage(R.string.account_delete_message);
-	
-	builder.setPositiveButton(R.string.yes_button,  
-		new DialogInterface.OnClickListener() {
-	    public void onClick(DialogInterface dialog, int which) {
-		accountManager.delete(account);
-		refreshAccountsList();
-	    }
-	});
-	
-	builder.setNegativeButton(R.string.no_button,  
-		new DialogInterface.OnClickListener() {
-	    public void onClick(DialogInterface dialog, int which) {
-		// do nothing
-	    }
-	});
+  private void showAccountDialog(final Account account) {
+    AlertDialog.Builder builder = new AlertDialog.Builder(
+        AccountDisplayActivity.this);
 
-	builder.show();
-    }
-    
+    Resources resources = getResources();
+    CharSequence[] items = resources.getTextArray(R.array.account_dialog);
+
+    String label = account.getLabel();
+    if (label == null || label.equals(""))
+      label = getString(R.string.no_label_text);
+
+    builder.setTitle(label);
+    builder.setItems(items, new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int item) {
+        switch (item) {
+        case 0: // rename
+          showRenameDialog(account);
+          break;
+
+        case 1: // modify
+          showModifyActivity(account);
+          break;
+
+        case 2: // delete
+          showDeleteDialog(account);
+          break;
+        }
+      }
+    });
+
+    builder.show();
+  }
+
+  private void showRenameDialog(final Account account) {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+    LayoutInflater inflater = (LayoutInflater) this
+        .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    LinearLayout renameLinear = (LinearLayout) inflater.inflate(
+        R.layout.account_rename_dialog, null);
+    final EditText labelText = (EditText) renameLinear
+        .findViewById(R.id.label_text);
+
+    String label = account.getLabel();
+    labelText.setText(label);
+
+    if (label == null || label.equals(""))
+      label = getString(R.string.no_label_text);
+
+    builder.setTitle(label);
+    builder.setView(renameLinear);
+
+    builder.setPositiveButton(R.string.rename_button,
+        new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int which) {
+            account.setLabel(labelText.getText().toString());
+            accountManager.modify(account);
+            refreshAccountsList();
+          }
+        });
+
+    builder.setNegativeButton(R.string.cancel_button,
+        new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int which) {
+            // do nothing
+          }
+        });
+
+    builder.show();
+    labelText.setSelection(0, labelText.length());
+    labelText.requestFocus();
+  }
+
+  private void showModifyActivity(Account account) {
+    Intent intent = new Intent(AccountDisplayActivity.this,
+        AccountModifyActivity.class);
+    intent.setAction("com.googlecode.ermete.DO_AUTHENTICATION");
+    intent.putExtra("com.googlecode.ermete.ACCOUNT", account);
+    startActivity(intent);
+  }
+
+  private void showDeleteDialog(final Account account) {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+
+    String label = account.getLabel();
+    if (label == null || label.equals(""))
+      label = getString(R.string.no_label_text);
+
+    builder.setTitle(label);
+    builder.setMessage(R.string.account_delete_message);
+
+    builder.setPositiveButton(R.string.yes_button,
+        new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int which) {
+            accountManager.delete(account);
+            refreshAccountsList();
+          }
+        });
+
+    builder.setNegativeButton(R.string.no_button,
+        new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int which) {
+            // do nothing
+          }
+        });
+
+    builder.show();
+  }
+
 }

@@ -24,10 +24,10 @@ import com.googlecode.ermete.R;
 
 public class InformationActivity extends Activity {
 
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-	super.onCreate(savedInstanceState);
-	setContentView(R.layout.information_activity);
-    }
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.information_activity);
+  }
 
 }

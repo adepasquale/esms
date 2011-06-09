@@ -40,98 +40,90 @@ import android.widget.TextView;
 
 import com.googlecode.ermete.R;
 
-public class ReceiverAdapter extends ResourceCursorAdapter 
-	implements Filterable {
+public class ReceiverAdapter extends ResourceCursorAdapter implements
+    Filterable {
 
-    final static String TAG = "ReceiverAdapter";
-    
-    Context context;
-    SharedPreferences preferences;
+  final static String TAG = "ReceiverAdapter";
 
-    public ReceiverAdapter(Context context) {
-	super(context, R.layout.receiver_adapter, null, false);
-	this.context = context;
-	preferences = PreferenceManager.getDefaultSharedPreferences(context);
+  Context context;
+  SharedPreferences preferences;
+
+  public ReceiverAdapter(Context context) {
+    super(context, R.layout.receiver_adapter, null, false);
+    this.context = context;
+    preferences = PreferenceManager.getDefaultSharedPreferences(context);
+  }
+
+  @Override
+  public void bindView(View view, Context context, Cursor cursor) {
+    ImageView image = (ImageView) view.findViewById(R.id.receiver_image);
+
+    if (preferences.getBoolean("show_pictures", true)) {
+      InputStream input = Contacts.openContactPhotoInputStream(
+          context.getContentResolver(),
+          ContentUris.withAppendedId(Contacts.CONTENT_URI, cursor.getInt(1)));
+      if (input != null) {
+        image.setImageBitmap(BitmapFactory.decodeStream(input));
+      } else {
+        image.setImageBitmap(BitmapFactory.decodeResource(
+            context.getResources(), R.drawable.ic_contact_picture));
+      }
+    } else {
+      image.setVisibility(View.GONE);
     }
 
-    @Override
-    public void bindView(View view, Context context, Cursor cursor) {
-	ImageView image = (ImageView) view.findViewById(R.id.receiver_image);
-	
-	if (preferences.getBoolean("show_pictures", true)) {
-	    InputStream input = 
-		Contacts.openContactPhotoInputStream(context.getContentResolver(),
-		    ContentUris.withAppendedId(Contacts.CONTENT_URI, cursor.getInt(1)));
-	    if (input != null) {
-		image.setImageBitmap(BitmapFactory.decodeStream(input));
-	    } else {
-		image.setImageBitmap(BitmapFactory.decodeResource(
-			context.getResources(), R.drawable.ic_contact_picture));
-	    }
-	} else {
-	    image.setVisibility(View.GONE);
-	}
-	
-	TextView name = (TextView) view.findViewById(R.id.receiver_name);
-	name.setText(cursor.getString(2));
-	
-	TextView type = (TextView) view.findViewById(R.id.receiver_type);
-	type.setText(Phone.getTypeLabel(context.getResources(),
-		cursor.getInt(4), cursor.getString(5)));
-	
-	TextView number = (TextView) view.findViewById(R.id.receiver_number);
-	number.setText(cursor.getString(3));
+    TextView name = (TextView) view.findViewById(R.id.receiver_name);
+    name.setText(cursor.getString(2));
+
+    TextView type = (TextView) view.findViewById(R.id.receiver_type);
+    type.setText(Phone.getTypeLabel(context.getResources(), cursor.getInt(4),
+        cursor.getString(5)));
+
+    TextView number = (TextView) view.findViewById(R.id.receiver_number);
+    number.setText(cursor.getString(3));
+  }
+
+  @Override
+  public Cursor runQueryOnBackgroundThread(CharSequence constraint) {
+    String constraintPath = null;
+    if (constraint != null) {
+      constraintPath = constraint.toString();
     }
 
-    @Override
-    public Cursor runQueryOnBackgroundThread(CharSequence constraint) {
-	String constraintPath = null;
-	if (constraint != null) {
-	    constraintPath = constraint.toString();
-	}
+    Uri queryURI = Uri.withAppendedPath(Phone.CONTENT_FILTER_URI,
+        Uri.encode(constraintPath));
 
-	Uri queryURI = Uri.withAppendedPath(
-		Phone.CONTENT_FILTER_URI, Uri.encode(constraintPath));
+    String[] projection = { Phone._ID, Phone.CONTACT_ID, Phone.DISPLAY_NAME,
+        Phone.NUMBER, Phone.TYPE, Phone.LABEL, };
 
-	String[] projection = { 
-		Phone._ID,
-		Phone.CONTACT_ID,
-		Phone.DISPLAY_NAME,
-		Phone.NUMBER,
-		Phone.TYPE,
-		Phone.LABEL,
-	};
+    String selection = null; // default: all numbers
+    String filter = preferences.getString("filter_receiver", "");
 
-	String selection = null; // default: all numbers
-	String filter = preferences.getString("filter_receiver", "");
-
-	if (filter.contains("M")) { // mobiles only
-	    selection = String.format("%s=%s OR %s=%s",
-		Phone.TYPE, Phone.TYPE_MOBILE, 
-		Phone.TYPE, Phone.TYPE_WORK_MOBILE);
-	}
-        if (filter.contains("H")) { // no home numbers
-            selection = String.format("%s<>%s",
-    		Phone.TYPE, Phone.TYPE_HOME);
-        }
-
-	String sorting = Contacts.TIMES_CONTACTED + " DESC";
-
-	return context.getContentResolver().query(
-		queryURI, projection, selection, null, sorting);
+    if (filter.contains("M")) { // mobiles only
+      selection = String.format("%s=%s OR %s=%s", Phone.TYPE,
+          Phone.TYPE_MOBILE, Phone.TYPE, Phone.TYPE_WORK_MOBILE);
+    }
+    if (filter.contains("H")) { // no home numbers
+      selection = String.format("%s<>%s", Phone.TYPE, Phone.TYPE_HOME);
     }
 
-    @Override
-    public CharSequence convertToString(Cursor cursor) {
-	SpannableString receiver = new SpannableString(
-		cursor.getString(2) + " <" + cursor.getString(3) + ">");
+    String sorting = Contacts.TIMES_CONTACTED + " DESC";
 
-	receiver.setSpan(new Annotation("number", cursor.getString(3)), 
-		0, receiver.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
-	receiver.setSpan(new Annotation("name", cursor.getString(2)),
-		0, receiver.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+    return context.getContentResolver().query(queryURI, projection, selection,
+        null, sorting);
+  }
 
-	return receiver;
-    }
+  @Override
+  public CharSequence convertToString(Cursor cursor) {
+    SpannableString receiver = new SpannableString(cursor.getString(2) + " <"
+        + cursor.getString(3) + ">");
+
+    receiver.setSpan(new Annotation("number", cursor.getString(3)), 0,
+        receiver.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+    receiver.setSpan(new Annotation("name", cursor.getString(2)), 0,
+        receiver.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+    return receiver;
+  }
 
 }

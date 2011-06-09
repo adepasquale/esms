@@ -34,47 +34,46 @@ import com.googlecode.ermete.account.AccountManagerAndroid;
 
 public class AccountCreateActivity extends Activity {
 
-    AccountManager accountManager;
-    
-    LinearLayout providersLinear;
-    
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-	super.onCreate(savedInstanceState);
-	setContentView(R.layout.account_create_activity);
+  AccountManager accountManager;
 
-	accountManager = new AccountManagerAndroid();
+  LinearLayout providersLinear;
 
-	providersLinear = (LinearLayout) findViewById(R.id.providers_linear);
-	for (final Account provider : accountManager.getProviders()) {
-	    
-	    View listItem = getLayoutInflater().inflate(
-		    R.layout.account_create_list_item, null);
-	    LinearLayout listItemLinear = 
-		(LinearLayout) listItem.findViewById(R.id.list_item_linear);
-	    TextView listItemProvider = 
-		(TextView) listItem.findViewById(R.id.list_item_provider);
-	    ImageView listItemLogo = 
-		(ImageView) listItem.findViewById(R.id.list_item_logo);
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    setContentView(R.layout.account_create_activity);
 
-	    listItemProvider.setText(provider.getProvider());
-	    listItemLogo.setImageBitmap(BitmapFactory.decodeResource(
-		    getResources(), provider.getLogoID()));
+    accountManager = new AccountManagerAndroid(AccountCreateActivity.this);
 
-	    listItemLinear.setOnClickListener(new OnClickListener() {
-		@Override
-		public void onClick(View v) {
-		    Intent intent = new Intent(
-			    AccountCreateActivity.this, 
-			    AccountModifyActivity.class);
-		    intent.setAction("com.googlecode.ermete.DO_AUTHENTICATION");
-		    intent.putExtra("com.googlecode.ermete.ACCOUNT", provider);
-		    startActivity(intent);
-		}
-	    });
-	    
-	    providersLinear.addView(listItem);
-	}
+    providersLinear = (LinearLayout) findViewById(R.id.providers_linear);
+    for (final Account provider : accountManager.getProviders()) {
+
+      View listItem = getLayoutInflater().inflate(
+          R.layout.account_create_list_item, null);
+      LinearLayout listItemLinear = (LinearLayout) listItem
+          .findViewById(R.id.list_item_linear);
+      TextView listItemProvider = (TextView) listItem
+          .findViewById(R.id.list_item_provider);
+      ImageView listItemLogo = (ImageView) listItem
+          .findViewById(R.id.list_item_logo);
+
+      listItemProvider.setText(provider.getProvider());
+      listItemLogo.setImageBitmap(BitmapFactory.decodeResource(getResources(),
+          provider.getLogoID()));
+
+      listItemLinear.setOnClickListener(new OnClickListener() {
+        @Override
+        public void onClick(View v) {
+          Intent intent = new Intent(AccountCreateActivity.this,
+              AccountModifyActivity.class);
+          intent.setAction("com.googlecode.ermete.DO_AUTHENTICATION");
+          intent.putExtra("com.googlecode.ermete.ACCOUNT", provider);
+          startActivity(intent);
+        }
+      });
+
+      providersLinear.addView(listItem);
     }
-    
+  }
+
 }
