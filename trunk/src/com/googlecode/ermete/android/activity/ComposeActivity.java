@@ -105,7 +105,6 @@ public class ComposeActivity extends Activity {
     setContentView(R.layout.compose_activity);
 
     conversationManager = new ConversationManagerAndroid();
-    accountManager = new AccountManagerAndroid(ComposeActivity.this);
 
     serviceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
@@ -124,37 +123,6 @@ public class ComposeActivity extends Activity {
     }
 
     preferences = PreferenceManager.getDefaultSharedPreferences(this);
-
-    counterImage = (ImageView) findViewById(R.id.counter_image);
-    counterText = (TextView) findViewById(R.id.counter_text);
-
-    ArrayList<CharSequence> providers = new ArrayList<CharSequence>();
-    for (Account account : accountManager.getAccounts()) {
-      String label = account.getLabel();
-      if (label == null || label.equals(""))
-        label = getString(R.string.no_label_text);
-      providers.add(label);
-    }
-    ArrayAdapter<CharSequence> senderAdapter = new ArrayAdapter<CharSequence>(
-        this, android.R.layout.simple_spinner_item, providers);
-    senderAdapter
-        .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    senderSpinner = (Spinner) findViewById(R.id.sender_spinner);
-    senderSpinner.setAdapter(senderAdapter);
-    senderSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
-      public void onNothingSelected(AdapterView<?> parent) {
-      }
-
-      public void onItemSelected(AdapterView<?> parent, View view,
-          int position, long id) {
-        List<Account> accounts = accountManager.getAccounts();
-        account = accounts.get(position);
-        int remaining = account.getLimit() - account.getCount();
-        counterText.setText(Integer.toString(remaining));
-        if (accountService != null)
-          accountService.login(account);
-      }
-    });
 
     clearButton = (ImageButton) findViewById(R.id.clear_button);
     clearButton.setEnabled(false);
@@ -367,6 +335,44 @@ public class ComposeActivity extends Activity {
     lengthText = (TextView) findViewById(R.id.length);
   }
 
+  @Override
+  public void onResume() {
+    super.onResume();
+    
+    accountManager = new AccountManagerAndroid(ComposeActivity.this);
+    if (accountManager.getAccounts().size() == 0)
+      startActivity(new Intent(this, AccountDisplayActivity.class));
+    
+    counterImage = (ImageView) findViewById(R.id.counter_image);
+    counterText = (TextView) findViewById(R.id.counter_text);
+
+    ArrayList<CharSequence> providers = new ArrayList<CharSequence>();
+    for (Account account : accountManager.getAccounts()) {
+      String label = account.getLabel();
+      if (label == null || label.equals(""))
+        label = getString(R.string.no_label_text);
+      providers.add(label);
+    }
+    ArrayAdapter<CharSequence> senderAdapter = new ArrayAdapter<CharSequence>(
+        this, android.R.layout.simple_spinner_item, providers);
+    senderAdapter
+        .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    senderSpinner = (Spinner) findViewById(R.id.sender_spinner);
+    senderSpinner.setAdapter(senderAdapter);
+    senderSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+      public void onNothingSelected(AdapterView<?> parent) { }
+      public void onItemSelected(AdapterView<?> parent, View view,
+          int position, long id) {
+        List<Account> accounts = accountManager.getAccounts();
+        account = accounts.get(position);
+        int remaining = account.getLimit() - account.getCount();
+        counterText.setText(Integer.toString(remaining));
+        if (accountService != null)
+          accountService.login(account);
+      }
+    });
+  }
+  
   @Override
   public void onDestroy() {
     super.onDestroy();

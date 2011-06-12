@@ -17,6 +17,8 @@
 
 package com.googlecode.ermete.android.activity;
 
+import java.util.List;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
@@ -26,6 +28,9 @@ import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
@@ -53,24 +58,17 @@ public class AccountDisplayActivity extends Activity {
     setContentView(R.layout.account_display_activity);
 
     accountManager = new AccountManagerAndroid(AccountDisplayActivity.this);
+    if (accountManager.getAccounts().size() == 0) showWelcomeDialog();
 
     accountsLinear = (LinearLayout) findViewById(R.id.accounts_linear);
     refreshAccountsList();
-
-    createButton = (Button) findViewById(R.id.create_button);
-    createButton.setOnClickListener(new OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        startActivity(new Intent(AccountDisplayActivity.this,
-            AccountCreateActivity.class));
-      }
-    });
   }
 
   private void refreshAccountsList() {
     accountsLinear.removeAllViews();
-
-    for (final Account account : accountManager.getAccounts()) {
+    List<Account> accounts = accountManager.getAccounts();
+    
+    for (final Account account : accounts) {
       View listItem = getLayoutInflater().inflate(
           R.layout.account_display_list_item, null);
       LinearLayout listItemLinear = (LinearLayout) listItem
@@ -87,9 +85,17 @@ public class AccountDisplayActivity extends Activity {
         label = getString(R.string.no_label_text);
       listItemLabel.setText(label);
       listItemSender.setText(account.getSender());
-      listItemLogo.setImageBitmap(BitmapFactory.decodeResource(getResources(),
-          account.getLogoID()));
-
+      
+      if (account.getProvider().equals("Vodafone"))
+        listItemLogo.setImageBitmap(
+            BitmapFactory.decodeResource(getResources(),
+            R.drawable.ic_logo_vodafone));
+        
+//      if (account.getProvider().equals("TIM")) 
+//        listItemLogo.setImageBitmap(
+//            BitmapFactory.decodeResource(getResources(), 
+//            R.drawable.ic_logo_tim));
+      
       listItemLinear.setOnClickListener(new OnClickListener() {
         public void onClick(View v) {
           showModifyActivity(account);
@@ -106,6 +112,12 @@ public class AccountDisplayActivity extends Activity {
       accountsLinear.addView(listItem);
     }
 
+    if (accounts.size() == 0) {
+      View listEmpty = getLayoutInflater().inflate(
+          R.layout.account_display_list_empty, null);
+      accountsLinear.addView(listEmpty);
+    }
+    
     accountsLinear.invalidate();
   }
 
@@ -164,8 +176,9 @@ public class AccountDisplayActivity extends Activity {
     builder.setPositiveButton(R.string.rename_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
+            accountManager.delete(account);
             account.setLabel(labelText.getText().toString());
-            accountManager.modify(account);
+            accountManager.insert(account);
             refreshAccountsList();
           }
         });
@@ -186,7 +199,8 @@ public class AccountDisplayActivity extends Activity {
     Intent intent = new Intent(AccountDisplayActivity.this,
         AccountModifyActivity.class);
     intent.setAction("com.googlecode.ermete.DO_AUTHENTICATION");
-    intent.putExtra("com.googlecode.ermete.ACCOUNT", account);
+    intent.putExtra("com.googlecode.ermete.NEW_ACCOUNT", account);
+    intent.putExtra("com.googlecode.ermete.OLD_ACCOUNT", account);
     startActivity(intent);
   }
 
@@ -218,4 +232,49 @@ public class AccountDisplayActivity extends Activity {
     builder.show();
   }
 
+  @Override
+  public void onBackPressed() {
+    if (accountManager.getAccounts().size() == 0)
+      showWelcomeDialog();
+    else super.onBackPressed();
+  }
+  
+  private void showWelcomeDialog() {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setTitle(R.string.app_name);
+    builder.setMessage(R.string.welcome_message);
+
+    builder.setPositiveButton(
+        R.string.account_create_button, new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int which) {
+        startActivity(new Intent(
+            AccountDisplayActivity.this,
+            AccountCreateActivity.class));
+      }
+    });
+
+    builder.setCancelable(false);
+    builder.show();
+  }
+  
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    MenuInflater inflater = getMenuInflater();
+    inflater.inflate(R.layout.create_menu, menu);
+    return true;
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+    case R.id.menu_item_create:
+      startActivity(new Intent(
+          AccountDisplayActivity.this,
+          AccountCreateActivity.class));
+      return true;
+
+    default:
+      return super.onOptionsItemSelected(item);
+    }
+  }
 }

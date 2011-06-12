@@ -58,8 +58,16 @@ public class AccountCreateActivity extends Activity {
           .findViewById(R.id.list_item_logo);
 
       listItemProvider.setText(provider.getProvider());
-      listItemLogo.setImageBitmap(BitmapFactory.decodeResource(getResources(),
-          provider.getLogoID()));
+      
+      if (provider.getProvider().equals("Vodafone"))
+        listItemLogo.setImageBitmap(
+            BitmapFactory.decodeResource(getResources(),
+            R.drawable.ic_logo_vodafone));
+        
+//      if (provider.getProvider().equals("TIM"))
+//        listItemLogo.setImageBitmap(
+//            BitmapFactory.decodeResource(getResources(), 
+//            R.drawable.ic_logo_tim));
 
       listItemLinear.setOnClickListener(new OnClickListener() {
         @Override
@@ -67,7 +75,7 @@ public class AccountCreateActivity extends Activity {
           Intent intent = new Intent(AccountCreateActivity.this,
               AccountModifyActivity.class);
           intent.setAction("com.googlecode.ermete.DO_AUTHENTICATION");
-          intent.putExtra("com.googlecode.ermete.ACCOUNT", provider);
+          intent.putExtra("com.googlecode.ermete.NEW_ACCOUNT", provider);
           startActivity(intent);
         }
       });
@@ -75,5 +83,4 @@ public class AccountCreateActivity extends Activity {
       providersLinear.addView(listItem);
     }
   }
-
 }

@@ -18,57 +18,132 @@
 
 package com.googlecode.ermete.account;
 
+import java.lang.reflect.Constructor;
 import java.util.LinkedList;
 
+import android.content.ContentValues;
 import android.content.Context;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteQueryBuilder;
 
-import com.googlecode.ermete.R;
 import com.googlecode.ermete.account.provider.Tim;
 import com.googlecode.ermete.account.provider.Vodafone;
 
 public class AccountManagerAndroid extends AccountManager {
   private static final long serialVersionUID = 1L;
 
+  static final String DB_NAME = "accounts.db";
+  static final int DB_VERSION = 1;
+  static final String TABLE_NAME = "accounts";
+
+  public static final String _ID = "_id";
+  public static final String CLASS = "class";
+  public static final String LABEL = "label";
+  public static final String USERNAME = "username";
+  public static final String PASSWORD = "password";
+  public static final String SENDER = "sender";
+  public static final String COUNT = "count";
+
+  private static class DBOpenHelper extends SQLiteOpenHelper {
+    DBOpenHelper(Context context) {
+      super(context, DB_NAME, null, DB_VERSION);
+    }
+
+    @Override
+    public void onCreate(SQLiteDatabase db) {
+      db.execSQL("CREATE TABLE " + TABLE_NAME + " (" + _ID
+          + " INTEGER PRIMARY KEY," + CLASS + " TEXT," + LABEL + " TEXT,"
+          + USERNAME + " TEXT," + PASSWORD + " TEXT," + SENDER + " TEXT,"
+          + COUNT + " INTEGER );");
+    }
+
+    @Override
+    public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+      onCreate(db);
+    }
+  }
+  
+  DBOpenHelper dbOpenHelper;
+  AccountConnectorAndroid connector;
+  
   public AccountManagerAndroid(Context context) {
-    AccountConnectorAndroid connector = new AccountConnectorAndroid(context);
+    dbOpenHelper = new DBOpenHelper(context);
+    connector = new AccountConnectorAndroid(context);
 
     providers = new LinkedList<Account>();
     providers.add(new Vodafone(connector));
     providers.add(new Tim(connector));
 
     accounts = new LinkedList<Account>();
-    // TODO load accounts from the DB
-    Account test1 = new Vodafone(connector);
-    test1.setLabel("Lavoro V.");
-    test1.setSender("340 1234567");
-    test1.setUsername("vodafone");
-    test1.setPassword("password");
-    test1.setLogoID(R.drawable.ic_logo_vodafone);
-    accounts.add(test1);
-    Account test2 = new Tim(connector);
-    test2.setLabel("Personale T.");
-    test2.setSender("333 1234567");
-    test2.setUsername("telecom");
-    test2.setPassword("password");
-    test2.setLogoID(R.drawable.ic_logo_vodafone);
-    accounts.add(test2);
+    
+    SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+    queryBuilder.setTables(TABLE_NAME);
+    SQLiteDatabase db = dbOpenHelper.getReadableDatabase();
+    Cursor c = queryBuilder.query(db, null, null, null, null, null, null);
+    c.moveToFirst();
+    
+    while (!c.isAfterLast()) {
+      try {
+        
+        @SuppressWarnings("unchecked")
+        Class<Account> accountClass = 
+          (Class<Account>) Class.forName(c.getString(c.getColumnIndex(CLASS)));
+        Constructor<Account> accountConstructor = 
+          accountClass.getConstructor(AccountConnector.class);
+        Account account = (Account) accountConstructor.newInstance(connector);
+        account.setLabel(c.getString(c.getColumnIndex(LABEL)));
+        account.setUsername(c.getString(c.getColumnIndex(USERNAME)));
+        account.setPassword(c.getString(c.getColumnIndex(PASSWORD)));
+        account.setSender(c.getString(c.getColumnIndex(SENDER)));
+        account.setCount(c.getInt(c.getColumnIndex(COUNT)));
+        accounts.add(account);
+        
+      } catch (Exception e) {
+        e.printStackTrace();
+        continue;
+      }
+
+      c.moveToNext();
+    }
+
+    c.close();
+    db.close();
   }
 
   @Override
-  public void insert(Account account) {
-    // TODO Auto-generated method stub
-    accounts.add(account);
+  public void insert(Account newAccount) {
+    accounts.add(newAccount);
+    
+    ContentValues values = new ContentValues();
+    values.put(CLASS, newAccount.getClass().getName());
+    values.put(LABEL, newAccount.getLabel());
+    values.put(USERNAME, newAccount.getUsername());
+    values.put(PASSWORD, newAccount.getPassword());
+    values.put(SENDER, newAccount.getSender());
+    values.put(COUNT, newAccount.getCount());
+
+    SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+    db.insert(TABLE_NAME, null, values);
+    db.close();
   }
 
   @Override
-  public void modify(int index) {
-    // TODO Auto-generated method stub
+  public void delete(Account oldAccount) {
+    accounts.remove(oldAccount);
+    
+    SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+    String whereClause = String.format(
+        "%s=\'%s\' AND %s=\'%s\' AND %s=\'%s\'" + 
+        " AND %s=\'%s\' AND %s=\'%s\' AND %s=%d",
+        CLASS, oldAccount.getClass().getName(),
+        LABEL, oldAccount.getLabel(),
+        USERNAME, oldAccount.getUsername(),
+        PASSWORD, oldAccount.getPassword(),
+        SENDER, oldAccount.getSender(),
+        COUNT, oldAccount.getCount());
+    db.delete(TABLE_NAME, whereClause, null);
+    db.close();
   }
-
-  @Override
-  public void delete(int index) {
-    // TODO Auto-generated method stub
-    accounts.remove(index);
-  }
-
 }

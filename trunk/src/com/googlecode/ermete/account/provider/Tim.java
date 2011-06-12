@@ -18,7 +18,8 @@
 
 package com.googlecode.ermete.account.provider;
 
-import com.googlecode.ermete.R;
+import java.util.List;
+
 import com.googlecode.ermete.account.Account;
 import com.googlecode.ermete.account.AccountConnector;
 import com.googlecode.ermete.sms.SMS;
@@ -33,7 +34,6 @@ public class Tim extends Account {
 
     label = PROVIDER;
     provider = PROVIDER;
-    logoID = R.drawable.ic_logo_vodafone;
     limit = 5;
   }
 
@@ -56,7 +56,13 @@ public class Tim extends Account {
   }
 
   @Override
-  public String[] info() {
+  public Result logout() {
+    // TODO Auto-generated method stub
+    return Result.LOGOUT_ERROR;
+  }
+  
+  @Override
+  public List<String> getSenderList() {
     // TODO Auto-generated method stub
     return null;
   }

@@ -17,19 +17,8 @@
   along with Ermete SMS.  If not, see <http://www.gnu.org/licenses/>.
   
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="fill_parent"
-    android:layout_height="fill_parent"
-    android:background="@android:color/black"
-    android:orientation="vertical"
->
-
-	<LinearLayout
-		android:id="@+id/accounts_linear"
-		android:layout_weight="1.0"
-	    android:layout_width="fill_parent"
-	    android:layout_height="0dp"
-	    android:orientation="vertical"
-	/>
-    
-</LinearLayout>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+	<item android:id="@+id/menu_item_create"
+          android:icon="@drawable/ic_menu_create"
+          android:title="@string/menu_item_create" />
+</menu>

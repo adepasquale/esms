@@ -18,33 +18,24 @@
 
 package com.googlecode.ermete.account;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
-import java.security.KeyStore;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
-import org.apache.http.conn.ClientConnectionManager;
-import org.apache.http.conn.scheme.PlainSocketFactory;
-import org.apache.http.conn.scheme.Scheme;
-import org.apache.http.conn.scheme.SchemeRegistry;
-import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.cookie.Cookie;
-import org.apache.http.impl.client.BasicCookieStore;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.SingleClientConnManager;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
 
+import android.content.ContentValues;
 import android.content.Context;
-
-import com.googlecode.ermete.R;
+import android.database.Cursor;
+import android.database.sqlite.SQLiteDatabase;
+import android.database.sqlite.SQLiteOpenHelper;
+import android.database.sqlite.SQLiteQueryBuilder;
 
 public class AccountConnectorAndroid extends AccountConnector {
   private static final long serialVersionUID = 1L;
@@ -56,7 +47,7 @@ public class AccountConnectorAndroid extends AccountConnector {
   }
 
   public HttpClient getHttpClient() {
-    return new HttpClientAndroid(context);
+    return new DefaultHttpClient();
   }
 
   public HttpContext getHttpContext() {
@@ -64,132 +55,135 @@ public class AccountConnectorAndroid extends AccountConnector {
   }
 
   public CookieStore getCookieStore() {
-    return new CookieStoreAndroid();
+    return new CookieStoreAndroid(context);
   }
 
-  // TODO check if keystore should be generated again
-  class HttpClientAndroid extends DefaultHttpClient {
+  class CookieStoreAndroid implements CookieStore {
 
-    Context context;
+    static final String DB_NAME = "cookies.db";
+    static final int DB_VERSION = 1;
+    static final String TABLE_NAME = "cookies";
 
-    public HttpClientAndroid(Context context) {
-      this.context = context;
-    }
+    public static final String _ID = "_id";
+    public static final String VERSION = "version";
+    public static final String NAME = "name";
+    public static final String VALUE = "value";
+    public static final String DOMAIN = "domain";
+    public static final String PATH = "path";
+    public static final String EXPIRY = "expiry";
+    
+    private class DBOpenHelper extends SQLiteOpenHelper {
+      DBOpenHelper(Context context) {
+        super(context, DB_NAME, null, DB_VERSION);
+      }
 
-    @Override
-    protected ClientConnectionManager createClientConnectionManager() {
-      SchemeRegistry registry = new SchemeRegistry();
-      registry.register(
-          new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
-      registry.register(new Scheme("https", newSSLSocketFactory(), 443));
-      return new SingleClientConnManager(getParams(), registry);
-    }
+      @Override
+      public void onCreate(SQLiteDatabase db) {
+        db.execSQL("CREATE TABLE " + TABLE_NAME + " (" + _ID
+            + " INTEGER PRIMARY KEY," + VERSION + " INTEGER," + NAME + " TEXT,"
+            + VALUE + " TEXT," + DOMAIN + " TEXT," + PATH + " TEXT, "
+            + EXPIRY + " BIGINT );");
+      }
 
-    private SSLSocketFactory newSSLSocketFactory() {
-      try {
-        KeyStore trusted = KeyStore.getInstance("BKS");
-        InputStream in = context.getResources().openRawResource(R.raw.keystore);
-
-        try {
-          trusted.load(in, "storepass".toCharArray());
-        } finally {
-          in.close();
-        }
-
-        SSLSocketFactory sf = new SSLSocketFactory(trusted);
-        sf.setHostnameVerifier(SSLSocketFactory.STRICT_HOSTNAME_VERIFIER);
-        return sf;
-
-      } catch (Exception e) {
-        throw new AssertionError(e);
+      @Override
+      public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+        onCreate(db);
       }
     }
-  }
+    
+    List<Cookie> cookies;
+    DBOpenHelper dbOpenHelper;
 
-  // TODO implement CookieStore without using BasicCookieStore
-  class CookieStoreAndroid implements CookieStore, Serializable {
-    static final long serialVersionUID = 1L;
+    public CookieStoreAndroid(Context context) {
+      cookies = new ArrayList<Cookie>();
+      dbOpenHelper = new DBOpenHelper(context);
 
-    transient CookieStore cookieStore;
+      SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
+      queryBuilder.setTables(TABLE_NAME);
+      SQLiteDatabase db = dbOpenHelper.getReadableDatabase();
+      Cursor c = queryBuilder.query(db, null, null, null, null, null, null);
+      c.moveToFirst();
+      
+      while (!c.isAfterLast()) {
+        BasicClientCookie cookie = new BasicClientCookie(
+            c.getString(c.getColumnIndex(NAME)),
+            c.getString(c.getColumnIndex(VALUE)));
+        cookie.setVersion(c.getInt(c.getColumnIndex(VERSION)));
+        cookie.setDomain(c.getString(c.getColumnIndex(DOMAIN)));
+        cookie.setPath(c.getString(c.getColumnIndex(PATH)));
+        long expiry = c.getLong(c.getColumnIndex(EXPIRY));
+        if (expiry != 0) cookie.setExpiryDate(new Date(expiry));
+        cookies.add(cookie);
+        c.moveToNext();
+      }
 
-    public CookieStoreAndroid() {
-      cookieStore = new BasicCookieStore();
+      c.close();
+      db.close();
     }
 
     @Override
-    public void addCookie(Cookie cookie) {
-      cookieStore.addCookie(cookie);
+    public void addCookie(Cookie newCookie) {
+      for (Cookie oldCookie : cookies) {
+        if (oldCookie.getName() == newCookie.getName() && 
+            oldCookie.getDomain() == newCookie.getDomain() &&
+            oldCookie.getPath() == newCookie.getPath()) {
+          cookies.remove(oldCookie);
+        }
+      }
+      
+      cookies.add(newCookie);
+      
+      ContentValues values = new ContentValues();
+      values.put(VERSION, newCookie.getVersion());
+      values.put(NAME, newCookie.getName());
+      values.put(VALUE, newCookie.getValue());
+      values.put(DOMAIN, newCookie.getDomain());
+      values.put(PATH, newCookie.getPath());
+      long expiry = 0;
+      Date expiryDate = newCookie.getExpiryDate();
+      if (expiryDate != null) expiry = expiryDate.getTime();
+      values.put(EXPIRY, expiry);
+
+      SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+      String whereClause = String.format(
+          "%s=\'%s\' AND %s=\'%s\' AND %s=\'%s\'",
+          NAME, newCookie.getName(),
+          DOMAIN, newCookie.getDomain(),
+          PATH, newCookie.getPath());
+      db.delete(TABLE_NAME, whereClause, null);
+      db.insert(TABLE_NAME, null, values);
+      db.close();
     }
 
     @Override
     public void clear() {
-      cookieStore.clear();
+      cookies.clear();
+      
+      SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+      db.delete(TABLE_NAME, null, null);
+      db.close();
     }
 
     @Override
     public boolean clearExpired(Date date) {
-      return cookieStore.clearExpired(date);
+      boolean purged = false;
+      for (Cookie cookie : cookies)
+        if (cookie.isExpired(date)) {
+          cookies.remove(cookie);
+          purged = true;
+        }
+      
+      SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+      String whereClause = String.format("%s < %d", EXPIRY, date.getTime());
+      int deleted = db.delete(TABLE_NAME, whereClause, null);
+      db.close();
+      
+      return purged || (deleted > 0);
     }
 
     @Override
     public List<Cookie> getCookies() {
-      return cookieStore.getCookies();
-    }
-
-    private void readObject(ObjectInputStream input) throws IOException,
-        ClassNotFoundException {
-      cookieStore = new BasicCookieStore();
-
-      input.defaultReadObject();
-      int size = input.readInt();
-      while (size-- > 0) {
-        CookieAndroid wsCookie = (CookieAndroid) input.readObject();
-        cookieStore.addCookie(wsCookie.getCookie());
-      }
-    }
-
-    private void writeObject(ObjectOutputStream output) throws IOException {
-      output.defaultWriteObject();
-      List<Cookie> cookies = cookieStore.getCookies();
-      output.writeInt(cookies.size());
-      for (Cookie cookie : cookies) {
-        output.writeObject(new CookieAndroid(cookie));
-      }
-    }
-
-    // TODO implement Cookie interface entirely
-    class CookieAndroid implements Serializable {
-      static final long serialVersionUID = 1L;
-
-      int version;
-      String name;
-      String value;
-      String domain;
-      String path;
-      long expiry;
-
-      public CookieAndroid(Cookie cookie) {
-        version = cookie.getVersion();
-        name = cookie.getName();
-        value = cookie.getValue();
-        domain = cookie.getDomain();
-        path = cookie.getPath();
-
-        expiry = 0;
-        Date expiryDate = cookie.getExpiryDate();
-        if (expiryDate != null)
-          expiry = expiryDate.getTime();
-      }
-
-      public Cookie getCookie() {
-        BasicClientCookie cookie = new BasicClientCookie(name, value);
-        cookie.setVersion(version);
-        cookie.setDomain(domain);
-        cookie.setPath(path);
-        if (expiry != 0)
-          cookie.setExpiryDate(new Date(expiry));
-        return cookie;
-      }
+      return cookies;
     }
   }
 

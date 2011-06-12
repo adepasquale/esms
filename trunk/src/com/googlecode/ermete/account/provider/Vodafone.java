@@ -20,6 +20,7 @@ package com.googlecode.ermete.account.provider;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import org.apache.http.HttpResponse;
@@ -35,9 +36,6 @@ import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jdom.input.SAXBuilder;
 
-import android.util.Log;
-
-import com.googlecode.ermete.R;
 import com.googlecode.ermete.account.Account;
 import com.googlecode.ermete.account.AccountConnector;
 import com.googlecode.ermete.sms.SMS;
@@ -51,16 +49,21 @@ public class Vodafone extends Account {
   public Vodafone(AccountConnector connector) {
     super(connector);
 
+    label = PROVIDER;
+    provider = PROVIDER;
+    limit = 10;
+    
+    loggedIn = false;
+    senderList = new LinkedList<String>();
+  }
+
+  @Override
+  protected void initAccountConnector() {
     httpClient.getParams().setParameter(
         "http.protocol.allow-circular-redirects", true);
     httpClient.getParams().setParameter("http.useragent", "Vodafone_DW");
-
-    label = PROVIDER;
-    provider = PROVIDER;
-    logoID = R.drawable.ic_logo_vodafone;
-    limit = 10;
   }
-
+  
   @Override
   public int calcRemaining(int length) {
     if (length == 0) {
@@ -94,25 +97,59 @@ public class Vodafone extends Account {
   @Override
   public Result login() {
     try {
-      if (isLoggedIn())
-        return Result.SUCCESSFUL;
-      if (doLogin())
-        return Result.SUCCESSFUL;
-      else
+      
+      if (loggedIn) {
+        if (usernameCurrent.equalsIgnoreCase(username)) {
+          return Result.SUCCESSFUL;
+        } else if (!doLogout()) {
+          return Result.LOGOUT_ERROR;
+        }
+      }
+      
+      if (doLogin()) {
+        if (isCorporate || isBlocked) 
+          return Result.UNSUPPORTED_ERROR;
+        else return Result.SUCCESSFUL;
+      } else {
         return Result.LOGIN_ERROR;
+      }
+      
+    } catch (JDOMException je) {
+      je.printStackTrace();
+      return Result.PROVIDER_ERROR;
     } catch (Exception e) {
       e.printStackTrace();
       return Result.NETWORK_ERROR;
     }
   }
+  
+  @Override
+  public Result logout() {
+    try {
+      
+      if (!loggedIn) {
+        return Result.SUCCESSFUL;
+      }
+      
+      if (doLogout()) {
+        return Result.SUCCESSFUL;
+      } else {
+        return Result.LOGOUT_ERROR;
+      }
+      
+    } catch (JDOMException je) {
+      je.printStackTrace();
+      return Result.PROVIDER_ERROR;
+    } catch (Exception e) {
+      e.printStackTrace();
+      return Result.NETWORK_ERROR;
+    }
+  }  
 
   @Override
-  public String[] info() {
-    // TODO Auto-generated method stub
-    String[] senders = new String[2];
-    senders[0] = "348 7654321";
-    senders[1] = "340 1234567";
-    return senders;
+  public List<String> getSenderList() {
+    if (loggedIn) return senderList;
+    else return null;
   }
 
   @Override
@@ -121,25 +158,49 @@ public class Vodafone extends Account {
     return Result.SUCCESSFUL;
   }
 
-  private static final String CHECK_USER = "https://widget.vodafone.it/190/trilogy/jsp/utility/checkUser.jsp";
+  private static final String CHECK_USER = 
+    "https://www.vodafone.it/190/trilogy/jsp/utility/checkUser.jsp";
+  private static final String DO_LOGIN = 
+    "https://www.vodafone.it/190/trilogy/jsp/login.do";
+//  private static final String DO_LOGOUT = 
+//    "http://www.vodafone.it/190/trilogy/jsp/logout.do";
 
-  private static final String DO_LOGIN = "https://widget.vodafone.it/190/trilogy/jsp/login.do";
-
-  private boolean isLoggedIn() throws ClientProtocolException, IOException,
+  boolean loggedIn;
+  boolean isConsumer;
+  boolean isCorporate;
+  boolean isBlocked;
+  String senderCurrent;
+  List<String> senderList;
+  String usernameCurrent;
+  
+  private void checkUser() throws ClientProtocolException, IOException, 
       IllegalStateException, JDOMException {
     HttpGet request = new HttpGet(CHECK_USER);
-    Log.d("Vodafone", "request == null  -> " + (request == null));
-    Log.d("Vodafone", "httpClient == null  -> " + (httpClient == null));
-    Log.d("Vodafone", "httpContext == null  -> " + (httpContext == null));
     HttpResponse response = httpClient.execute(request, httpContext);
-    Document document = new SAXBuilder().build(response.getEntity()
-        .getContent());
+    Document document = 
+        new SAXBuilder().build(response.getEntity().getContent());
     response.getEntity().consumeContent();
     Element root = document.getRootElement();
-    Element child = root.getChild("logged-in");
-    return child.getValue().equals("true");
+    Element liChild = root.getChild("logged-in");
+    loggedIn = liChild.getValue().equals("true");
+    
+    senderCurrent = null;
+    senderList.clear();
+    
+    if (loggedIn) {
+      Element userChild = root.getChild("user");
+      isConsumer = userChild.getChild("is-consumer").getValue().equals("true");
+      isCorporate = userChild.getChild("is-corporate").getValue().equals("true");
+      isBlocked = userChild.getChild("is-blocked").getValue().equals("true");
+      senderCurrent = userChild.getChild("current-msisdn").getValue();
+      Element asChild = userChild.getChild("all-sims");
+      @SuppressWarnings("unchecked")
+      List<Element> mChildren = asChild.getChildren("msisdn");
+      for (Element mChild : mChildren) senderList.add(mChild.getValue());
+      usernameCurrent = root.getChild("security").getChild("username").getValue();
+    }
   }
-
+  
   private boolean doLogin() throws ClientProtocolException, IOException,
       IllegalStateException, JDOMException {
     HttpPost request = new HttpPost(DO_LOGIN);
@@ -149,10 +210,24 @@ public class Vodafone extends Account {
     request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
     HttpResponse response = httpClient.execute(request, httpContext);
     response.getEntity().consumeContent();
-
-    if (isLoggedIn())
-      return true;
-    return false;
+    
+    checkUser();
+    if (loggedIn && usernameCurrent.equalsIgnoreCase(username)) return true;
+    else return false;
   }
+  
+  private boolean doLogout() throws ClientProtocolException, 
+      IOException, IllegalStateException, JDOMException {
+//    HttpGet request = new HttpGet(DO_LOGOUT);
+//    HttpResponse response = httpClient.execute(request, httpContext);
+//    response.getEntity().consumeContent();
+
+    // this is enough
+    cookieStore.clear();
+    
+    checkUser();
+    if (!loggedIn) return true;
+    else return false;
+  }  
 
 }
