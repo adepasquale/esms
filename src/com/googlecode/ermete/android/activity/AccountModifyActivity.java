@@ -80,20 +80,31 @@ public class AccountModifyActivity extends Activity {
 
     Intent intent = getIntent();
     String action = intent.getAction();
-    final Account account = (Account) intent
-        .getSerializableExtra("com.googlecode.ermete.ACCOUNT");
-    account.setAccountConnector(new AccountConnectorAndroid(this));
+    
+    final Account newAccount = (Account) 
+        intent.getSerializableExtra("com.googlecode.ermete.NEW_ACCOUNT");
+    final Account oldAccount = (Account)
+        intent.getSerializableExtra("com.googlecode.ermete.OLD_ACCOUNT");
 
-    titleLogo.setImageBitmap(BitmapFactory.decodeResource(getResources(),
-        account.getLogoID()));
-
+    newAccount.setAccountConnector(new AccountConnectorAndroid(this));
+    
+    if (newAccount.getProvider().equals("Vodafone"))
+      titleLogo.setImageBitmap(
+          BitmapFactory.decodeResource(getResources(),
+          R.drawable.ic_logo_vodafone));
+      
+//    if (newAccount.getProvider().equals("TIM")) 
+//      titleLogo.setImageBitmap(
+//          BitmapFactory.decodeResource(getResources(), 
+//          R.drawable.ic_logo_tim));
+    
     titleText.setText(getString(R.string.account_modify_activity) + " "
-        + account.getLabel());
+        + newAccount.getLabel());
 
     if (action.equals("com.googlecode.ermete.DO_AUTHENTICATION")) {
       loginLinear.setVisibility(View.VISIBLE);
 
-      usernameText.setText(account.getUsername());
+      usernameText.setText(newAccount.getUsername());
       usernameText.addTextChangedListener(new TextWatcher() {
         public void beforeTextChanged(CharSequence s, int start, int count,
             int after) {
@@ -108,7 +119,7 @@ public class AccountModifyActivity extends Activity {
         }
       });
 
-      passwordText.setText(account.getPassword());
+      passwordText.setText(newAccount.getPassword());
       passwordText.addTextChangedListener(new TextWatcher() {
         public void beforeTextChanged(CharSequence s, int start, int count,
             int after) {
@@ -123,6 +134,12 @@ public class AccountModifyActivity extends Activity {
         }
       });
 
+      prevButton.setOnClickListener(new OnClickListener() {
+        public void onClick(View v) {
+          AccountModifyActivity.this.finish();
+        }
+      });
+      
       toggleNextButton(usernameText.length(), passwordText.length());
       nextButton.setOnClickListener(new OnClickListener() {
         public void onClick(View v) {
@@ -135,11 +152,9 @@ public class AccountModifyActivity extends Activity {
             }
 
             protected Account.Result doInBackground(Void... params) {
-              try {
-                Thread.sleep(2500);
-              } catch (InterruptedException e) {
-              }
-              return account.login();
+              newAccount.setUsername(usernameText.getText().toString());
+              newAccount.setPassword(passwordText.getText().toString());
+              return newAccount.login();
             }
 
             protected void onPostExecute(Account.Result result) {
@@ -150,7 +165,9 @@ public class AccountModifyActivity extends Activity {
                 Intent intent = new Intent(AccountModifyActivity.this,
                     AccountModifyActivity.class);
                 intent.setAction("com.googlecode.ermete.CHOOSE_SENDER");
-                intent.putExtra("com.googlecode.ermete.ACCOUNT", account);
+                intent.putExtra("com.googlecode.ermete.NEW_ACCOUNT", newAccount);
+                if (oldAccount != null) 
+                  intent.putExtra("com.googlecode.ermete.OLD_ACCOUNT", oldAccount);
                 startActivity(intent);
                 break;
 
@@ -159,6 +176,22 @@ public class AccountModifyActivity extends Activity {
                     R.string.login_error_toast, Toast.LENGTH_LONG).show();
                 break;
 
+              case LOGOUT_ERROR:
+                Toast.makeText(AccountModifyActivity.this,
+                    R.string.logout_error_toast, Toast.LENGTH_LONG).show();
+                break;
+
+              case UNSUPPORTED_ERROR:
+                Toast.makeText(AccountModifyActivity.this,
+                    R.string.unsupported_error_toast, Toast.LENGTH_LONG).show();
+                break;
+                
+              case PROVIDER_ERROR:
+                Toast.makeText(AccountModifyActivity.this,
+                    R.string.provider_error_toast, Toast.LENGTH_LONG).show();
+                break;
+                
+              case NETWORK_ERROR:
               default:
                 Toast.makeText(AccountModifyActivity.this,
                     R.string.network_error_toast, Toast.LENGTH_LONG).show();
@@ -179,13 +212,68 @@ public class AccountModifyActivity extends Activity {
         }
       });
 
+      prevButton.setOnClickListener(new OnClickListener() {
+        public void onClick(View v) {
+          new AsyncTask<Void, Void, Account.Result>() {
+            ProgressDialog progress;
+
+            protected void onPreExecute() {
+              progress = ProgressDialog.show(AccountModifyActivity.this, "",
+                  getString(R.string.logout_progress_dialog), true, false);
+            }
+
+            protected Account.Result doInBackground(Void... params) {
+              return newAccount.logout();
+            }
+
+            protected void onPostExecute(Account.Result result) {
+              progress.dismiss();
+
+              switch (result) {
+              case SUCCESSFUL:
+                Intent intent = new Intent(AccountModifyActivity.this,
+                    AccountModifyActivity.class);
+                intent.setAction("com.googlecode.ermete.DO_AUTHENTICATION");
+                intent.putExtra("com.googlecode.ermete.NEW_ACCOUNT", newAccount);
+                if (oldAccount != null) 
+                  intent.putExtra("com.googlecode.ermete.OLD_ACCOUNT", oldAccount);
+                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                break;
+
+              case LOGOUT_ERROR:
+                Toast.makeText(AccountModifyActivity.this,
+                    R.string.logout_error_toast, Toast.LENGTH_LONG).show();
+                break;
+
+              case PROVIDER_ERROR:
+                Toast.makeText(AccountModifyActivity.this,
+                    R.string.provider_error_toast, Toast.LENGTH_LONG).show();
+                break;
+                
+              case NETWORK_ERROR:
+              default:
+                Toast.makeText(AccountModifyActivity.this,
+                    R.string.network_error_toast, Toast.LENGTH_LONG).show();
+              }
+            }
+
+          }.execute();
+        }
+      });
+      
       nextButton.setEnabled(false);
       nextButton.setOnClickListener(new OnClickListener() {
         public void onClick(View v) {
           Intent intent = new Intent(AccountModifyActivity.this,
               AccountModifyActivity.class);
           intent.setAction("com.googlecode.ermete.CHOOSE_LABEL");
-          intent.putExtra("com.googlecode.ermete.ACCOUNT", account);
+          int checkedId = senderRadio.getCheckedRadioButtonId();
+          RadioButton rb = (RadioButton) senderRadio.findViewById(checkedId);
+          newAccount.setSender(rb.getText().toString());
+          intent.putExtra("com.googlecode.ermete.NEW_ACCOUNT", newAccount);
+          if (oldAccount != null) 
+            intent.putExtra("com.googlecode.ermete.OLD_ACCOUNT", oldAccount);
           startActivity(intent);
         }
       });
@@ -193,12 +281,12 @@ public class AccountModifyActivity extends Activity {
       float scale = getResources().getDisplayMetrics().density;
       int padding = (int) (12 * scale + 0.5f);
 
-      for (String sender : account.info()) {
+      for (String sender : newAccount.getSenderList()) {
         RadioButton rb = new RadioButton(this);
         rb.setText(sender);
         rb.setPadding(4 * padding, padding, 0, padding);
         senderRadio.addView(rb);
-        if (sender.equals(account.getSender()))
+        if (sender.equals(newAccount.getSender()))
           rb.setChecked(true);
       }
     }
@@ -206,7 +294,7 @@ public class AccountModifyActivity extends Activity {
     if (action.equals("com.googlecode.ermete.CHOOSE_LABEL")) {
       labelLinear.setVisibility(View.VISIBLE);
 
-      labelText.setText(account.getLabel());
+      labelText.setText(newAccount.getLabel());
       labelText.setSelection(0, labelText.length());
       labelText.addTextChangedListener(new TextWatcher() {
         public void beforeTextChanged(CharSequence s, int start, int count,
@@ -225,8 +313,25 @@ public class AccountModifyActivity extends Activity {
         }
       });
 
+      prevButton.setOnClickListener(new OnClickListener() {
+        public void onClick(View v) {
+          Intent intent = new Intent(AccountModifyActivity.this,
+              AccountModifyActivity.class);
+          intent.setAction("com.googlecode.ermete.CHOOSE_SENDER");
+          intent.putExtra("com.googlecode.ermete.NEW_ACCOUNT", newAccount);
+          if (oldAccount != null) 
+            intent.putExtra("com.googlecode.ermete.OLD_ACCOUNT", oldAccount);
+          startActivity(intent);
+        }
+      });
+      
       nextButton.setOnClickListener(new OnClickListener() {
         public void onClick(View v) {
+          newAccount.setLabel(labelText.getText().toString());
+          AccountManager accountManager = 
+            new AccountManagerAndroid(AccountModifyActivity.this);
+          if (oldAccount != null) accountManager.delete(oldAccount);
+          accountManager.insert(newAccount);
           Intent intent = new Intent(AccountModifyActivity.this,
               AccountDisplayActivity.class);
           intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -234,12 +339,6 @@ public class AccountModifyActivity extends Activity {
         }
       });
     }
-
-    prevButton.setOnClickListener(new OnClickListener() {
-      public void onClick(View v) {
-        AccountModifyActivity.this.finish();
-      }
-    });
   }
 
   private void toggleNextButton(int uLength, int pLength) {

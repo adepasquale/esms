@@ -19,6 +19,7 @@
 package com.googlecode.ermete.account;
 
 import java.io.Serializable;
+import java.util.List;
 
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
@@ -33,10 +34,13 @@ public abstract class Account implements Serializable {
   public enum Result {
     SUCCESSFUL, 
     NETWORK_ERROR, 
-    LOGIN_ERROR, 
+    LOGIN_ERROR,
+    LOGOUT_ERROR, 
     RECEIVER_ERROR, 
     MESSAGE_ERROR, 
     LIMIT_ERROR, 
+    UNSUPPORTED_ERROR,
+    PROVIDER_ERROR,
     UNKNOWN_ERROR
   }
 
@@ -46,9 +50,6 @@ public abstract class Account implements Serializable {
 
   protected String label;
   protected String provider;
-
-  // FIXME this is platform-dependent
-  protected int logoID;
 
   protected String username;
   protected String password;
@@ -67,7 +68,10 @@ public abstract class Account implements Serializable {
     httpContext = connector.getHttpContext();
     cookieStore = connector.getCookieStore();
     httpContext.setAttribute(ClientContext.COOKIE_STORE, cookieStore);
+    initAccountConnector();
   }
+  
+  protected void initAccountConnector() { }
   
   public String getLabel() {
     return label;
@@ -81,14 +85,6 @@ public abstract class Account implements Serializable {
 
   public String getProvider() {
     return provider;
-  }
-
-  public int getLogoID() {
-    return logoID;
-  }
-
-  public void setLogoID(int logoID) {
-    this.logoID = logoID;
   }
 
   public String getUsername() {
@@ -119,17 +115,21 @@ public abstract class Account implements Serializable {
     return count;
   }
 
+  public void setCount(int count) {
+    this.count = count;
+  }
+  
   public int getLimit() {
     return limit;
   }
 
   public abstract int calcRemaining(int length);
-
   public abstract int calcFragments(int length);
 
+  public abstract List<String> getSenderList();
+  
   public abstract Result login();
-
-  public abstract String[] info();
-
+  public abstract Result logout();
+  
   public abstract Result send(SMS sms);
 }
