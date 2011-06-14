@@ -294,7 +294,7 @@ public class AccountModifyActivity extends Activity {
     if (action.equals("com.googlecode.ermete.CHOOSE_LABEL")) {
       labelLinear.setVisibility(View.VISIBLE);
 
-      labelText.setText(newAccount.getLabel());
+      labelText.setText(newAccount.getLabel()); // TODO incremental label
       labelText.setSelection(0, labelText.length());
       labelText.addTextChangedListener(new TextWatcher() {
         public void beforeTextChanged(CharSequence s, int start, int count,
