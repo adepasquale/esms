@@ -20,14 +20,13 @@ package com.googlecode.ermete.sms;
 
 public abstract class ConversationManager {
   public abstract SMS loadDraft(String receiver);
-
-  public abstract void saveDraft(String receiver);
-
+  public abstract void saveDraft(SMS sms);
   public abstract SMS loadInbox(String sender);
-
-  public abstract void saveOutbox(String receiver);
-
+  public abstract void saveInbox(SMS sms);
+  public abstract SMS loadOutbox(String receiver);
+  public abstract void saveOutbox(SMS sms);
+  public abstract SMS loadSent(String receiver);
+  public abstract void saveSent(SMS sms);
   public abstract SMS loadFailed(String receiver);
-
-  public abstract void saveFailed(String receiver);
+  public abstract void saveFailed(SMS sms);
 }

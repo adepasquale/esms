@@ -104,7 +104,12 @@ public class ComposeActivity extends Activity {
     super.onCreate(savedInstanceState);
     setContentView(R.layout.compose_activity);
 
-    conversationManager = new ConversationManagerAndroid();
+    preferences = PreferenceManager.getDefaultSharedPreferences(this);
+    conversationManager = new ConversationManagerAndroid(this);
+    accountManager = new AccountManagerAndroid(ComposeActivity.this);
+    if (accountManager.getAccounts().size() == 0)
+      startActivity(new Intent(this, AccountDisplayActivity.class));
+    else ;
 
     serviceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
@@ -121,8 +126,6 @@ public class ComposeActivity extends Activity {
         serviceConnection, Context.BIND_AUTO_CREATE)) {
       serviceBound = true;
     }
-
-    preferences = PreferenceManager.getDefaultSharedPreferences(this);
 
     clearButton = (ImageButton) findViewById(R.id.clear_button);
     clearButton.setEnabled(false);
@@ -158,18 +161,20 @@ public class ComposeActivity extends Activity {
         hasAutocompleted = true;
 
         if (listSize == 0) {
-          SMS reply = conversationManager.loadInbox(receiverNumber.getText()
-              .toString());
-          replyContent.setText(reply.getMessage());
-          replyDate.setText(reply.getDate());
+          SMS reply = 
+            conversationManager.loadInbox(receiverNumber.getText().toString());
+          if (reply != null) {
+            replyContent.setText(reply.getMessage());
+            replyDate.setText(reply.getDate());
+          }
         } else {
-          addListItem(receiverName.getText().toString(), receiverNumber
-              .getText().toString());
+          addListItem(receiverName.getText().toString(), 
+              receiverNumber.getText().toString());
           receiverText.setText("");
         }
 
-        toggleButtons(receiverText.getText().length(), messageText.getText()
-            .length());
+        toggleButtons(receiverText.getText().length(), 
+            messageText.getText().length());
       }
     });
     receiverText.addTextChangedListener(new TextWatcher() {
@@ -339,10 +344,6 @@ public class ComposeActivity extends Activity {
   public void onResume() {
     super.onResume();
     
-    accountManager = new AccountManagerAndroid(ComposeActivity.this);
-    if (accountManager.getAccounts().size() == 0)
-      startActivity(new Intent(this, AccountDisplayActivity.class));
-    
     counterImage = (ImageView) findViewById(R.id.counter_image);
     counterText = (TextView) findViewById(R.id.counter_text);
 
@@ -361,8 +362,8 @@ public class ComposeActivity extends Activity {
     senderSpinner.setAdapter(senderAdapter);
     senderSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
       public void onNothingSelected(AdapterView<?> parent) { }
-      public void onItemSelected(AdapterView<?> parent, View view,
-          int position, long id) {
+      public void onItemSelected(
+          AdapterView<?> parent, View view, int position, long id) {
         List<Account> accounts = accountManager.getAccounts();
         account = accounts.get(position);
         int remaining = account.getLimit() - account.getCount();

@@ -94,6 +94,12 @@ public class AccountConnectorAndroid extends AccountConnector {
     List<Cookie> cookies;
     DBOpenHelper dbOpenHelper;
 
+// TODO For best performance, the caller should follow these guidelines: 
+// * Provide an explicit projection, to prevent reading data from storage that 
+// aren't going to be used.
+// * Use question mark parameter markers such as 'phone=?' instead of explicit 
+// values in the selection parameter, so that queries that differ only by 
+// those values will be recognized as the same for caching purposes.
     public CookieStoreAndroid(Context context) {
       cookies = new ArrayList<Cookie>();
       dbOpenHelper = new DBOpenHelper(context);

@@ -31,6 +31,12 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import com.googlecode.ermete.account.provider.Tim;
 import com.googlecode.ermete.account.provider.Vodafone;
 
+// TODO For best performance, the caller should follow these guidelines: 
+// * Provide an explicit projection, to prevent reading data from storage that 
+// aren't going to be used.
+// * Use question mark parameter markers such as 'phone=?' instead of explicit 
+// values in the selection parameter, so that queries that differ only by 
+// those values will be recognized as the same for caching purposes.
 public class AccountManagerAndroid extends AccountManager {
   private static final long serialVersionUID = 1L;
 
