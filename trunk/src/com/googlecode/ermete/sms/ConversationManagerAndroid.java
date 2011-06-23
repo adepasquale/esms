@@ -43,8 +43,8 @@ public class ConversationManagerAndroid extends ConversationManager {
   public ConversationManagerAndroid(Context context) {
     this.context = context;
     
-    // this detects if sms provider is installed
     try {
+      // detect if SMS provider is installed
       PathClassLoader cl = new PathClassLoader(
           "/system/app/TelephonyProvider.apk", context.getClassLoader());
       cl.loadClass("com.android.providers.telephony.SmsProvider");
@@ -109,7 +109,7 @@ public class ConversationManagerAndroid extends ConversationManager {
     int length = address.length();
     if (length > 10) address = address.substring(length-10, length);
     
-    String selection = ADDRESS + "LIKE '%" + address + "'";
+    String selection = ADDRESS + " LIKE '%" + address + "'";
     String sorting = DATE + " ASC";
     
     Cursor c = context.getContentResolver()
