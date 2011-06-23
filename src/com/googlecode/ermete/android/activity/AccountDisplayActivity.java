@@ -91,10 +91,10 @@ public class AccountDisplayActivity extends Activity {
             BitmapFactory.decodeResource(getResources(),
             R.drawable.ic_logo_vodafone));
         
-//      if (account.getProvider().equals("TIM")) 
-//        listItemLogo.setImageBitmap(
-//            BitmapFactory.decodeResource(getResources(), 
-//            R.drawable.ic_logo_tim));
+      if (account.getProvider().equals("TIM")) 
+        listItemLogo.setImageBitmap(
+            BitmapFactory.decodeResource(getResources(), 
+            R.drawable.ic_logo_tim));
       
       listItemLinear.setOnClickListener(new OnClickListener() {
         public void onClick(View v) {

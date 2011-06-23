@@ -22,7 +22,8 @@
 	<string name="sender_prompt">Mittente</string>
 	<string name="no_label_text">(etichetta)</string>
 	<string name="receiver_hint">Destinatario</string>
-	<string name="receiver_toast">Il destinatario è già inserito nella lista</string>
+	<string name="positive_receiver_toast">è stato inserito nella lista</string>
+	<string name="negative_receiver_toast">Il destinatario è già inserito nella lista</string>
 	<string name="message_hint">Messaggio</string>
 	<string name="send_button">Invia</string>
 	<string name="sending_toast">Invio in corso...</string>

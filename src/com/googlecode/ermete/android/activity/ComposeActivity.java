@@ -168,9 +168,13 @@ public class ComposeActivity extends Activity {
             replyDate.setText(reply.getDate());
           }
         } else {
-          addListItem(receiverName.getText().toString(), 
-              receiverNumber.getText().toString());
+          String name = receiverName.getText().toString();
+          String number = receiverNumber.getText().toString();
+          addListItem(name, number);
           receiverText.setText("");
+          String t = name + " (" + number + ") " +
+              getString(R.string.positive_receiver_toast);
+          Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
         }
 
         toggleButtons(receiverText.getText().length(), 
@@ -232,6 +236,10 @@ public class ComposeActivity extends Activity {
           return;
 
         addListItem(name, number);
+        if (listSize > 1) {
+          String t = number + " " + getString(R.string.positive_receiver_toast);
+          Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
+        }
         receiverText.setText("");
         receiverIncomplete = "";
         hasAutocompleted = false;
@@ -423,7 +431,7 @@ public class ComposeActivity extends Activity {
       View item = listLinear.getChildAt(i);
       TextView itemNumber = (TextView) item.findViewById(R.id.list_item_number);
       if (itemNumber.getText().toString().equals(number)) {
-        Toast.makeText(ComposeActivity.this, R.string.receiver_toast,
+        Toast.makeText(ComposeActivity.this, R.string.negative_receiver_toast,
             Toast.LENGTH_SHORT).show();
         return;
       }

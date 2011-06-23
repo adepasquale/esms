@@ -45,6 +45,7 @@ public class ConversationManagerAndroid extends ConversationManager {
     
     try {
       // detect if SMS provider is installed
+      // TODO test on different platforms (e.g. Archos)
       PathClassLoader cl = new PathClassLoader(
           "/system/app/TelephonyProvider.apk", context.getClassLoader());
       cl.loadClass("com.android.providers.telephony.SmsProvider");
@@ -117,9 +118,9 @@ public class ConversationManagerAndroid extends ConversationManager {
     
     // return null if there are no messages
     if (c == null) return null;
+    c.moveToLast();
+    if (c.isAfterLast()) return null;
     
-    c.moveToFirst();
-    while (!c.isLast()) c.moveToNext();
     String body = c.getString(c.getColumnIndex(BODY));
     long date = c.getLong(c.getColumnIndex(DATE));
     c.close();
