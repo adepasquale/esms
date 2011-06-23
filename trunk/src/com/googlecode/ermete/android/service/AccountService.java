@@ -152,7 +152,7 @@ public class AccountService extends Service {
   private Notification createNotification(String[] receivers) {
     String ticker = getString(R.string.sending_notification_1) + " "
         + receivers[0] + " " + getString(R.string.sending_notification_2);
-    Notification notification = new Notification(R.drawable.ic_notify, ticker,
+    Notification notification = new Notification(R.drawable.ic_stat_notify, ticker,
         System.currentTimeMillis());
     Intent intent = new Intent(AccountService.this, ComposeActivity.class);
     intent.setAction(Intent.ACTION_MAIN);

@@ -24,6 +24,9 @@ import com.googlecode.ermete.R;
 
 public class InformationActivity extends Activity {
 
+  // TODO open project homepage instead
+  // TODO create issue reporting button
+  
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);

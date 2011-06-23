@@ -64,10 +64,10 @@ public class AccountCreateActivity extends Activity {
             BitmapFactory.decodeResource(getResources(),
             R.drawable.ic_logo_vodafone));
         
-//      if (provider.getProvider().equals("TIM"))
-//        listItemLogo.setImageBitmap(
-//            BitmapFactory.decodeResource(getResources(), 
-//            R.drawable.ic_logo_tim));
+      if (provider.getProvider().equals("TIM"))
+        listItemLogo.setImageBitmap(
+            BitmapFactory.decodeResource(getResources(), 
+            R.drawable.ic_logo_tim));
 
       listItemLinear.setOnClickListener(new OnClickListener() {
         @Override

@@ -93,10 +93,10 @@ public class AccountModifyActivity extends Activity {
           BitmapFactory.decodeResource(getResources(),
           R.drawable.ic_logo_vodafone));
       
-//    if (newAccount.getProvider().equals("TIM")) 
-//      titleLogo.setImageBitmap(
-//          BitmapFactory.decodeResource(getResources(), 
-//          R.drawable.ic_logo_tim));
+    if (newAccount.getProvider().equals("TIM")) 
+      titleLogo.setImageBitmap(
+          BitmapFactory.decodeResource(getResources(), 
+          R.drawable.ic_logo_tim));
     
     titleText.setText(getString(R.string.account_modify_activity) + " "
         + newAccount.getLabel());
