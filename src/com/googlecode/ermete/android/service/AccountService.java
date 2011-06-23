@@ -86,14 +86,19 @@ public class AccountService extends Service {
 
   public void send(final Activity activity, final Account account, final SMS sms) {
     new AsyncTask<Void, Void, SMS>() {
+      
+      // prevent errors when preferences are changed during send()
+      boolean progress, notifications;
 
       @Override
       protected void onPreExecute() {
-        if (preferences.getBoolean("show_progress", false)) {
+        progress = preferences.getBoolean("show_progress", false);
+        if (progress) {
           progressDialog = showProgressDialog(activity);
         }
 
-        if (preferences.getBoolean("enable_notifications", true)) {
+        notifications = preferences.getBoolean("enable_notifications", true);
+        if (notifications) {
           AccountService.this.startForeground(12345,
               createNotification(sms.getReceiverName()));
         }
@@ -124,14 +129,14 @@ public class AccountService extends Service {
 
       @Override
       protected void onPostExecute(SMS result) {
-        if (preferences.getBoolean("show_progress", false)) {
+        if (progress) {
           if (progressDialog != null) {
             progressDialog.dismiss();
             progressDialog = null;
           }
         }
 
-        if (preferences.getBoolean("enable_notifications", true)) {
+        if (notifications) {
           AccountService.this.stopForeground(true);
         }
       }
