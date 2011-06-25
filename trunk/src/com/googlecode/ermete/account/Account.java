@@ -32,13 +32,14 @@ public abstract class Account implements Serializable {
   private static final long serialVersionUID = 1L;
 
   public enum Result {
-    SUCCESSFUL, 
-    NETWORK_ERROR, 
+    SUCCESSFUL,
+    CAPTCHA_NEEDED,
+    NETWORK_ERROR,
     LOGIN_ERROR,
-    LOGOUT_ERROR, 
-    RECEIVER_ERROR, 
-    MESSAGE_ERROR, 
-    LIMIT_ERROR, 
+    LOGOUT_ERROR,
+    RECEIVER_ERROR,
+    MESSAGE_ERROR,
+    LIMIT_ERROR,
     UNSUPPORTED_ERROR,
     PROVIDER_ERROR,
     UNKNOWN_ERROR

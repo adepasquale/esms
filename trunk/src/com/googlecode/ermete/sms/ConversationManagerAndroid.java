@@ -83,6 +83,8 @@ public class ConversationManagerAndroid extends ConversationManager {
 
   @Override
   public void saveOutbox(SMS sms) {
+    delete(SMS_DRAFT, sms);
+    delete(SMS_FAILED, sms);
     save(SMS_OUTBOX, sms);
   }
 
@@ -93,6 +95,7 @@ public class ConversationManagerAndroid extends ConversationManager {
   
   @Override
   public void saveSent(SMS sms) {
+    delete(SMS_OUTBOX, sms);
     save(SMS_SENT, sms);
   }
 
@@ -103,6 +106,7 @@ public class ConversationManagerAndroid extends ConversationManager {
 
   @Override
   public void saveFailed(SMS sms) {
+    delete(SMS_OUTBOX, sms);
     save(SMS_FAILED, sms);
   }
   
@@ -110,11 +114,13 @@ public class ConversationManagerAndroid extends ConversationManager {
     int length = address.length();
     if (length > 10) address = address.substring(length-10, length);
     
-    String selection = ADDRESS + " LIKE '%" + address + "'";
-    String sorting = DATE + " ASC";
+    String projection[] = { ADDRESS, BODY, DATE }; 
+    String selection = ADDRESS + " LIKE ?";
+    String selectionArgs[] = { "%" + address };
+    String sortOrder = DATE + " ASC";
     
     Cursor c = context.getContentResolver()
-        .query(uri, null, selection, null, sorting);
+        .query(uri, projection, selection, selectionArgs, sortOrder);
     
     // return null if there are no messages
     if (c == null) return null;
@@ -133,11 +139,22 @@ public class ConversationManagerAndroid extends ConversationManager {
 
   private void save(Uri uri, SMS sms) {
     String body = sms.getMessage();
-    for (String receiver : sms.getReceiverNumber()) {
+    for (String address : sms.getReceiverNumber()) {
       ContentValues values = new ContentValues();
-      values.put(ADDRESS, receiver);
+      values.put(ADDRESS, address);
       values.put(BODY, body);
       context.getContentResolver().insert(uri, values);
     }
+  }
+  
+  private int delete(Uri uri, SMS sms) {
+    int rows = 0;
+    String body = sms.getMessage();
+    String where = ADDRESS + "=? AND " + BODY + "=?";
+    for (String address : sms.getReceiverNumber()) {
+      String selectionArgs[] = { address, body };
+      rows += context.getContentResolver().delete(uri, where, selectionArgs);
+    }
+    return rows;
   }
 }

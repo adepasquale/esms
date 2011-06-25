@@ -30,7 +30,7 @@
 			android:key="filter_receiver" 
 			android:entries="@array/receiver_filtering_entries" 
 			android:entryValues="@array/receiver_filtering_values"
-			android:defaultValue="H"
+			android:defaultValue=""
 		/>
 		
 		<CheckBoxPreference

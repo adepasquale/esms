@@ -19,7 +19,8 @@
 package com.googlecode.ermete.account;
 
 import java.lang.reflect.Constructor;
-import java.util.LinkedList;
+import java.util.ArrayList;
+import java.util.List;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -31,12 +32,6 @@ import android.database.sqlite.SQLiteQueryBuilder;
 import com.googlecode.ermete.account.provider.Tim;
 import com.googlecode.ermete.account.provider.Vodafone;
 
-// TODO For best performance, the caller should follow these guidelines: 
-// * Provide an explicit projection, to prevent reading data from storage that 
-// aren't going to be used.
-// * Use question mark parameter markers such as 'phone=?' instead of explicit 
-// values in the selection parameter, so that queries that differ only by 
-// those values will be recognized as the same for caching purposes.
 public class AccountManagerAndroid extends AccountManager {
   private static final long serialVersionUID = 1L;
 
@@ -77,17 +72,23 @@ public class AccountManagerAndroid extends AccountManager {
   public AccountManagerAndroid(Context context) {
     dbOpenHelper = new DBOpenHelper(context);
     connector = new AccountConnectorAndroid(context);
-
-    providers = new LinkedList<Account>();
+  }
+  
+  public List<Account> getProviders() {
+    List<Account> providers = new ArrayList<Account>();
     providers.add(new Vodafone(connector));
     providers.add(new Tim(connector));
-
-    accounts = new LinkedList<Account>();
+    return providers;
+  }
+    
+  public List<Account> getAccounts() {
+    List<Account> accounts = new ArrayList<Account>();
     
     SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
     queryBuilder.setTables(TABLE_NAME);
     SQLiteDatabase db = dbOpenHelper.getReadableDatabase();
-    Cursor c = queryBuilder.query(db, null, null, null, null, null, null);
+    String[] projection = { CLASS, LABEL, USERNAME, PASSWORD, SENDER, COUNT };
+    Cursor c = queryBuilder.query(db, projection, null, null, null, null, null);
     c.moveToFirst();
     
     while (!c.isAfterLast()) {
@@ -116,12 +117,11 @@ public class AccountManagerAndroid extends AccountManager {
 
     c.close();
     db.close();
+    return accounts;
   }
 
   @Override
   public void insert(Account newAccount) {
-    accounts.add(newAccount);
-    
     ContentValues values = new ContentValues();
     values.put(CLASS, newAccount.getClass().getName());
     values.put(LABEL, newAccount.getLabel());
@@ -137,19 +137,22 @@ public class AccountManagerAndroid extends AccountManager {
 
   @Override
   public void delete(Account oldAccount) {
-    accounts.remove(oldAccount);
-    
     SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
-    String whereClause = String.format(
-        "%s=\'%s\' AND %s=\'%s\' AND %s=\'%s\'" + 
-        " AND %s=\'%s\' AND %s=\'%s\' AND %s=%d",
-        CLASS, oldAccount.getClass().getName(),
-        LABEL, oldAccount.getLabel(),
-        USERNAME, oldAccount.getUsername(),
-        PASSWORD, oldAccount.getPassword(),
-        SENDER, oldAccount.getSender(),
-        COUNT, oldAccount.getCount());
-    db.delete(TABLE_NAME, whereClause, null);
+    String whereClause = 
+        CLASS + "=? AND " + 
+        LABEL + "=? AND " +
+        USERNAME + "=? AND " +
+        PASSWORD + "=? AND " +
+        SENDER + "=? AND " +
+        COUNT + "=?";
+    String[] whereArgs = {
+        oldAccount.getClass().getName(),
+        oldAccount.getLabel(),
+        oldAccount.getUsername(),
+        oldAccount.getPassword(),
+        oldAccount.getSender(),
+        String.valueOf(oldAccount.getCount()) };
+    db.delete(TABLE_NAME, whereClause, whereArgs);
     db.close();
   }
 }

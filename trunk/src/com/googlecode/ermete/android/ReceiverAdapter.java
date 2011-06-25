@@ -96,21 +96,27 @@ public class ReceiverAdapter extends ResourceCursorAdapter implements
     String[] projection = { Phone._ID, Phone.CONTACT_ID, Phone.DISPLAY_NAME,
         Phone.NUMBER, Phone.TYPE, Phone.LABEL, };
 
-    String selection = null; // default: all numbers
+    // default: all numbers
+    String selection = null;
+    String[] selectionArgs = null;
+    
     String filter = preferences.getString("filter_receiver", "");
 
     if (filter.contains("M")) { // mobiles only
-      selection = String.format("%s=%s OR %s=%s", Phone.TYPE,
-          Phone.TYPE_MOBILE, Phone.TYPE, Phone.TYPE_WORK_MOBILE);
+      selection = Phone.TYPE + "=? OR " + Phone.TYPE + "=?";
+      selectionArgs = new String[] { 
+          String.valueOf(Phone.TYPE_MOBILE),
+          String.valueOf(Phone.TYPE_WORK_MOBILE)};
     }
     if (filter.contains("H")) { // no home numbers
-      selection = String.format("%s<>%s", Phone.TYPE, Phone.TYPE_HOME);
+      selection = Phone.TYPE + "=?";
+      selectionArgs = new String[] { String.valueOf(Phone.TYPE_HOME) };
     }
 
-    String sorting = Contacts.TIMES_CONTACTED + " DESC";
+    String sortOrder = Contacts.TIMES_CONTACTED + " DESC";
 
-    return context.getContentResolver().query(queryURI, projection, selection,
-        null, sorting);
+    return context.getContentResolver()
+        .query(queryURI, projection, selection, selectionArgs, sortOrder);
   }
 
   @Override

@@ -66,11 +66,6 @@
 			android:label="@string/settings_activity"
 			android:configChanges="keyboardHidden|orientation" />
 			
-      	<activity
-      		android:name=".android.activity.InformationActivity" 
-			android:label="@string/information_activity"
-			android:configChanges="keyboardHidden|orientation" />
-        
 		<service android:name=".android.service.AccountService" />
         
     </application>

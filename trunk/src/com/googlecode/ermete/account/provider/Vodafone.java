@@ -18,7 +18,10 @@
 
 package com.googlecode.ermete.account.provider;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -39,6 +42,7 @@ import org.jdom.input.SAXBuilder;
 import com.googlecode.ermete.account.Account;
 import com.googlecode.ermete.account.AccountConnector;
 import com.googlecode.ermete.sms.SMS;
+import com.googlecode.ermete.sms.captcha.Base64;
 
 // TODO web, widget and business all in one account
 public class Vodafone extends Account {
@@ -99,11 +103,10 @@ public class Vodafone extends Account {
     try {
       
       if (loggedIn) {
-        if (usernameCurrent.equalsIgnoreCase(username)) {
+        if (usernameCurrent.equalsIgnoreCase(username))
           return Result.SUCCESSFUL;
-        } else if (!doLogout()) {
+        else if (!doLogout())
           return Result.LOGOUT_ERROR;
-        }
       }
       
       if (doLogin()) {
@@ -154,16 +157,47 @@ public class Vodafone extends Account {
 
   @Override
   public Result send(SMS sms) {
-    // TODO Auto-generated method stub
+    try {
+      for (int i = 0; i < sms.getReceiverNumber().length; ++i) {
+        
+        int precheck = doPrecheck();
+        if (precheck != 0) 
+          return getResult(precheck);
+        
+        int prepare = doPrepare(sms, i);
+        if (prepare != 0)
+          return getResult(prepare);
+        
+        // TODO check CAPTCHA
+//        return Result.CAPTCHA_NEEDED;
+        
+        int send = doSend(sms, i);
+        if (send != 0)
+          return getResult(send);
+        
+        count -= calcFragments(sms.getMessage().length());
+        
+      }
+    } catch (Exception e) {
+      e.printStackTrace();
+      return Result.NETWORK_ERROR;
+    }
+    
     return Result.SUCCESSFUL;
   }
 
-  private static final String CHECK_USER = 
+  static final String CHECK_USER = 
     "https://www.vodafone.it/190/trilogy/jsp/utility/checkUser.jsp";
-  private static final String DO_LOGIN = 
+  static final String DO_LOGIN = 
     "https://www.vodafone.it/190/trilogy/jsp/login.do";
-//  private static final String DO_LOGOUT = 
+//  static final String DO_LOGOUT = 
 //    "http://www.vodafone.it/190/trilogy/jsp/logout.do";
+  static final String DO_PRECHECK = 
+    "https://www.vodafone.it/190/fsms/precheck.do?channel=VODAFONE_DW";
+  static final String DO_PREPARE = 
+    "https://www.vodafone.it/190/fsms/prepare.do?channel=VODAFONE_DW";
+  static final String DO_SEND = 
+    "https://www.vodafone.it/190/fsms/send.do?channel=VODAFONE_DW";
 
   boolean loggedIn;
   boolean isConsumer;
@@ -230,4 +264,122 @@ public class Vodafone extends Account {
     else return false;
   }  
 
+  private Result getResult(int code) {
+    switch (code) {
+    case 107: return Result.LIMIT_ERROR;
+    case 113: return Result.RECEIVER_ERROR;
+    case 104: // ?
+    case 109: // empty message
+    default:  return Result.UNKNOWN_ERROR;
+    }
+  }
+
+  private int doPrecheck() throws ClientProtocolException, 
+      IOException, JDOMException {
+    Document document = null;
+
+    // to solve XML header problem
+    boolean skip = true;
+    boolean done = false;
+
+    do {
+      try {
+        HttpGet request = new HttpGet(DO_PRECHECK);
+        HttpResponse response = httpClient.execute(request, httpContext);
+
+        Reader reader = new BufferedReader(
+            new InputStreamReader(response.getEntity().getContent()));
+        if (skip) reader.skip(13);
+
+        document = new SAXBuilder().build(reader);
+        response.getEntity().consumeContent();
+        done = true;
+
+      } catch (JDOMException jdom) {
+        if (skip) skip = false;
+        else throw jdom;
+      }
+    } while (!done);
+
+    Element root = document.getRootElement();
+    @SuppressWarnings("unchecked")
+    List<Element> children = root.getChildren("e");
+    int status = 0, errorcode = 0;
+    for (Element child : children) {
+      if (child.getAttributeValue("n").equals("STATUS"))
+        status = Integer.parseInt(child.getAttributeValue("v"));
+      if (child.getAttributeValue("n").equals("ERRORCODE"))
+        errorcode = Integer.parseInt(child.getAttributeValue("v"));
+    }
+
+    if (status != 1)
+      return errorcode;
+    return 0;
+  }
+
+  private int doPrepare(SMS sms, int id) throws IOException, 
+      IllegalStateException, JDOMException {
+    HttpPost request = new HttpPost(DO_PREPARE);
+    List<NameValuePair> requestData = new ArrayList<NameValuePair>();
+    requestData.add(new BasicNameValuePair("receiverNumber", sms.getReceiverNumber()[id]));
+    requestData.add(new BasicNameValuePair("message", sms.getMessage()));
+    request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
+    HttpResponse response = httpClient.execute(request, httpContext);
+    Document document = new SAXBuilder().build(response.getEntity().getContent());
+    response.getEntity().consumeContent();
+
+    Element root = document.getRootElement();
+    @SuppressWarnings("unchecked")
+    List<Element> children = root.getChildren("e");
+    int status = 0, errorcode = 0;
+    for (Element child : children) {
+      if (child.getAttributeValue("n").equals("STATUS"))
+        status = Integer.parseInt(child.getAttributeValue("v"));
+      if (child.getAttributeValue("n").equals("ERRORCODE"))
+        errorcode = Integer.parseInt(child.getAttributeValue("v"));
+      if (child.getAttributeValue("n").equals("CODEIMG")) {
+        sms.setCaptchaArray(Base64.decode(child.getValue()));
+        return 0;
+      }
+    }
+
+    if (status != 1)
+      return errorcode;
+    return 0;
+  }
+
+  private int doSend(SMS sms, int id) throws IOException, 
+      IllegalStateException, JDOMException {
+    HttpPost request = new HttpPost(DO_SEND);
+    List<NameValuePair> requestData = new ArrayList<NameValuePair>();
+    requestData.add(new BasicNameValuePair("verifyCode", sms.getCaptcha()));
+    requestData.add(new BasicNameValuePair("receiverNumber", sms.getReceiverNumber()[id]));
+    requestData.add(new BasicNameValuePair("message", sms.getMessage()));
+    request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
+    HttpResponse response = httpClient.execute(request, httpContext);
+    Document document = new SAXBuilder().build(response.getEntity().getContent());
+    response.getEntity().consumeContent();
+
+    Element root = document.getRootElement();
+    @SuppressWarnings("unchecked")
+    List<Element> children = root.getChildren("e");
+    int status = 0, errorcode = 0;
+//    String returnmsg = null;
+    for (Element child : children) {
+      if (child.getAttributeValue("n").equals("STATUS"))
+        status = Integer.parseInt(child.getAttributeValue("v"));
+      if (child.getAttributeValue("n").equals("ERRORCODE"))
+        errorcode = Integer.parseInt(child.getAttributeValue("v"));
+//      if (child.getAttributeValue("n").equals("RETURNMSG"))
+//        returnmsg = child.getValue();
+      if (child.getAttributeValue("n").equals("CODEIMG")) {
+        sms.setCaptchaArray(Base64.decode(child.getValue()));
+        return 0;
+      }
+    }
+
+    if (status != 1)
+      return errorcode;
+    return 0;
+  }
 }

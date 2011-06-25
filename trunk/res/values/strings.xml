@@ -22,8 +22,8 @@
 	<string name="sender_prompt">Mittente</string>
 	<string name="no_label_text">(etichetta)</string>
 	<string name="receiver_hint">Destinatario</string>
-	<string name="positive_receiver_toast">è stato inserito nella lista</string>
-	<string name="negative_receiver_toast">Il destinatario è già inserito nella lista</string>
+	<string name="positive_receiver_toast">è stato/a inserito/a nella lista</string>
+	<string name="negative_receiver_toast">Questo destinatario è già inserito nella lista</string>
 	<string name="message_hint">Messaggio</string>
 	<string name="send_button">Invia</string>
 	<string name="sending_toast">Invio in corso...</string>
@@ -32,7 +32,8 @@
 	<string name="sending_progress_dialog">Invio in corso...</string>
 	<string name="menu_item_accounts">Accounts</string>
 	<string name="menu_item_settings">Impostazioni</string>
-	<string name="menu_item_information">Informazioni</string>
+	<string name="menu_item_information">Informazioni su</string>
+	<string name="menu_item_reporting">Segnala un problema</string>
 	<string name="account_display_activity">Gestione account</string>
 	<string name="account_rename_message">Rinomina l\'etichetta dell\'account:</string>
 	<string name="account_delete_message">Sei sicuro di voler eliminare l\'account?</string>
@@ -56,8 +57,6 @@
 	<string name="sender_text">Seleziona SIM:</string>
 	<string name="label_text">Assegna un\'etichetta:</string>
 	<string name="settings_activity">Impostazioni di Ermete SMS</string>
-	<string name="information_activity">Informazioni su Ermete SMS</string>
-	<string name="information_credits">Andrea De Pasquale\nAlberto Gasparin\n</string>
 	<string name="rename_button">Rinomina</string>
 	<string name="cancel_button">Annulla</string>
 	<string name="ok_button">OK</string>

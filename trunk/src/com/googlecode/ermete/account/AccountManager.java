@@ -24,16 +24,8 @@ import java.util.List;
 public abstract class AccountManager implements Serializable {
   private static final long serialVersionUID = 1L;
 
-  protected List<Account> providers;
-  protected List<Account> accounts;
-
-  public List<Account> getProviders() {
-    return providers;
-  }
-
-  public List<Account> getAccounts() {
-    return accounts;
-  }
+  public abstract List<Account> getProviders();
+  public abstract List<Account> getAccounts();
 
   public abstract void insert(Account newAccount);
   public abstract void delete(Account oldAccount);

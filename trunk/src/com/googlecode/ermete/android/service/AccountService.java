@@ -119,11 +119,7 @@ public class AccountService extends Service {
         }
 
         account.send(sms);
-        try {
-          Thread.sleep(10000);
-        } catch (InterruptedException e) {
-        }
-
+        
         return null;
       }
 

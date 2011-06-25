@@ -21,7 +21,7 @@ package com.googlecode.ermete.sms.captcha;
 public class CaptchaDecoderAndroid extends CaptchaDecoder {
 
   @Override
-  public String decode(byte[] image) {
+  public String decode(byte[] pixels, int width, int height) {
     // TODO Auto-generated method stub
     return null;
   }

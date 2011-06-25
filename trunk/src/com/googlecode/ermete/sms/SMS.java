@@ -63,4 +63,20 @@ public class SMS {
     this.date = date;
   }
 
+  public byte[] getCaptchaArray() {
+    return captchaArray;
+  }
+
+  public void setCaptchaArray(byte[] captchaArray) {
+    this.captchaArray = captchaArray;
+  }
+
+  public String getCaptcha() {
+    return captcha;
+  }
+
+  public void setCaptcha(String captcha) {
+    this.captcha = captcha;
+  }
+
 }
