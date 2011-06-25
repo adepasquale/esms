@@ -294,7 +294,12 @@ public class AccountModifyActivity extends Activity {
     if (action.equals("com.googlecode.ermete.CHOOSE_LABEL")) {
       labelLinear.setVisibility(View.VISIBLE);
 
-      labelText.setText(newAccount.getLabel()); // TODO incremental label
+      int suffix = 1;
+      String label = newAccount.getLabel();
+      for (Account account : accountManager.getAccounts())
+        if (account.getLabel().equalsIgnoreCase(label)) ++suffix;
+      if (suffix > 1) label += " (" + suffix + ")";
+      labelText.setText(label);
       labelText.setSelection(0, labelText.length());
       labelText.addTextChangedListener(new TextWatcher() {
         public void beforeTextChanged(CharSequence s, int start, int count,

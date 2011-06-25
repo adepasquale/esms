@@ -91,23 +91,66 @@ public class AccountConnectorAndroid extends AccountConnector {
       }
     }
     
-    List<Cookie> cookies;
     DBOpenHelper dbOpenHelper;
 
-// TODO For best performance, the caller should follow these guidelines: 
-// * Provide an explicit projection, to prevent reading data from storage that 
-// aren't going to be used.
-// * Use question mark parameter markers such as 'phone=?' instead of explicit 
-// values in the selection parameter, so that queries that differ only by 
-// those values will be recognized as the same for caching purposes.
     public CookieStoreAndroid(Context context) {
-      cookies = new ArrayList<Cookie>();
       dbOpenHelper = new DBOpenHelper(context);
+    }
 
+    @Override
+    public void addCookie(Cookie cookie) {
+      SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+      String whereClause = 
+          NAME + "=? AND " + 
+          DOMAIN + "=? AND " +
+          PATH + "=?"; 
+      String[] whereArgs = { 
+          cookie.getName(),
+          cookie.getDomain(), 
+          cookie.getPath()};
+      db.delete(TABLE_NAME, whereClause, whereArgs);
+      
+      ContentValues values = new ContentValues();
+      values.put(VERSION, cookie.getVersion());
+      values.put(NAME, cookie.getName());
+      values.put(VALUE, cookie.getValue());
+      values.put(DOMAIN, cookie.getDomain());
+      values.put(PATH, cookie.getPath());
+      long expiry = 0;
+      Date expiryDate = cookie.getExpiryDate();
+      if (expiryDate != null) expiry = expiryDate.getTime();
+      values.put(EXPIRY, expiry);
+      db.insert(TABLE_NAME, null, values);
+      
+      db.close();
+    }
+
+    @Override
+    public void clear() {
+      SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+      db.delete(TABLE_NAME, null, null);
+      db.close();
+    }
+
+    @Override
+    public boolean clearExpired(Date date) {
+      SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+      String whereClause = EXPIRY + " < ?";
+      String[] whereArgs = { String.valueOf(date.getTime()) };
+      int deleted = db.delete(TABLE_NAME, whereClause, whereArgs);
+      db.close();
+      
+      return (deleted > 0);
+    }
+
+    @Override
+    public List<Cookie> getCookies() {
+      List<Cookie> cookies = new ArrayList<Cookie>();
       SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
       queryBuilder.setTables(TABLE_NAME);
       SQLiteDatabase db = dbOpenHelper.getReadableDatabase();
-      Cursor c = queryBuilder.query(db, null, null, null, null, null, null);
+      String projection[] = { VERSION, NAME, VALUE, DOMAIN, PATH, EXPIRY }; 
+      Cursor c = queryBuilder.query(db, projection, null, null, null, null, null);
       c.moveToFirst();
       
       while (!c.isAfterLast()) {
@@ -125,70 +168,6 @@ public class AccountConnectorAndroid extends AccountConnector {
 
       c.close();
       db.close();
-    }
-
-    @Override
-    public void addCookie(Cookie newCookie) {
-      for (Cookie oldCookie : cookies) {
-        if (oldCookie.getName() == newCookie.getName() && 
-            oldCookie.getDomain() == newCookie.getDomain() &&
-            oldCookie.getPath() == newCookie.getPath()) {
-          cookies.remove(oldCookie);
-        }
-      }
-      
-      cookies.add(newCookie);
-      
-      ContentValues values = new ContentValues();
-      values.put(VERSION, newCookie.getVersion());
-      values.put(NAME, newCookie.getName());
-      values.put(VALUE, newCookie.getValue());
-      values.put(DOMAIN, newCookie.getDomain());
-      values.put(PATH, newCookie.getPath());
-      long expiry = 0;
-      Date expiryDate = newCookie.getExpiryDate();
-      if (expiryDate != null) expiry = expiryDate.getTime();
-      values.put(EXPIRY, expiry);
-
-      SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
-      String whereClause = String.format(
-          "%s=\'%s\' AND %s=\'%s\' AND %s=\'%s\'",
-          NAME, newCookie.getName(),
-          DOMAIN, newCookie.getDomain(),
-          PATH, newCookie.getPath());
-      db.delete(TABLE_NAME, whereClause, null);
-      db.insert(TABLE_NAME, null, values);
-      db.close();
-    }
-
-    @Override
-    public void clear() {
-      cookies.clear();
-      
-      SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
-      db.delete(TABLE_NAME, null, null);
-      db.close();
-    }
-
-    @Override
-    public boolean clearExpired(Date date) {
-      boolean purged = false;
-      for (Cookie cookie : cookies)
-        if (cookie.isExpired(date)) {
-          cookies.remove(cookie);
-          purged = true;
-        }
-      
-      SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
-      String whereClause = String.format("%s < %d", EXPIRY, date.getTime());
-      int deleted = db.delete(TABLE_NAME, whereClause, null);
-      db.close();
-      
-      return purged || (deleted > 0);
-    }
-
-    @Override
-    public List<Cookie> getCookies() {
       return cookies;
     }
   }

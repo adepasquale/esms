@@ -27,6 +27,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.graphics.drawable.AnimationDrawable;
+import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
@@ -67,6 +69,11 @@ import com.googlecode.ermete.sms.SMS;
 
 public class ComposeActivity extends Activity {
 
+  static final String INFORMATION_URL = 
+    "http://code.google.com/p/esms/";
+  static final String REPORTING_URL = 
+    "http://code.google.com/p/esms/issues/list";
+  
   ConversationManager conversationManager;
   AccountManager accountManager;
   Account account;
@@ -78,6 +85,7 @@ public class ComposeActivity extends Activity {
   boolean serviceBound;
 
   ImageView counterImage;
+  AnimationDrawable counterAnimation;
   TextView counterText;
 
   Spinner senderSpinner;
@@ -323,6 +331,10 @@ public class ComposeActivity extends Activity {
         if (!preferences.getBoolean("show_progress", false)) {
           Toast.makeText(ComposeActivity.this, R.string.sending_toast,
               Toast.LENGTH_LONG).show();
+          
+          counterImage.setImageResource(R.drawable.sending_progress);
+          counterAnimation = (AnimationDrawable) counterImage.getDrawable();
+          counterAnimation.start();
 
           // disable the button and re-enable it after some time
           sendButton.setEnabled(false);
@@ -350,8 +362,6 @@ public class ComposeActivity extends Activity {
 
   @Override
   public void onResume() {
-    super.onResume();
-    
     counterImage = (ImageView) findViewById(R.id.counter_image);
     counterText = (TextView) findViewById(R.id.counter_text);
 
@@ -376,10 +386,26 @@ public class ComposeActivity extends Activity {
         account = accounts.get(position);
         int remaining = account.getLimit() - account.getCount();
         counterText.setText(Integer.toString(remaining));
+        int percentage = (int) 10.0 * remaining / account.getLimit();
+        switch (percentage) {
+        case  0: counterImage.setImageResource(R.drawable.ic_counter_0);  break;
+        case  1: counterImage.setImageResource(R.drawable.ic_counter_1);  break;
+        case  2: counterImage.setImageResource(R.drawable.ic_counter_2);  break;
+        case  3: counterImage.setImageResource(R.drawable.ic_counter_3);  break;
+        case  4: counterImage.setImageResource(R.drawable.ic_counter_4);  break;
+        case  5: counterImage.setImageResource(R.drawable.ic_counter_5);  break;
+        case  6: counterImage.setImageResource(R.drawable.ic_counter_6);  break;
+        case  7: counterImage.setImageResource(R.drawable.ic_counter_7);  break;
+        case  8: counterImage.setImageResource(R.drawable.ic_counter_8);  break;
+        case  9: counterImage.setImageResource(R.drawable.ic_counter_9);  break;
+        case 10: counterImage.setImageResource(R.drawable.ic_counter_10); break;
+        }
         if (accountService != null)
           accountService.login(account);
       }
     });
+    
+    super.onResume();
   }
   
   @Override
@@ -416,7 +442,16 @@ public class ComposeActivity extends Activity {
       return true;
 
     case R.id.menu_item_information:
-      startActivity(new Intent(this, InformationActivity.class));
+      Intent informationIntent = new Intent(Intent.ACTION_VIEW);
+      informationIntent.setData(Uri.parse(INFORMATION_URL));
+      startActivity(informationIntent);
+      return true;
+      
+    case R.id.menu_item_reporting:
+      // TODO use IssueTrackerAPI and Android AccountManager
+      Intent reportingIntent = new Intent(Intent.ACTION_VIEW);
+      reportingIntent.setData(Uri.parse(REPORTING_URL));
+      startActivity(reportingIntent);
       return true;
 
     default:
