@@ -20,6 +20,7 @@ package com.googlecode.ermete.account;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import android.content.ContentValues;
@@ -36,7 +37,7 @@ public class AccountManagerAndroid extends AccountManager {
   private static final long serialVersionUID = 1L;
 
   static final String DB_NAME = "accounts.db";
-  static final int DB_VERSION = 1;
+  static final int DB_VERSION = 2;
   static final String TABLE_NAME = "accounts";
 
   public static final String _ID = "_id";
@@ -46,6 +47,7 @@ public class AccountManagerAndroid extends AccountManager {
   public static final String PASSWORD = "password";
   public static final String SENDER = "sender";
   public static final String COUNT = "count";
+  public static final String COUNT_DATE = "count_date";
 
   private static class DBOpenHelper extends SQLiteOpenHelper {
     DBOpenHelper(Context context) {
@@ -57,11 +59,12 @@ public class AccountManagerAndroid extends AccountManager {
       db.execSQL("CREATE TABLE " + TABLE_NAME + " (" + _ID
           + " INTEGER PRIMARY KEY," + CLASS + " TEXT," + LABEL + " TEXT,"
           + USERNAME + " TEXT," + PASSWORD + " TEXT," + SENDER + " TEXT,"
-          + COUNT + " INTEGER );");
+          + COUNT + " INTEGER, " + COUNT_DATE + " BIGINT );");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
+      db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
       onCreate(db);
     }
   }
@@ -87,7 +90,7 @@ public class AccountManagerAndroid extends AccountManager {
     SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
     queryBuilder.setTables(TABLE_NAME);
     SQLiteDatabase db = dbOpenHelper.getReadableDatabase();
-    String[] projection = { CLASS, LABEL, USERNAME, PASSWORD, SENDER, COUNT };
+    String[] projection = { CLASS, LABEL, USERNAME, PASSWORD, SENDER, COUNT, COUNT_DATE };
     Cursor c = queryBuilder.query(db, projection, null, null, null, null, null);
     c.moveToFirst();
     
@@ -104,7 +107,8 @@ public class AccountManagerAndroid extends AccountManager {
         account.setUsername(c.getString(c.getColumnIndex(USERNAME)));
         account.setPassword(c.getString(c.getColumnIndex(PASSWORD)));
         account.setSender(c.getString(c.getColumnIndex(SENDER)));
-        account.setCount(c.getInt(c.getColumnIndex(COUNT)));
+        long countDate = c.getLong(c.getColumnIndex(COUNT_DATE));
+        account.setCount(c.getInt(c.getColumnIndex(COUNT)), new Date(countDate));
         accounts.add(account);
         
       } catch (Exception e) {
@@ -129,6 +133,7 @@ public class AccountManagerAndroid extends AccountManager {
     values.put(PASSWORD, newAccount.getPassword());
     values.put(SENDER, newAccount.getSender());
     values.put(COUNT, newAccount.getCount());
+    values.put(COUNT_DATE, newAccount.getCountDate().getTime());
 
     SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
     db.insert(TABLE_NAME, null, values);
@@ -140,18 +145,10 @@ public class AccountManagerAndroid extends AccountManager {
     SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
     String whereClause = 
         CLASS + "=? AND " + 
-        LABEL + "=? AND " +
-        USERNAME + "=? AND " +
-        PASSWORD + "=? AND " +
-        SENDER + "=? AND " +
-        COUNT + "=?";
+        LABEL + "=?";
     String[] whereArgs = {
         oldAccount.getClass().getName(),
-        oldAccount.getLabel(),
-        oldAccount.getUsername(),
-        oldAccount.getPassword(),
-        oldAccount.getSender(),
-        String.valueOf(oldAccount.getCount()) };
+        oldAccount.getLabel() };
     db.delete(TABLE_NAME, whereClause, whereArgs);
     db.close();
   }
