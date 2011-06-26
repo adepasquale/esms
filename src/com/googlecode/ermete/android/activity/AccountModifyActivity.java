@@ -294,11 +294,13 @@ public class AccountModifyActivity extends Activity {
     if (action.equals("com.googlecode.ermete.CHOOSE_LABEL")) {
       labelLinear.setVisibility(View.VISIBLE);
 
-      int suffix = 1;
       String label = newAccount.getLabel();
-      for (Account account : accountManager.getAccounts())
-        if (account.getLabel().equalsIgnoreCase(label)) ++suffix;
-      if (suffix > 1) label += " (" + suffix + ")";
+      if (oldAccount == null) {
+        int suffix = 1;
+        for (Account account : accountManager.getAccounts())
+          if (account.getLabel().equalsIgnoreCase(label)) ++suffix;
+        if (suffix > 1) label += " (" + suffix + ")";
+      }
       labelText.setText(label);
       labelText.setSelection(0, labelText.length());
       labelText.addTextChangedListener(new TextWatcher() {
@@ -332,11 +334,22 @@ public class AccountModifyActivity extends Activity {
       
       nextButton.setOnClickListener(new OnClickListener() {
         public void onClick(View v) {
-          newAccount.setLabel(labelText.getText().toString());
           AccountManager accountManager = 
             new AccountManagerAndroid(AccountModifyActivity.this);
           if (oldAccount != null) accountManager.delete(oldAccount);
+          
+          String label = labelText.getText().toString();
+          for (Account account : accountManager.getAccounts())
+            if (account.getLabel().equalsIgnoreCase(label)) {
+              if (oldAccount != null) accountManager.insert(oldAccount);
+              Toast.makeText(AccountModifyActivity.this, 
+                  R.string.existing_label_toast, Toast.LENGTH_SHORT).show();
+              return;
+            }
+
+          newAccount.setLabel(label);
           accountManager.insert(newAccount);
+          
           Intent intent = new Intent(AccountModifyActivity.this,
               AccountDisplayActivity.class);
           intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);

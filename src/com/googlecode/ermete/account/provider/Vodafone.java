@@ -23,6 +23,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -97,6 +99,20 @@ public class Vodafone extends Account {
       return 0;
     }
   }
+  
+  @Override
+  protected void updateCount() {
+    Calendar prev = Calendar.getInstance();
+    prev.setTime(countDate);
+    Calendar curr = Calendar.getInstance();
+    curr.setTime(new Date());
+    if (prev.get(Calendar.YEAR) < curr.get(Calendar.YEAR) ||
+        prev.get(Calendar.MONTH) < curr.get(Calendar.MONTH) || 
+        prev.get(Calendar.DATE) < curr.get(Calendar.DATE)) {
+      count = 0;
+      countDate = new Date();
+    }
+  }
 
   @Override
   public Result login() {
@@ -158,26 +174,44 @@ public class Vodafone extends Account {
   @Override
   public Result send(SMS sms) {
     try {
+      
+      Result login = login();
+      if (login != Result.SUCCESSFUL)
+        return login;
+      
+      if (!senderCurrent.equalsIgnoreCase(sender)) 
+        if (!doSwapSIM()) return Result.SENDER_ERROR;
+
       for (int i = 0; i < sms.getReceiverNumber().length; ++i) {
         
-        int precheck = doPrecheck();
-        if (precheck != 0) 
-          return getResult(precheck);
+        if (sms.getCaptcha() == null || sms.getCaptcha() == "") {
+          System.out.println("doPrecheck()");
+          int precheck = doPrecheck();
+          if (precheck != 0) 
+            return getResult(precheck);
+          
+          System.out.println("doPrepare()");
+          int prepare = doPrepare(sms, i);
+          if (prepare != 0)
+            return getResult(prepare);
+          
+          if (sms.getCaptchaArray() != null)
+            return Result.CAPTCHA_NEEDED;
+        }
         
-        int prepare = doPrepare(sms, i);
-        if (prepare != 0)
-          return getResult(prepare);
-        
-        // TODO check CAPTCHA
-//        return Result.CAPTCHA_NEEDED;
-        
+        System.out.println("doSend()");
         int send = doSend(sms, i);
         if (send != 0)
           return getResult(send);
         
+        updateCount();
         count -= calcFragments(sms.getMessage().length());
         
       }
+      
+    } catch (JDOMException je) {
+      je.printStackTrace();
+      return Result.PROVIDER_ERROR;
     } catch (Exception e) {
       e.printStackTrace();
       return Result.NETWORK_ERROR;
@@ -192,6 +226,8 @@ public class Vodafone extends Account {
     "https://www.vodafone.it/190/trilogy/jsp/login.do";
 //  static final String DO_LOGOUT = 
 //    "http://www.vodafone.it/190/trilogy/jsp/logout.do";
+  static final String DO_SWAPSIM = 
+    "https://www.vodafone.it/190/trilogy/jsp/swapSim.do";
   static final String DO_PRECHECK = 
     "https://www.vodafone.it/190/fsms/precheck.do?channel=VODAFONE_DW";
   static final String DO_PREPARE = 
@@ -266,12 +302,33 @@ public class Vodafone extends Account {
 
   private Result getResult(int code) {
     switch (code) {
-    case 107: return Result.LIMIT_ERROR;
-    case 113: return Result.RECEIVER_ERROR;
+    case 107: 
+      return Result.LIMIT_ERROR;
+    case 113:
+      return Result.RECEIVER_ERROR;
+    case 109:
+    case 112: // "Numero destinatario con caratteri non validi"
+      return Result.MESSAGE_ERROR;
     case 104: // ?
-    case 109: // empty message
-    default:  return Result.UNKNOWN_ERROR;
+    default:
+      return Result.UNKNOWN_ERROR;
     }
+  }
+  
+  private boolean doSwapSIM() throws ClientProtocolException, 
+      IOException, IllegalStateException, JDOMException {
+    HttpPost request = new HttpPost(DO_SWAPSIM);
+    List<NameValuePair> requestData = new ArrayList<NameValuePair>();
+    requestData.add(new BasicNameValuePair("ty_sim", sender));
+    requestData.add(new BasicNameValuePair("swap_sim_link", sender));
+    request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
+    HttpResponse response = httpClient.execute(request, httpContext);
+    response.getEntity().consumeContent();
+    
+    checkUser();
+    if (loggedIn && usernameCurrent.equalsIgnoreCase(username) && 
+        senderCurrent.equalsIgnoreCase(sender)) return true;
+    else return false;
   }
 
   private int doPrecheck() throws ClientProtocolException, 
@@ -317,11 +374,33 @@ public class Vodafone extends Account {
     return 0;
   }
 
+  private String stripPrefix(String receiver) {
+    final String PREFIX = "39";
+    String pZero = "00" + PREFIX;
+    String pPlus = "+" + PREFIX;
+
+    receiver = receiver.replaceAll("[^0-9\\+]*", "");
+    int lNumber = receiver.length();
+    int lZero = pZero.length();
+    int lPlus = pPlus.length();
+
+    if (lNumber > lZero && receiver.substring(0, lZero).equals(pZero)) {
+      return receiver.substring(lZero);
+    }
+
+    if (lNumber > lPlus && receiver.substring(0, lPlus).equals(pPlus)) {
+      return receiver.substring(lPlus);
+    }
+
+    return receiver;
+  }
+  
   private int doPrepare(SMS sms, int id) throws IOException, 
       IllegalStateException, JDOMException {
     HttpPost request = new HttpPost(DO_PREPARE);
     List<NameValuePair> requestData = new ArrayList<NameValuePair>();
-    requestData.add(new BasicNameValuePair("receiverNumber", sms.getReceiverNumber()[id]));
+    requestData.add(new BasicNameValuePair("receiverNumber", 
+        stripPrefix(sms.getReceiverNumber()[id])));
     requestData.add(new BasicNameValuePair("message", sms.getMessage()));
     request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
     HttpResponse response = httpClient.execute(request, httpContext);
@@ -353,7 +432,8 @@ public class Vodafone extends Account {
     HttpPost request = new HttpPost(DO_SEND);
     List<NameValuePair> requestData = new ArrayList<NameValuePair>();
     requestData.add(new BasicNameValuePair("verifyCode", sms.getCaptcha()));
-    requestData.add(new BasicNameValuePair("receiverNumber", sms.getReceiverNumber()[id]));
+    requestData.add(new BasicNameValuePair("receiverNumber", 
+        stripPrefix(sms.getReceiverNumber()[id])));
     requestData.add(new BasicNameValuePair("message", sms.getMessage()));
     request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
     HttpResponse response = httpClient.execute(request, httpContext);

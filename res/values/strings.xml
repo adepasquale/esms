@@ -26,6 +26,7 @@
 	<string name="negative_receiver_toast">Questo destinatario è già inserito nella lista</string>
 	<string name="message_hint">Messaggio</string>
 	<string name="send_button">Invia</string>
+	<string name="invalid_receiver_toast">Uno o più destinatari non validi</string>
 	<string name="sending_toast">Invio in corso...</string>
 	<string name="sending_notification_1">Invio del messaggio per</string>
 	<string name="sending_notification_2">in corso</string>
@@ -56,6 +57,7 @@
 	<string name="network_error_toast">Errore durante la connessione</string>
 	<string name="sender_text">Seleziona SIM:</string>
 	<string name="label_text">Assegna un\'etichetta:</string>
+	<string name="existing_label_toast">Etichetta già esistente, selezionare un altro nome</string>
 	<string name="settings_activity">Impostazioni di Ermete SMS</string>
 	<string name="rename_button">Rinomina</string>
 	<string name="cancel_button">Annulla</string>

@@ -39,6 +39,7 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.googlecode.ermete.R;
 import com.googlecode.ermete.account.Account;
@@ -176,8 +177,19 @@ public class AccountDisplayActivity extends Activity {
     builder.setPositiveButton(R.string.rename_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
+            String label = labelText.getText().toString();
+            if (label.equalsIgnoreCase(account.getLabel())) return;
+            
+            for (Account a : accountManager.getAccounts())
+              if (a.getLabel().equalsIgnoreCase(label)) {
+                Toast.makeText(AccountDisplayActivity.this, 
+                    R.string.existing_label_toast, Toast.LENGTH_SHORT).show();
+                showRenameDialog(account);
+                return;
+              }
+            
             accountManager.delete(account);
-            account.setLabel(labelText.getText().toString());
+            account.setLabel(label);
             accountManager.insert(account);
             refreshAccountsList();
           }

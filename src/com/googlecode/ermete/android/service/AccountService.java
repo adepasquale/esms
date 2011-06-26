@@ -18,6 +18,11 @@
 
 package com.googlecode.ermete.android.service;
 
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStreamReader;
+
 import android.app.Activity;
 import android.app.Notification;
 import android.app.PendingIntent;
@@ -32,16 +37,18 @@ import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
-import android.util.Log;
 
 import com.googlecode.ermete.R;
 import com.googlecode.ermete.account.Account;
+import com.googlecode.ermete.account.Account.Result;
+import com.googlecode.ermete.account.AccountConnector;
+import com.googlecode.ermete.account.AccountConnectorAndroid;
+import com.googlecode.ermete.account.AccountManager;
+import com.googlecode.ermete.account.AccountManagerAndroid;
 import com.googlecode.ermete.android.activity.ComposeActivity;
 import com.googlecode.ermete.sms.SMS;
 
 public class AccountService extends Service {
-
-  static final String TAG = "AccountService";
 
   SharedPreferences preferences;
   AudioManager audioManager;
@@ -57,35 +64,33 @@ public class AccountService extends Service {
 
   @Override
   public IBinder onBind(Intent intent) {
-    Log.d(TAG, "onBind()");
     return binder;
   }
 
   @Override
   public void onCreate() {
-    Log.d(TAG, "onCreate()");
     preferences = PreferenceManager.getDefaultSharedPreferences(this);
     audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
   }
 
-  @Override
-  public void onDestroy() {
-    Log.d(TAG, "onDestroy()");
-  }
+//  @Override
+//  public void onDestroy() {
+//  }
 
   public void login(final Account account) {
     new AsyncTask<Void, Void, Void>() {
       @Override
       protected Void doInBackground(Void... params) {
-        Log.d(TAG, "this.login()");
+        System.out.println("call login()");
         account.login();
+        System.out.println("done login()");
         return null;
       }
     }.execute();
   }
 
   public void send(final Activity activity, final Account account, final SMS sms) {
-    new AsyncTask<Void, Void, SMS>() {
+    new AsyncTask<Void, Void, Result>() {
       
       // prevent errors when preferences are changed during send()
       boolean progress, notifications;
@@ -99,32 +104,52 @@ public class AccountService extends Service {
 
         notifications = preferences.getBoolean("enable_notifications", true);
         if (notifications) {
-          AccountService.this.startForeground(12345,
-              createNotification(sms.getReceiverName()));
+          AccountService.this.startForeground(
+              12345, createSendNotification(sms));
         }
       }
 
       @Override
-      protected SMS doInBackground(Void... params) {
-        Log.d(TAG, "this.send()");
-
-        String receiverName[] = null;
-        String receiverNumber[] = null;
-        receiverName = sms.getReceiverName();
-        receiverNumber = sms.getReceiverNumber();
-
-        Log.d(TAG, sms.getMessage());
-        for (int i = 0; i < receiverNumber.length; ++i) {
-          Log.d(TAG, receiverName[i] + " " + receiverNumber[i]);
+      protected Result doInBackground(Void... params) {
+        int attempts = 3;
+        while (true) {
+          System.out.println("call send() #" + attempts);
+          Result result = account.send(sms);
+          System.out.println("done send() " + result);
+          AccountManager accountManager = new AccountManagerAndroid(activity);
+          accountManager.delete(account);
+          accountManager.insert(account);
+          switch (result) {
+          case NETWORK_ERROR:
+          case UNKNOWN_ERROR:
+            if (--attempts == 0) return result;
+            AccountConnector connector = new AccountConnectorAndroid(activity);
+            account.setAccountConnector(connector);
+            try {
+              Thread.sleep(1000);
+            } catch (InterruptedException e) { 
+              e.printStackTrace();
+            }
+            break;
+//          case CAPTCHA_NEEDED:
+//            try {
+//              BufferedReader reader = new BufferedReader(new InputStreamReader(
+//                  new ByteArrayInputStream(sms.getCaptchaArray())));
+//              char[] buffer = new char[sms.getCaptchaArray().length];
+//              reader.read(buffer, 0, sms.getCaptchaArray().length);
+//              System.out.println(buffer);
+//            } catch (IOException e) {
+//              e.printStackTrace();
+//            }
+//            break;
+          default:
+            return result;
+          }
         }
-
-        account.send(sms);
-        
-        return null;
       }
 
       @Override
-      protected void onPostExecute(SMS result) {
+      protected void onPostExecute(Result result) {
         if (progress) {
           if (progressDialog != null) {
             progressDialog.dismiss();
@@ -135,6 +160,35 @@ public class AccountService extends Service {
         if (notifications) {
           AccountService.this.stopForeground(true);
         }
+        
+        switch (result) {
+        case SUCCESSFUL:
+          if (notifications) {
+            
+          } else { // toast
+            
+          }
+          break;
+        case CAPTCHA_NEEDED: 
+          /* decode manually */
+          break;
+        case NETWORK_ERROR:
+        case UNKNOWN_ERROR:
+          /* network is down? */
+          break;
+        case LOGIN_ERROR:
+        case LOGOUT_ERROR:
+        case SENDER_ERROR:
+        case UNSUPPORTED_ERROR:
+          /* account configuration */
+          break;
+        case RECEIVER_ERROR:
+        case MESSAGE_ERROR:
+        case LIMIT_ERROR:
+        case PROVIDER_ERROR:
+          /* send with other account or with default app */
+          break;
+        }        
       }
 
     }.execute();
@@ -145,15 +199,26 @@ public class AccountService extends Service {
         getString(R.string.sending_progress_dialog), true, false);
   }
 
-  private Notification createNotification(String[] receivers) {
+  private Notification createSendNotification(SMS sms) {
+    String receivers = "";
+    String[] receiverName = sms.getReceiverName();
+    String[] receiverNumber = sms.getReceiverNumber();
+    for (int i = 0; i < receiverName.length; ++i) {
+      if (receiverName[i] != null && !receiverName[i].equals("")) 
+        receivers += receiverName[i];
+      else receivers += receiverNumber[i];
+      if (i != receiverName.length - 1)
+        receivers += ", ";
+    }
+    
     String ticker = getString(R.string.sending_notification_1) + " "
-        + receivers[0] + " " + getString(R.string.sending_notification_2);
-    Notification notification = new Notification(R.drawable.ic_stat_notify, ticker,
-        System.currentTimeMillis());
+        + receivers + " " + getString(R.string.sending_notification_2);
+    Notification notification = new Notification(R.drawable.ic_stat_notify, 
+        ticker, System.currentTimeMillis());
     Intent intent = new Intent(AccountService.this, ComposeActivity.class);
     intent.setAction(Intent.ACTION_MAIN);
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
-        | Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | 
+        Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
     notification.setLatestEventInfo(AccountService.this,
         AccountService.this.getString(R.string.app_name), ticker,
         PendingIntent.getActivity(AccountService.this, 0, intent, 0));
@@ -161,9 +226,9 @@ public class AccountService extends Service {
         "notification_ringtone", "DEFAULT_RINGTONE_URI"));
 
     String vibrate = preferences.getString("notification_vibration", "S");
-    if (vibrate.equals("A")
-        || (vibrate.equals("S") && audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE)) {
-      long[] pattern = { 0, 300, 100, 100 };
+    if (vibrate.equals("A") || (vibrate.equals("S") && 
+        audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE)) {
+      long[] pattern = { 0, 200, 100, 100 };
       notification.vibrate = pattern;
     }
 

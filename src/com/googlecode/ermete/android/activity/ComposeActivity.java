@@ -117,7 +117,6 @@ public class ComposeActivity extends Activity {
     accountManager = new AccountManagerAndroid(ComposeActivity.this);
     if (accountManager.getAccounts().size() == 0)
       startActivity(new Intent(this, AccountDisplayActivity.class));
-    else ;
 
     serviceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
@@ -321,6 +320,16 @@ public class ComposeActivity extends Activity {
             receiverNumber[i] = listItemNumber.getText().toString();
           }
         }
+        
+        for (int i = 0; i < receiverNumber.length; ++i) {
+          receiverNumber[i] = receiverNumber[i].replaceAll("[^0-9\\+]*", "");
+          int l = receiverNumber[i].length();
+          if (l < 9 || l > 13) {
+            Toast.makeText(ComposeActivity.this,
+                R.string.invalid_receiver_toast, Toast.LENGTH_SHORT).show();
+            return;
+          }
+        }
 
         SMS sms = new SMS(messageText.getText().toString());
         sms.setReceiverName(receiverName);
@@ -341,8 +350,9 @@ public class ComposeActivity extends Activity {
           new AsyncTask<Void, Void, Void>() {
             protected Void doInBackground(Void... params) {
               try {
-                Thread.sleep(3500);
+                Thread.sleep(3500); // Toast.LENGTH_LONG
               } catch (InterruptedException e) {
+                e.printStackTrace();
               }
               return null;
             }

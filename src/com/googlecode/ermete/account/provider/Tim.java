@@ -47,6 +47,11 @@ public class Tim extends Account {
   public int calcFragments(int length) {
     return 0;
   }
+  
+  @Override
+  protected void updateCount() {
+    return;
+  }
 
   @Override
   public Result login() {

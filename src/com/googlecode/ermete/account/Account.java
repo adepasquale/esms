@@ -19,6 +19,7 @@
 package com.googlecode.ermete.account;
 
 import java.io.Serializable;
+import java.util.Date;
 import java.util.List;
 
 import org.apache.http.client.CookieStore;
@@ -37,6 +38,7 @@ public abstract class Account implements Serializable {
     NETWORK_ERROR,
     LOGIN_ERROR,
     LOGOUT_ERROR,
+    SENDER_ERROR,
     RECEIVER_ERROR,
     MESSAGE_ERROR,
     LIMIT_ERROR,
@@ -57,11 +59,14 @@ public abstract class Account implements Serializable {
 
   protected String sender;
 
-  protected int count;
   protected int limit;
+  protected int count;
+  protected Date countDate;
 
   public Account(AccountConnector connector) {
     setAccountConnector(connector);
+    count = 0;
+    countDate = new Date();
   }
 
   public void setAccountConnector(AccountConnector connector) {
@@ -111,21 +116,29 @@ public abstract class Account implements Serializable {
   public void setSender(String sender) {
     this.sender = sender;
   }
-
-  public int getCount() {
-    return count;
-  }
-
-  public void setCount(int count) {
-    this.count = count;
-  }
   
   public int getLimit() {
     return limit;
   }
 
+  public int getCount() {
+    return count;
+  }
+
+  public void setCount(int count, Date countDate) {
+    this.count = count;
+    this.countDate = countDate;
+    updateCount();
+  }
+  
+  public Date getCountDate() {
+    return countDate;
+  }
+
   public abstract int calcRemaining(int length);
   public abstract int calcFragments(int length);
+  
+  protected abstract void updateCount();
 
   public abstract List<String> getSenderList();
   

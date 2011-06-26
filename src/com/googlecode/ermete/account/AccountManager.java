@@ -28,5 +28,6 @@ public abstract class AccountManager implements Serializable {
   public abstract List<Account> getAccounts();
 
   public abstract void insert(Account newAccount);
+//  public abstract void update(Account account);
   public abstract void delete(Account oldAccount);
 }

@@ -69,6 +69,7 @@ public class SMS {
 
   public void setCaptchaArray(byte[] captchaArray) {
     this.captchaArray = captchaArray;
+    this.captcha = "";
   }
 
   public String getCaptcha() {
@@ -77,6 +78,7 @@ public class SMS {
 
   public void setCaptcha(String captcha) {
     this.captcha = captcha;
+    this.captchaArray = null;
   }
 
 }
