@@ -309,7 +309,7 @@ public class Vodafone extends Account {
     case 109:
     case 112: // "Numero destinatario con caratteri non validi"
       return Result.MESSAGE_ERROR;
-    case 104: // ?
+    case 104: // "Servizio non disponibile"
     default:
       return Result.UNKNOWN_ERROR;
     }
