@@ -37,7 +37,7 @@ import android.preference.PreferenceManager;
 
 import com.googlecode.awsms.account.AccountConnectorAndroid;
 import com.googlecode.awsms.account.AccountManagerAndroid;
-import com.googlecode.esms.R;
+import com.googlecode.awsms.R;
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountConnector;
 import com.googlecode.esms.account.AccountManager;
@@ -208,8 +208,8 @@ public class AccountService extends Service {
         receivers += ", ";
     }
     
-    String ticker = getString(R.string.sending_notification_1) + " "
-        + receivers + " " + getString(R.string.sending_notification_2);
+    String ticker = String.format(
+        getString(R.string.sending_notification), receivers);
     Notification notification = new Notification(R.drawable.ic_stat_notify, 
         ticker, System.currentTimeMillis());
     Intent intent = new Intent(AccountService.this, ComposeActivity.class);

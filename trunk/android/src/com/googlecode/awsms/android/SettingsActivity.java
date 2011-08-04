@@ -23,7 +23,7 @@ import android.preference.Preference;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.preference.PreferenceActivity;
 
-import com.googlecode.esms.R;
+import com.googlecode.awsms.R;
 
 public class SettingsActivity extends PreferenceActivity {
 
