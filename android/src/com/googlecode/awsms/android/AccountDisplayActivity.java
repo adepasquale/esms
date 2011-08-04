@@ -42,7 +42,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.googlecode.awsms.account.AccountManagerAndroid;
-import com.googlecode.esms.R;
+import com.googlecode.awsms.R;
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountManager;
 
@@ -96,6 +96,11 @@ public class AccountDisplayActivity extends Activity {
         listItemLogo.setImageBitmap(
             BitmapFactory.decodeResource(getResources(), 
             R.drawable.ic_logo_tim));
+      
+      if (account.getProvider().equals("3"))
+        listItemLogo.setImageBitmap(
+            BitmapFactory.decodeResource(getResources(), 
+            R.drawable.ic_logo_tim)); // XXX logo 3
       
       listItemLinear.setOnClickListener(new OnClickListener() {
         public void onClick(View v) {
@@ -210,9 +215,9 @@ public class AccountDisplayActivity extends Activity {
   private void showModifyActivity(Account account) {
     Intent intent = new Intent(AccountDisplayActivity.this,
         AccountModifyActivity.class);
-    intent.setAction("com.googlecode.ermete.DO_AUTHENTICATION");
-    intent.putExtra("com.googlecode.ermete.NEW_ACCOUNT", account);
-    intent.putExtra("com.googlecode.ermete.OLD_ACCOUNT", account);
+    intent.setAction(AccountIntents.DO_AUTHENTICATION);
+    intent.putExtra(AccountIntents.NEW_ACCOUNT, account);
+    intent.putExtra(AccountIntents.OLD_ACCOUNT, account);
     startActivity(intent);
   }
 

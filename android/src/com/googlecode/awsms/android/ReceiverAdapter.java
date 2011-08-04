@@ -38,7 +38,7 @@ import android.widget.ImageView;
 import android.widget.ResourceCursorAdapter;
 import android.widget.TextView;
 
-import com.googlecode.esms.R;
+import com.googlecode.awsms.R;
 
 public class ReceiverAdapter extends ResourceCursorAdapter implements
     Filterable {

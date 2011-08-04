@@ -59,7 +59,7 @@ import android.widget.Toast;
 import com.googlecode.awsms.account.AccountManagerAndroid;
 import com.googlecode.awsms.android.AccountService.AccountServiceBinder;
 import com.googlecode.awsms.message.ConversationManagerAndroid;
-import com.googlecode.esms.R;
+import com.googlecode.awsms.R;
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountManager;
 import com.googlecode.esms.message.ConversationManager;
@@ -96,6 +96,7 @@ public class ComposeActivity extends Activity {
 
   LinearLayout listLinear;
   int listSize;
+  static final int MAX_LIST_SIZE = 3;
 
   LinearLayout replyLinear;
   TextView replyContent;
@@ -172,13 +173,18 @@ public class ComposeActivity extends Activity {
             replyContent.setText(reply.getMessage());
             replyDate.setText(reply.getDate());
           }
-        } else {
+        } else if (listSize < MAX_LIST_SIZE) {
           String name = receiverName.getText().toString();
           String number = receiverNumber.getText().toString();
           addListItem(name, number);
           receiverText.setText("");
-          String t = name + " (" + number + ") " +
-              getString(R.string.positive_receiver_toast);
+          String t = String.format(
+              getString(R.string.positive_receiver_toast), 
+              name + " (" + number + ")");
+          Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
+        } else {
+          receiverText.setText("");
+          String t = getString(R.string.maximum_receivers_toast);
           Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
         }
 
@@ -237,12 +243,18 @@ public class ComposeActivity extends Activity {
         }
 
         number = number.replaceAll("[^0-9\\+]*", "");
-        if (number.equals(""))
+        if (number.equals("")) return;
+        
+        if (listSize >= MAX_LIST_SIZE) {
+          String t = getString(R.string.maximum_receivers_toast);
+          Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
           return;
+        }
 
         addListItem(name, number);
         if (listSize > 1) {
-          String t = number + " " + getString(R.string.positive_receiver_toast);
+          String t = String.format(
+              getString(R.string.positive_receiver_toast), number);
           Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
         }
         receiverText.setText("");
@@ -480,8 +492,8 @@ public class ComposeActivity extends Activity {
       }
     }
 
-    View listItem = getLayoutInflater().inflate(R.layout.receiver_list_item,
-        null);
+    View listItem = getLayoutInflater().inflate(
+        R.layout.receiver_list_item, null);
     TextView listItemName = (TextView) listItem
         .findViewById(R.id.list_item_name);
     TextView listItemNumber = (TextView) listItem
@@ -498,8 +510,8 @@ public class ComposeActivity extends Activity {
         if (--listSize == 0) {
           listLinear.setVisibility(View.GONE);
           replyLinear.setVisibility(View.VISIBLE);
-          toggleButtons(receiverText.getText().length(), messageText.getText()
-              .length());
+          toggleButtons(receiverText.getText().length(), 
+              messageText.getText().length());
         }
       }
     });
@@ -510,8 +522,8 @@ public class ComposeActivity extends Activity {
       replyLinear.setVisibility(View.GONE);
       replyContent.setText("");
       replyDate.setText("");
-      toggleButtons(receiverText.getText().length(), messageText.getText()
-          .length());
+      toggleButtons(receiverText.getText().length(), 
+          messageText.getText().length());
     }
   }
 

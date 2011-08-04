@@ -34,6 +34,7 @@ import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountConnector;
 import com.googlecode.esms.account.AccountManager;
 import com.googlecode.esms.provider.Tim;
+import com.googlecode.esms.provider.Tre;
 import com.googlecode.esms.provider.Vodafone;
 
 public class AccountManagerAndroid extends AccountManager {
@@ -84,6 +85,7 @@ public class AccountManagerAndroid extends AccountManager {
     List<Account> providers = new ArrayList<Account>();
     providers.add(new Vodafone(connector));
     providers.add(new Tim(connector));
+    providers.add(new Tre(connector));
     return providers;
   }
     

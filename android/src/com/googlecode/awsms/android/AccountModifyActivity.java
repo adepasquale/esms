@@ -20,9 +20,11 @@ package com.googlecode.awsms.android;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
@@ -39,7 +41,7 @@ import android.widget.Toast;
 
 import com.googlecode.awsms.account.AccountConnectorAndroid;
 import com.googlecode.awsms.account.AccountManagerAndroid;
-import com.googlecode.esms.R;
+import com.googlecode.awsms.R;
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountManager;
 
@@ -82,9 +84,9 @@ public class AccountModifyActivity extends Activity {
     String action = intent.getAction();
     
     final Account newAccount = (Account) 
-        intent.getSerializableExtra("com.googlecode.ermete.NEW_ACCOUNT");
+        intent.getSerializableExtra(AccountIntents.NEW_ACCOUNT);
     final Account oldAccount = (Account)
-        intent.getSerializableExtra("com.googlecode.ermete.OLD_ACCOUNT");
+        intent.getSerializableExtra(AccountIntents.OLD_ACCOUNT);
 
     newAccount.setAccountConnector(new AccountConnectorAndroid(this));
     
@@ -98,13 +100,26 @@ public class AccountModifyActivity extends Activity {
           BitmapFactory.decodeResource(getResources(), 
           R.drawable.ic_logo_tim));
     
+    if (newAccount.getProvider().equals("3"))
+      titleLogo.setImageBitmap(
+          BitmapFactory.decodeResource(getResources(), 
+          R.drawable.ic_logo_tim)); // XXX logo 3
+    
     titleText.setText(getString(R.string.account_modify_activity) + " "
         + newAccount.getLabel());
 
-    if (action.equals("com.googlecode.ermete.DO_AUTHENTICATION")) {
+    if (action.equals(AccountIntents.DO_AUTHENTICATION)) {
       loginLinear.setVisibility(View.VISIBLE);
 
-      usernameText.setText(newAccount.getUsername());
+      // import old username and password from Android Web SMS
+      SharedPreferences prefs = PreferenceManager
+          .getDefaultSharedPreferences(AccountModifyActivity.this);
+      
+      String username = newAccount.getUsername();
+      if (oldAccount == null && newAccount.getProvider().equals("Vodafone"))
+        username = prefs.getString("VodafoneItalyUsername", username);
+      usernameText.setText(username);
+//      usernameText.setText(newAccount.getUsername());
       usernameText.addTextChangedListener(new TextWatcher() {
         public void beforeTextChanged(CharSequence s, int start, int count,
             int after) {
@@ -119,7 +134,11 @@ public class AccountModifyActivity extends Activity {
         }
       });
 
-      passwordText.setText(newAccount.getPassword());
+      String password = newAccount.getPassword();
+      if (oldAccount == null && newAccount.getProvider().equals("Vodafone"))
+        password = prefs.getString("VodafoneItalyPassword", password);
+      passwordText.setText(password);
+//      passwordText.setText(newAccount.getPassword());
       passwordText.addTextChangedListener(new TextWatcher() {
         public void beforeTextChanged(CharSequence s, int start, int count,
             int after) {
@@ -164,10 +183,10 @@ public class AccountModifyActivity extends Activity {
               case SUCCESSFUL:
                 Intent intent = new Intent(AccountModifyActivity.this,
                     AccountModifyActivity.class);
-                intent.setAction("com.googlecode.ermete.CHOOSE_SENDER");
-                intent.putExtra("com.googlecode.ermete.NEW_ACCOUNT", newAccount);
+                intent.setAction(AccountIntents.CHOOSE_SENDER);
+                intent.putExtra(AccountIntents.NEW_ACCOUNT, newAccount);
                 if (oldAccount != null) 
-                  intent.putExtra("com.googlecode.ermete.OLD_ACCOUNT", oldAccount);
+                  intent.putExtra(AccountIntents.OLD_ACCOUNT, oldAccount);
                 startActivity(intent);
                 break;
 
@@ -203,7 +222,7 @@ public class AccountModifyActivity extends Activity {
       });
     }
 
-    if (action.equals("com.googlecode.ermete.CHOOSE_SENDER")) {
+    if (action.equals(AccountIntents.CHOOSE_SENDER)) {
       senderLinear.setVisibility(View.VISIBLE);
 
       senderRadio.setOnCheckedChangeListener(new OnCheckedChangeListener() {
@@ -233,10 +252,10 @@ public class AccountModifyActivity extends Activity {
               case SUCCESSFUL:
                 Intent intent = new Intent(AccountModifyActivity.this,
                     AccountModifyActivity.class);
-                intent.setAction("com.googlecode.ermete.DO_AUTHENTICATION");
-                intent.putExtra("com.googlecode.ermete.NEW_ACCOUNT", newAccount);
+                intent.setAction(AccountIntents.DO_AUTHENTICATION);
+                intent.putExtra(AccountIntents.NEW_ACCOUNT, newAccount);
                 if (oldAccount != null) 
-                  intent.putExtra("com.googlecode.ermete.OLD_ACCOUNT", oldAccount);
+                  intent.putExtra(AccountIntents.OLD_ACCOUNT, oldAccount);
                 intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
                 startActivity(intent);
                 break;
@@ -267,13 +286,13 @@ public class AccountModifyActivity extends Activity {
         public void onClick(View v) {
           Intent intent = new Intent(AccountModifyActivity.this,
               AccountModifyActivity.class);
-          intent.setAction("com.googlecode.ermete.CHOOSE_LABEL");
+          intent.setAction(AccountIntents.CHOOSE_LABEL);
           int checkedId = senderRadio.getCheckedRadioButtonId();
           RadioButton rb = (RadioButton) senderRadio.findViewById(checkedId);
           newAccount.setSender(rb.getText().toString());
-          intent.putExtra("com.googlecode.ermete.NEW_ACCOUNT", newAccount);
+          intent.putExtra(AccountIntents.NEW_ACCOUNT, newAccount);
           if (oldAccount != null) 
-            intent.putExtra("com.googlecode.ermete.OLD_ACCOUNT", oldAccount);
+            intent.putExtra(AccountIntents.OLD_ACCOUNT, oldAccount);
           startActivity(intent);
         }
       });
@@ -291,7 +310,7 @@ public class AccountModifyActivity extends Activity {
       }
     }
 
-    if (action.equals("com.googlecode.ermete.CHOOSE_LABEL")) {
+    if (action.equals(AccountIntents.CHOOSE_LABEL)) {
       labelLinear.setVisibility(View.VISIBLE);
 
       String label = newAccount.getLabel();
@@ -324,10 +343,10 @@ public class AccountModifyActivity extends Activity {
         public void onClick(View v) {
           Intent intent = new Intent(AccountModifyActivity.this,
               AccountModifyActivity.class);
-          intent.setAction("com.googlecode.ermete.CHOOSE_SENDER");
-          intent.putExtra("com.googlecode.ermete.NEW_ACCOUNT", newAccount);
+          intent.setAction(AccountIntents.CHOOSE_SENDER);
+          intent.putExtra(AccountIntents.NEW_ACCOUNT, newAccount);
           if (oldAccount != null) 
-            intent.putExtra("com.googlecode.ermete.OLD_ACCOUNT", oldAccount);
+            intent.putExtra(AccountIntents.OLD_ACCOUNT, oldAccount);
           startActivity(intent);
         }
       });
@@ -349,6 +368,14 @@ public class AccountModifyActivity extends Activity {
 
           newAccount.setLabel(label);
           accountManager.insert(newAccount);
+          
+          if (oldAccount == null && newAccount.getProvider().equals("Vodafone")) {
+            SharedPreferences.Editor editor = PreferenceManager
+                .getDefaultSharedPreferences(AccountModifyActivity.this).edit();
+            editor.remove("VodafoneItalyUsername");
+            editor.remove("VodafoneItalyPassword");
+            editor.commit();
+          }
           
           Intent intent = new Intent(AccountModifyActivity.this,
               AccountDisplayActivity.class);

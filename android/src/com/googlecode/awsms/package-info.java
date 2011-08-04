@@ -19,8 +19,9 @@
 package com.googlecode.awsms;
 
 /*
- *  This package ensures backward-compatibility with Android Web SMS,
- *  i.e. the name of Ermete SMS prior to version 2.0.
+ *  Due to Android Market restrictions, the package must have this name 
+ *  to allow users of Android Web SMS to upgrade to Ermete SMS.
  *  
- *  For more information please visit http://code.google.com/p/awsms/
+ *  For more information please visit http://code.google.com/p/awsms/ and
+ *  http://groups.google.com/group/android-developers/browse_thread/thread/13a54f4bfcae8a3f
  */

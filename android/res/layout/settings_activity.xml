@@ -48,7 +48,8 @@
 		<CheckBoxPreference
 			android:title="@string/show_progress_setting"
 			android:key="show_progress"
-			android:defaultValue="false"
+			android:defaultValue="true"
+			android:enabled="false"
 		/>
 			
 		<CheckBoxPreference
