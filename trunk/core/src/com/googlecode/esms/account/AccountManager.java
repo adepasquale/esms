@@ -21,13 +21,36 @@ package com.googlecode.esms.account;
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * Keep track of available providers and configured accounts.
+ * @author Andrea De Pasquale
+ */
 public abstract class AccountManager implements Serializable {
   private static final long serialVersionUID = 1L;
 
+  /**
+   * Get all available providers.
+   * @return list of providers
+   */
   public abstract List<Account> getProviders();
+  
+  /**
+   * Get all configured accounts.
+   * @return list of accounts
+   */
   public abstract List<Account> getAccounts();
 
+  /**
+   * Insert an account into the list of configured accounts.
+   * @param newAccount account to insert
+   */
   public abstract void insert(Account newAccount);
+  
 //  public abstract void update(Account account);
+  
+  /**
+   * Delete an account from the list of configured accounts.
+   * @param oldAccount account to delete
+   */
   public abstract void delete(Account oldAccount);
 }

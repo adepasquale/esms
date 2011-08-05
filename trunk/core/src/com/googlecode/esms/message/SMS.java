@@ -18,6 +18,11 @@
 
 package com.googlecode.esms.message;
 
+/**
+ * Class representing a text message, along with other information such as
+ * receivers name and number, sending date, CAPTCHA image or text, etc 
+ * @author Andrea De Pasquale
+ */
 public class SMS {
   String[] receiverName;
   String[] receiverNumber;
@@ -27,6 +32,10 @@ public class SMS {
   byte[] captchaArray;
   String captcha;
 
+  /**
+   * Default constructor.
+   * @param message SMS text
+   */
   public SMS(String message) {
     this.message = message;
   }
