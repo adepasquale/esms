@@ -18,6 +18,18 @@
 
 package com.googlecode.esms.message;
 
+/**
+ * Abstract class for automatic and manual CAPTCHA decoders.
+ * @author Andrea De Pasquale
+ */
 public abstract class CaptchaDecoder {
+  
+  /**
+   * Try to extract the text from a CAPTCHA image.
+   * @param pixels array of pixel values
+   * @param width image width
+   * @param height image height
+   * @return Best guess for CAPTCHA text. 
+   */
   public abstract String decode(byte[] pixels, int width, int height);
 }

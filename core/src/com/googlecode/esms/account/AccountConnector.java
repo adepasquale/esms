@@ -24,6 +24,10 @@ import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
 import org.apache.http.protocol.HttpContext;
 
+/**
+ * Container for HTTP connection classes, needed by Account. 
+ * @author Andrea De Pasquale
+ */
 public abstract class AccountConnector implements Serializable {
   private static final long serialVersionUID = 1L;
 

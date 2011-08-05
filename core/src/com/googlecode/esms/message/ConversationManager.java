@@ -18,15 +18,74 @@
 
 package com.googlecode.esms.message;
 
+/**
+ * Load and save conversations, i.e. a set of text messages. 
+ * @author Andrea De Pasquale
+ */
 public abstract class ConversationManager {
+  
+  /**
+   * Load last draft of message for some receiver.
+   * @param receiver to identify the conversation
+   * @return SMS the SMS draft.
+   */
   public abstract SMS loadDraft(String receiver);
+  
+  /**
+   * Save draft of a message.
+   * @param sms to be saved
+   */
   public abstract void saveDraft(SMS sms);
+  
+  /**
+   * Load last message received from some sender
+   * @param sender to identify the conversation
+   * @return SMS the SMS received.
+   */
   public abstract SMS loadInbox(String sender);
+  
+  /**
+   * Save received message.
+   * @param sms to be saved
+   */
   public abstract void saveInbox(SMS sms);
+  
+  /**
+   * Load last message still to be sent to some receiver
+   * @param receiver to identify the conversation
+   * @return SMS the SMS still unsent.
+   */
   public abstract SMS loadOutbox(String receiver);
+  
+  /**
+   * Save message before sending.
+   * @param sms to be saved
+   */
   public abstract void saveOutbox(SMS sms);
+  
+  /**
+   * Load last message sent to some receiver
+   * @param receiver to identify the conversation
+   * @return the SMS sent.
+   */
   public abstract SMS loadSent(String receiver);
+  
+  /**
+   * Save message after sending.
+   * @param sms to be saved
+   */
   public abstract void saveSent(SMS sms);
+  
+  /**
+   * Load last message not sent due to errors
+   * @param receiver to identify the conversation
+   * @return the SMS not sent for errors.
+   */
   public abstract SMS loadFailed(String receiver);
+  
+  /**
+   * Save message after an error
+   * @param sms to be saved
+   */
   public abstract void saveFailed(SMS sms);
 }

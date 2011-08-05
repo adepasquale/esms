@@ -29,9 +29,16 @@ import org.apache.http.protocol.HttpContext;
 
 import com.googlecode.esms.message.SMS;
 
+/**
+ * Abstract class for every account used to send.  
+ * @author Andrea De Pasquale
+ */
 public abstract class Account implements Serializable {
   private static final long serialVersionUID = 1L;
 
+  /**
+   * Values returned by some of Account class methods.
+   */
   public enum Result {
     SUCCESSFUL,
     CAPTCHA_NEEDED,
@@ -64,12 +71,20 @@ public abstract class Account implements Serializable {
   protected int count;
   protected Date countDate;
 
+  /**
+   * Account constructor with specified connector.
+   * @param connector some connector implementation
+   */
   public Account(AccountConnector connector) {
     setAccountConnector(connector);
     count = 0;
     countDate = new Date();
   }
 
+  /**
+   * Change the current account connector.
+   * @param connector the new connector
+   */
   public void setAccountConnector(AccountConnector connector) {
     httpClient = connector.getHttpClient();
     httpContext = connector.getHttpContext();
@@ -78,7 +93,12 @@ public abstract class Account implements Serializable {
     initAccountConnector();
   }
   
-  protected void initAccountConnector() { }
+  /**
+   * Convenience method called after setAccountConnector()
+   */
+  protected void initAccountConnector() {
+    // empty default implementation
+  }
   
   public String getLabel() {
     return label;
@@ -132,19 +152,53 @@ public abstract class Account implements Serializable {
     updateCount();
   }
   
+  /**
+   * Convenience method called after setCount()
+   */
+  protected void updateCount() {
+    // empty default implementation
+  }
+  
   public Date getCountDate() {
     return countDate;
   }
 
+  /**
+   * Calculate how many characters are remaining.
+   * @param length current message length
+   * @return Number of chars remaining. 
+   */
   public abstract int calcRemaining(int length);
+  
+  /**
+   * Calculate how many fragments are needed.
+   * @param length current message length
+   * @return Number of fragments needed.
+   */  
   public abstract int calcFragments(int length);
   
-  protected abstract void updateCount();
-
+  /**
+   * Get available senders for this account.
+   * @return List of valid senders.
+   */
   public abstract List<String> getSenderList();
   
+  /**
+   * Perform login for this account.
+   * @return enum value, Result.SUCCESSFUL if ok.
+   */
   public abstract Result login();
+  
+  /**
+   * Perform logout for this account.
+   * @return enum value, Result.SUCCESSFUL if ok.
+   */
   public abstract Result logout();
   
+  /**
+   * Send an SMS using this account.
+   * @param sms Message with parameters
+   * @return enum value, Result.SUCCESSFUL if ok.
+   */
   public abstract Result send(SMS sms);
 }
