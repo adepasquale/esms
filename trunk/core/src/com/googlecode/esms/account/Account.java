@@ -86,11 +86,13 @@ public abstract class Account implements Serializable {
    * @param connector the new connector
    */
   public void setAccountConnector(AccountConnector connector) {
-    httpClient = connector.getHttpClient();
-    httpContext = connector.getHttpContext();
-    cookieStore = connector.getCookieStore();
-    httpContext.setAttribute(ClientContext.COOKIE_STORE, cookieStore);
-    initAccountConnector();
+    if (connector != null) {
+      httpClient = connector.getHttpClient();
+      httpContext = connector.getHttpContext();
+      cookieStore = connector.getCookieStore();
+      httpContext.setAttribute(ClientContext.COOKIE_STORE, cookieStore);
+      initAccountConnector();
+    }
   }
   
   /**
