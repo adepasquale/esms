@@ -30,6 +30,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
 
+import com.googlecode.awsms.provider.Telephony;
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountConnector;
 import com.googlecode.esms.account.AccountManager;
@@ -68,7 +69,7 @@ public class AccountManagerAndroid extends AccountManager {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-      db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+      db.execSQL("DROP TABLE IF EXISTS accounts");
       onCreate(db);
     }
   }
@@ -83,6 +84,7 @@ public class AccountManagerAndroid extends AccountManager {
   
   public List<Account> getProviders() {
     List<Account> providers = new ArrayList<Account>();
+    providers.add(new Telephony());
     providers.add(new Vodafone(connector));
     providers.add(new Tim(connector));
     providers.add(new Tre(connector));

@@ -90,6 +90,11 @@ public class AccountModifyActivity extends Activity {
 
     newAccount.setAccountConnector(new AccountConnectorAndroid(this));
     
+    if (newAccount.getProvider().equals("Telefono"))
+      titleLogo.setImageBitmap(
+          BitmapFactory.decodeResource(getResources(),
+          R.drawable.ic_logo_vodafone)); // XXX SIM icon
+    
     if (newAccount.getProvider().equals("Vodafone"))
       titleLogo.setImageBitmap(
           BitmapFactory.decodeResource(getResources(),

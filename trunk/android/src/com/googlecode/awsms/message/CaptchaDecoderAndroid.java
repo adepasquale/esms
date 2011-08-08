@@ -23,6 +23,7 @@ import com.googlecode.esms.message.CaptchaDecoder;
 public class CaptchaDecoderAndroid extends CaptchaDecoder {
 
   CaptchaDecoderAndroid() {
+    // TODO Auto-generated method stub
   }
   
   @Override
