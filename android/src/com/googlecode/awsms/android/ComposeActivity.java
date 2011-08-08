@@ -347,7 +347,7 @@ public class ComposeActivity extends Activity {
         if (accountService != null)
           accountService.send(ComposeActivity.this, account, sms);
 
-        if (!preferences.getBoolean("show_progress", false)) {
+        if (!preferences.getBoolean("show_progress", true)) {
           Toast.makeText(ComposeActivity.this, R.string.sending_toast,
               Toast.LENGTH_LONG).show();
           
@@ -404,9 +404,12 @@ public class ComposeActivity extends Activity {
           AdapterView<?> parent, View view, int position, long id) {
         List<Account> accounts = accountManager.getAccounts();
         account = accounts.get(position);
-        int remaining = account.getLimit() - account.getCount();
+        int limit = account.getLimit();
+        int remaining = limit - account.getCount();
+        if (remaining < 0) remaining = 0;
+        if (remaining > limit) remaining = limit;
         counterText.setText(Integer.toString(remaining));
-        int percentage = (int) 10.0 * remaining / account.getLimit();
+        int percentage = (int) 10.0 * remaining / limit;
         switch (percentage) {
         case  0: counterImage.setImageResource(R.drawable.ic_counter_0);  break;
         case  1: counterImage.setImageResource(R.drawable.ic_counter_1);  break;

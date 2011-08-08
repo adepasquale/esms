@@ -30,12 +30,14 @@ import android.net.Uri;
 import dalvik.system.PathClassLoader;
 
 public class ConversationManagerAndroid extends ConversationManager {
+  static final Uri SMS = Uri.parse("content://sms");
   static final Uri SMS_INBOX = Uri.parse("content://sms/inbox");
   static final Uri SMS_SENT = Uri.parse("content://sms/sent");
   static final Uri SMS_DRAFT = Uri.parse("content://sms/draft");
   static final Uri SMS_OUTBOX = Uri.parse("content://sms/outbox");
   static final Uri SMS_FAILED = Uri.parse("content://sms/failed");
   
+  static final String ID = "_id";
   static final String ADDRESS = "address";
   static final String BODY = "body";
   static final String DATE = "date";
@@ -87,6 +89,7 @@ public class ConversationManagerAndroid extends ConversationManager {
   @Override
   public void saveOutbox(SMS sms) {
     delete(SMS_DRAFT, sms);
+    delete(SMS_OUTBOX, sms);
     delete(SMS_FAILED, sms);
     save(SMS_OUTBOX, sms);
   }
@@ -151,13 +154,29 @@ public class ConversationManagerAndroid extends ConversationManager {
   }
   
   private int delete(Uri uri, SMS sms) {
-    int rows = 0;
+    int deleted = 0;
     String body = sms.getMessage();
-    String where = ADDRESS + "=? AND " + BODY + "=?";
+    String projection[] = { ID }; 
+    String selection = ADDRESS + " LIKE ? AND " + BODY + "=?";
+    String where = ID + "=?";
+    
     for (String address : sms.getReceiverNumber()) {
-      String selectionArgs[] = { address, body };
-      rows += context.getContentResolver().delete(uri, where, selectionArgs);
+      int length = address.length();
+      if (length > 10) address = address.substring(length-10, length);
+      String selectionArgs[] = { "%"+address, body };
+      
+      Cursor c = context.getContentResolver()
+          .query(uri, projection, selection, selectionArgs, null);
+      
+      // advance if there are no messages
+      if (c == null || !c.moveToFirst()) continue;
+      do {
+        String[] whereArgs = { String.valueOf(c.getInt(c.getColumnIndex(ID))) };
+        deleted += context.getContentResolver().delete(SMS, where, whereArgs);
+      } while (c.moveToNext());
+      c.close();
     }
-    return rows;
+    
+    return deleted;
   }
 }

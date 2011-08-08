@@ -87,6 +87,11 @@ public class AccountDisplayActivity extends Activity {
       listItemLabel.setText(label);
       listItemSender.setText(account.getSender());
       
+      if (account.getProvider().equals("Telefono"))
+        listItemLogo.setImageBitmap(
+            BitmapFactory.decodeResource(getResources(),
+            R.drawable.ic_logo_vodafone)); // XXX SIM icon
+      
       if (account.getProvider().equals("Vodafone"))
         listItemLogo.setImageBitmap(
             BitmapFactory.decodeResource(getResources(),

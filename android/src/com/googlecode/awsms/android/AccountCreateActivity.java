@@ -59,6 +59,11 @@ public class AccountCreateActivity extends Activity {
 
       listItemProvider.setText(provider.getProvider());
       
+      if (provider.getProvider().equals("Telefono"))
+        listItemLogo.setImageBitmap(
+            BitmapFactory.decodeResource(getResources(),
+            R.drawable.ic_logo_vodafone)); // XXX SIM icon
+      
       if (provider.getProvider().equals("Vodafone"))
         listItemLogo.setImageBitmap(
             BitmapFactory.decodeResource(getResources(),

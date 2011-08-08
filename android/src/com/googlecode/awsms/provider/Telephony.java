@@ -12,8 +12,14 @@ import com.googlecode.esms.message.SMS;
 public class Telephony extends Account {
   private static final long serialVersionUID = 1L;
   
+  static final String PROVIDER = "Telefono";
+  
   public Telephony() {
     super(null);
+    
+    label = PROVIDER;
+    provider = PROVIDER;
+    limit = 0;
   }
   
   @Override
