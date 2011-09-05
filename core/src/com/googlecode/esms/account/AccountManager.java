@@ -46,6 +46,7 @@ public abstract class AccountManager implements Serializable {
    */
   public abstract void insert(Account newAccount);
   
+  // TODO using this method should avoid accounts reordering
 //  public abstract void update(Account account);
   
   /**
