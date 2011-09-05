@@ -103,12 +103,14 @@ public class ComposeActivity extends Activity {
   TextView replyDate;
 
   EditText messageText;
+  TextWatcher messageWatcher;
   Button sendButton;
   TextView lengthText;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    
     setContentView(R.layout.compose_activity);
 
     preferences = PreferenceManager.getDefaultSharedPreferences(this);
@@ -271,7 +273,61 @@ public class ComposeActivity extends Activity {
     replyDate = (TextView) findViewById(R.id.reply_date);
 
     messageText = (EditText) findViewById(R.id.message);
-    messageText.addTextChangedListener(new TextWatcher() {
+    sendButton = (Button) findViewById(R.id.send);
+    lengthText = (TextView) findViewById(R.id.length);
+  }
+
+  @Override
+  public void onResume() {
+    super.onResume(); 
+    
+    counterImage = (ImageView) findViewById(R.id.counter_image);
+    counterText = (TextView) findViewById(R.id.counter_text);
+
+    ArrayList<CharSequence> providers = new ArrayList<CharSequence>();
+    for (Account account : accountManager.getAccounts()) {
+      String label = account.getLabel();
+      if (label == null || label.equals(""))
+        label = getString(R.string.no_label_text);
+      providers.add(label);
+    }
+    ArrayAdapter<CharSequence> senderAdapter = new ArrayAdapter<CharSequence>(
+        this, android.R.layout.simple_spinner_item, providers);
+    senderAdapter
+        .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    senderSpinner = (Spinner) findViewById(R.id.sender_spinner);
+    senderSpinner.setAdapter(senderAdapter);
+    senderSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
+      public void onNothingSelected(AdapterView<?> parent) { }
+      public void onItemSelected(
+          AdapterView<?> parent, View view, int position, long id) {
+        List<Account> accounts = accountManager.getAccounts();
+        account = accounts.get(position);
+        int limit = account.getLimit();
+        int remaining = limit - account.getCount();
+        if (remaining < 0) remaining = 0;
+        if (remaining > limit) remaining = limit;
+        counterText.setText(Integer.toString(remaining));
+        int percentage = (int) 10.0 * remaining / limit;
+        switch (percentage) {
+        case  0: counterImage.setImageResource(R.drawable.ic_counter_0);  break;
+        case  1: counterImage.setImageResource(R.drawable.ic_counter_1);  break;
+        case  2: counterImage.setImageResource(R.drawable.ic_counter_2);  break;
+        case  3: counterImage.setImageResource(R.drawable.ic_counter_3);  break;
+        case  4: counterImage.setImageResource(R.drawable.ic_counter_4);  break;
+        case  5: counterImage.setImageResource(R.drawable.ic_counter_5);  break;
+        case  6: counterImage.setImageResource(R.drawable.ic_counter_6);  break;
+        case  7: counterImage.setImageResource(R.drawable.ic_counter_7);  break;
+        case  8: counterImage.setImageResource(R.drawable.ic_counter_8);  break;
+        case  9: counterImage.setImageResource(R.drawable.ic_counter_9);  break;
+        case 10: counterImage.setImageResource(R.drawable.ic_counter_10); break;
+        }
+        if (accountService != null)
+          accountService.login(account);
+      }
+    });
+    
+    messageWatcher = new TextWatcher() {
       public void beforeTextChanged(CharSequence s, int start, int count,
           int after) {
       }
@@ -299,9 +355,10 @@ public class ComposeActivity extends Activity {
 
         toggleButtons(receiverText.getText().length(), l);
       }
-    });
+    };
+    
+    messageText.addTextChangedListener(messageWatcher);
 
-    sendButton = (Button) findViewById(R.id.send);
     sendButton.setOnClickListener(new OnClickListener() {
       public void onClick(View v) {
         String receiverName[], receiverNumber[];
@@ -376,68 +433,26 @@ public class ComposeActivity extends Activity {
         clearFields();
       }
     });
-
-    lengthText = (TextView) findViewById(R.id.length);
   }
-
+  
   @Override
-  public void onResume() {
-    counterImage = (ImageView) findViewById(R.id.counter_image);
-    counterText = (TextView) findViewById(R.id.counter_text);
-
-    ArrayList<CharSequence> providers = new ArrayList<CharSequence>();
-    for (Account account : accountManager.getAccounts()) {
-      String label = account.getLabel();
-      if (label == null || label.equals(""))
-        label = getString(R.string.no_label_text);
-      providers.add(label);
-    }
-    ArrayAdapter<CharSequence> senderAdapter = new ArrayAdapter<CharSequence>(
-        this, android.R.layout.simple_spinner_item, providers);
-    senderAdapter
-        .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
-    senderSpinner = (Spinner) findViewById(R.id.sender_spinner);
-    senderSpinner.setAdapter(senderAdapter);
-    senderSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
-      public void onNothingSelected(AdapterView<?> parent) { }
-      public void onItemSelected(
-          AdapterView<?> parent, View view, int position, long id) {
-        List<Account> accounts = accountManager.getAccounts();
-        account = accounts.get(position);
-        int limit = account.getLimit();
-        int remaining = limit - account.getCount();
-        if (remaining < 0) remaining = 0;
-        if (remaining > limit) remaining = limit;
-        counterText.setText(Integer.toString(remaining));
-        int percentage = (int) 10.0 * remaining / limit;
-        switch (percentage) {
-        case  0: counterImage.setImageResource(R.drawable.ic_counter_0);  break;
-        case  1: counterImage.setImageResource(R.drawable.ic_counter_1);  break;
-        case  2: counterImage.setImageResource(R.drawable.ic_counter_2);  break;
-        case  3: counterImage.setImageResource(R.drawable.ic_counter_3);  break;
-        case  4: counterImage.setImageResource(R.drawable.ic_counter_4);  break;
-        case  5: counterImage.setImageResource(R.drawable.ic_counter_5);  break;
-        case  6: counterImage.setImageResource(R.drawable.ic_counter_6);  break;
-        case  7: counterImage.setImageResource(R.drawable.ic_counter_7);  break;
-        case  8: counterImage.setImageResource(R.drawable.ic_counter_8);  break;
-        case  9: counterImage.setImageResource(R.drawable.ic_counter_9);  break;
-        case 10: counterImage.setImageResource(R.drawable.ic_counter_10); break;
-        }
-        if (accountService != null)
-          accountService.login(account);
-      }
-    });
+  public void onPause() {
+    senderSpinner.setOnItemSelectedListener(null);
+    messageText.removeTextChangedListener(messageWatcher);
+    sendButton.setOnClickListener(null);
     
-    super.onResume();
+    // TODO save app status (account, single/multiple receiver, message text)
+    super.onPause();
   }
   
   @Override
   public void onDestroy() {
-    super.onDestroy();
     if (serviceBound) {
       unbindService(serviceConnection);
       serviceBound = false;
     }
+    
+    super.onDestroy();
   }
 
   @Override
@@ -471,7 +486,7 @@ public class ComposeActivity extends Activity {
       return true;
       
     case R.id.menu_item_reporting:
-      // TODO use IssueTrackerAPI and Android AccountManager
+      // TODO use IssueTrackerAPI with custom input form
       Intent reportingIntent = new Intent(Intent.ACTION_VIEW);
       reportingIntent.setData(Uri.parse(REPORTING_URL));
       startActivity(reportingIntent);
