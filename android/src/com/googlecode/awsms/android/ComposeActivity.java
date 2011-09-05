@@ -551,7 +551,7 @@ public class ComposeActivity extends Activity {
     else
       clearButton.setEnabled(false);
 
-    if ((lReceiver > 0 || listSize > 0) && account.calcRemaining(lMessage) > 0)
+    if ((lReceiver > 0 || listSize > 0) && account.calcFragments(lMessage) > 0)
       sendButton.setEnabled(true);
     else
       sendButton.setEnabled(false);
