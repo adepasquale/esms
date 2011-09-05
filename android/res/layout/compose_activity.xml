@@ -211,7 +211,7 @@
                 android:capitalize="sentences"
                 android:nextFocusRight="@+id/send_button"
                 android:hint="@string/message_hint"
-                android:maxLines="4"
+                android:maxLines="3"
                 android:inputType="textShortMessage|textAutoCorrect|textCapSentences|textMultiLine"
                 android:imeOptions="actionSend|flagNoEnterAction"
                 android:background="@android:drawable/edit_text"

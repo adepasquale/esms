@@ -143,6 +143,7 @@ public class AccountService extends Service {
         while (true) {
           Log.d(TAG, "call send() #" + attempts);
           Result result = account.send(sms);
+          // FIXME handle partial failures, e.g. for one receiver only
           Log.d(TAG, "done send() " + result);
           AccountManager accountManager = new AccountManagerAndroid(activity);
           accountManager.delete(account);
@@ -375,6 +376,15 @@ public class AccountService extends Service {
     builder.setNegativeButton(R.string.cancel_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
+            if (preferences.getBoolean("enable_notifications", true))
+              notificationManager.cancel(CAPTCHA_NID);
+            Toast.makeText(activity, R.string.sending_canceled_toast, 
+                Toast.LENGTH_LONG).show();
+          }
+        });
+    
+    builder.setOnCancelListener(new OnCancelListener() {
+          public void onCancel(DialogInterface dialog) {
             if (preferences.getBoolean("enable_notifications", true))
               notificationManager.cancel(CAPTCHA_NID);
             Toast.makeText(activity, R.string.sending_canceled_toast, 

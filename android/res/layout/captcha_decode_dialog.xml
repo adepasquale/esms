@@ -39,9 +39,10 @@
 		android:id="@+id/captcha_text"
 		android:layout_width="fill_parent"
 		android:layout_height="wrap_content"
-		android:capitalize="characters"
 		android:singleLine="true"
-		android:maxLength="12"
+		android:inputType="textCapCharacters|textNoSuggestions"
+        android:imeOptions="actionGo"
+		android:maxLength="5"
 	/>
 		
 </LinearLayout>
