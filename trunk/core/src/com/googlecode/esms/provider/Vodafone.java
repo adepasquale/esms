@@ -185,12 +185,12 @@ public class Vodafone extends Account {
       for (int i = 0; i < sms.getReceiverNumber().length; ++i) {
         
         if (sms.getCaptcha() == null || sms.getCaptcha() == "") {
-          System.out.println("doPrecheck()");
+          System.out.println("com.googlecode.esms.provider.Vodafone.doPrecheck()");
           int precheck = doPrecheck();
           if (precheck != 0) 
             return getResult(precheck);
           
-          System.out.println("doPrepare()");
+          System.out.println("com.googlecode.esms.provider.Vodafone.doPrepare()");
           int prepare = doPrepare(sms, i);
           if (prepare != 0)
             return getResult(prepare);
@@ -199,13 +199,15 @@ public class Vodafone extends Account {
             return Result.CAPTCHA_NEEDED;
         }
         
-        System.out.println("doSend()");
+        System.out.println("com.googlecode.esms.provider.Vodafone.doSend()");
         int send = doSend(sms, i);
         if (send != 0)
           return getResult(send);
+        if (sms.getCaptchaArray() != null)
+          return Result.CAPTCHA_NEEDED;
         
         updateCount();
-        count -= calcFragments(sms.getMessage().length());
+        count += calcFragments(sms.getMessage().length());
         
       }
       
@@ -458,9 +460,11 @@ public class Vodafone extends Account {
         return 0;
       }
     }
-
+    
     if (status != 1)
       return errorcode;
+    
+    sms.setCaptchaArray(null);
     return 0;
   }
 }
