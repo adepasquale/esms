@@ -480,6 +480,7 @@ public class ComposeActivity extends Activity {
       return true;
 
     case R.id.menu_item_information:
+      // TODO modal window with version, homepage, authors
       Intent informationIntent = new Intent(Intent.ACTION_VIEW);
       informationIntent.setData(Uri.parse(INFORMATION_URL));
       startActivity(informationIntent);

@@ -109,7 +109,7 @@ public class ReceiverAdapter extends ResourceCursorAdapter implements
           String.valueOf(Phone.TYPE_WORK_MOBILE)};
     }
     if (filter.contains("H")) { // no home numbers
-      selection = Phone.TYPE + "=?";
+      selection = Phone.TYPE + "<>?";
       selectionArgs = new String[] { String.valueOf(Phone.TYPE_HOME) };
     }
 
