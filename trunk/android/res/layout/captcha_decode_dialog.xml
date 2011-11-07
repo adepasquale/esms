@@ -41,7 +41,7 @@
 		android:layout_height="wrap_content"
 		android:singleLine="true"
 		android:inputType="textCapCharacters|textNoSuggestions"
-        android:imeOptions="actionGo"
+    android:imeOptions="actionNone"
 		android:maxLength="5"
 	/>
 		

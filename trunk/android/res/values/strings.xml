@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
+
   This file is part of Ermete SMS.
   
   Ermete SMS is free software: you can redistribute it and/or modify
@@ -14,9 +15,15 @@
  
   You should have received a copy of the GNU General Public License
   along with Ermete SMS.  If not, see <http://www.gnu.org/licenses/>.
+
 -->
 <resources>
   <string name="app_name">Ermete SMS</string>
+  <string name="app_version">versione 2.0.0</string>
+  <string name="app_author_title">Autori:</string>
+  <string name="app_author_value">Andrea De Pasquale\nAlberto Gasparin</string>
+  <string name="app_homepage_title">Homepage:</string>
+  <string name="app_homepage_value">code.google.com/p/esms</string>
   <string name="sender_prompt">Mittente</string>
   <string name="no_label_text">(etichetta)</string>
   <string name="receiver_hint">Destinatario</string>
@@ -53,7 +60,7 @@
   <string name="login_error_toast">Nome utente o password non validi</string>
   <string name="logout_progress_dialog">Uscita in corso...</string>
   <string name="logout_error_toast">Errore durante l\'uscita, ritentare o riavviare l\'applicazione</string>
-  <string name="unsupported_error_toast">Questo tipo di account non è attualmente supportato. Se desideri collaborare, contatta lo sviluppatore.</string>
+  <string name="unsupported_error_toast">Questo tipo di account non è attualmente supportato. Se desideri collaborare, per favore contatta lo sviluppatore.</string>
   <string name="provider_error_toast">Il sito internet potrebbe essere fuori servizio, per favore controlla e riprova più tardi</string>
   <string name="network_error_toast">Errore durante la connessione</string>
   <string name="captcha_decode_dialog">Decodifica CAPTCHA</string>
@@ -85,6 +92,7 @@
   <string name="no_button">No</string>
   <string name="prev_button">Indietro</string>
   <string name="next_button">Avanti</string>
+  <string name="close_button">Chiudi</string>
   <string name="receiver_settings">Prima dell\'invio</string>
   <string name="filter_receiver_setting">Filtraggio rubrica</string>
   <string name="show_pictures_setting">Visualizza fotografie</string>

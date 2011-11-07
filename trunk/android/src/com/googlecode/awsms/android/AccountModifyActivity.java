@@ -90,25 +90,29 @@ public class AccountModifyActivity extends Activity {
 
     newAccount.setAccountConnector(new AccountConnectorAndroid(this));
     
-    if (newAccount.getProvider().equals("Telefono"))
-      titleLogo.setImageBitmap(
-          BitmapFactory.decodeResource(getResources(),
-          R.drawable.ic_logo_vodafone)); // XXX SIM icon
+    if (newAccount.getProvider().equals("Telefono")) {
+//      titleLogo.setImageBitmap(
+//          BitmapFactory.decodeResource(getResources(),
+//          R.drawable.ic_logo_SIM));
+    }
     
-    if (newAccount.getProvider().equals("Vodafone"))
+    if (newAccount.getProvider().equals("Vodafone")) {
       titleLogo.setImageBitmap(
           BitmapFactory.decodeResource(getResources(),
           R.drawable.ic_logo_vodafone));
+    }
       
-    if (newAccount.getProvider().equals("TIM")) 
+    if (newAccount.getProvider().equals("TIM")) { 
       titleLogo.setImageBitmap(
           BitmapFactory.decodeResource(getResources(), 
           R.drawable.ic_logo_tim));
+    }
     
-    if (newAccount.getProvider().equals("3"))
-      titleLogo.setImageBitmap(
-          BitmapFactory.decodeResource(getResources(), 
-          R.drawable.ic_logo_tim)); // XXX logo 3
+    if (newAccount.getProvider().equals("Tre")) {
+//      titleLogo.setImageBitmap(
+//          BitmapFactory.decodeResource(getResources(), 
+//          R.drawable.ic_logo_tre));
+    }
     
     titleText.setText(getString(R.string.account_modify_activity) + " "
         + newAccount.getLabel());

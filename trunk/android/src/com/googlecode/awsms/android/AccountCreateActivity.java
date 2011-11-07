@@ -59,25 +59,29 @@ public class AccountCreateActivity extends Activity {
 
       listItemProvider.setText(provider.getProvider());
       
-      if (provider.getProvider().equals("Telefono"))
-        listItemLogo.setImageBitmap(
-            BitmapFactory.decodeResource(getResources(),
-            R.drawable.ic_logo_vodafone)); // XXX SIM icon
+      if (provider.getProvider().equals("Telefono")) {
+//        listItemLogo.setImageBitmap(
+//            BitmapFactory.decodeResource(getResources(),
+//            R.drawable.ic_logo_SIM));
+      }
       
-      if (provider.getProvider().equals("Vodafone"))
+      if (provider.getProvider().equals("Vodafone")) {
         listItemLogo.setImageBitmap(
             BitmapFactory.decodeResource(getResources(),
             R.drawable.ic_logo_vodafone));
+      }
         
-      if (provider.getProvider().equals("TIM"))
+      if (provider.getProvider().equals("TIM")) {
         listItemLogo.setImageBitmap(
             BitmapFactory.decodeResource(getResources(), 
             R.drawable.ic_logo_tim));
+      }
       
-      if (provider.getProvider().equals("3"))
-        listItemLogo.setImageBitmap(
-            BitmapFactory.decodeResource(getResources(), 
-            R.drawable.ic_logo_tim)); // XXX logo 3
+      if (provider.getProvider().equals("Tre")) {
+//        listItemLogo.setImageBitmap(
+//            BitmapFactory.decodeResource(getResources(), 
+//            R.drawable.ic_logo_tre));
+      }
 
       listItemLinear.setOnClickListener(new OnClickListener() {
         @Override

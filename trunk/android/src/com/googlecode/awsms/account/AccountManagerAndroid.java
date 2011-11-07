@@ -76,15 +76,17 @@ public class AccountManagerAndroid extends AccountManager {
   
   DBOpenHelper dbOpenHelper;
   AccountConnectorAndroid connector;
+  Context context;
   
   public AccountManagerAndroid(Context context) {
     dbOpenHelper = new DBOpenHelper(context);
     connector = new AccountConnectorAndroid(context);
+    this.context = context;
   }
   
   public List<Account> getProviders() {
     List<Account> providers = new ArrayList<Account>();
-    providers.add(new Telephony());
+    providers.add(new Telephony(context));
     providers.add(new Vodafone(connector));
     providers.add(new Tim(connector));
     providers.add(new Tre(connector));
