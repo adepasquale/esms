@@ -18,7 +18,11 @@
 
 package com.googlecode.awsms.provider;
 
+import java.util.LinkedList;
 import java.util.List;
+
+import android.content.Context;
+import android.telephony.TelephonyManager;
 
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.message.SMS;
@@ -31,9 +35,11 @@ public class Telephony extends Account {
   private static final long serialVersionUID = 1L;
   
   static final String PROVIDER = "Telefono";
+  Context context;
   
-  public Telephony() {
+  public Telephony(Context context) {
     super(null);
+    this.context = context;
     
     label = PROVIDER;
     provider = PROVIDER;
@@ -54,8 +60,13 @@ public class Telephony extends Account {
 
   @Override
   public List<String> getSenderList() {
-    // TODO retrieve SIM phone number
-    return null;
+    List<String> senderList = new LinkedList<String>();
+    TelephonyManager telephonyManager = (TelephonyManager)
+        context.getSystemService(Context.TELEPHONY_SERVICE);
+    String phoneNumber = telephonyManager.getLine1Number();
+    if (phoneNumber == null) return null;
+    senderList.add(phoneNumber);
+    return senderList;
   }
 
   @Override

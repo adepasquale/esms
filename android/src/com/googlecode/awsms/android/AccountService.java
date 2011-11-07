@@ -18,6 +18,7 @@
 
 package com.googlecode.awsms.android;
 
+import java.util.Date;
 import java.util.List;
 
 import android.app.Activity;
@@ -30,6 +31,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.DialogInterface.OnCancelListener;
+import android.content.DialogInterface.OnKeyListener;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Bitmap;
@@ -42,6 +44,7 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -115,7 +118,8 @@ public class AccountService extends Service {
     }.execute();
   }
 
-  public void send(final Activity activity, final Account account, final SMS sms) {
+  public void send(final ComposeActivity activity, 
+      final Account account, final SMS sms) {
     new AsyncTask<Void, Void, Result>() {
       
       // prevent errors when preferences are changed during send()
@@ -201,6 +205,8 @@ public class AccountService extends Service {
           else // toast
             Toast.makeText(activity, R.string.sending_successful_toast, 
                 Toast.LENGTH_LONG).show();
+          activity.clearFields();
+          activity.refreshCounter();
           break;
           
         case CAPTCHA_NEEDED:
@@ -239,6 +245,11 @@ public class AccountService extends Service {
           if (notifications)
             notificationManager.notify(
                 LIMIT_NID, createLimitNotification());
+          AccountManager accountManager = 
+              new AccountManagerAndroid(activity);
+          account.setCount(account.getLimit(), new Date());
+          accountManager.delete(account);
+          accountManager.insert(account);
           break;
           
         case RECEIVER_ERROR:
@@ -342,7 +353,7 @@ public class AccountService extends Service {
     return notification;
   }
   
-  private void showCaptchaDialog(final Activity activity, 
+  private void showCaptchaDialog(final ComposeActivity activity, 
       final Account account, final SMS sms) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
@@ -354,7 +365,7 @@ public class AccountService extends Service {
         .findViewById(R.id.captcha_image);
     final EditText captchaText = (EditText) decodeLinear
         .findViewById(R.id.captcha_text);
-
+    
     builder.setTitle(R.string.captcha_decode_dialog);
     builder.setView(decodeLinear);
     byte[] captchaArray = sms.getCaptchaArray();
@@ -362,6 +373,21 @@ public class AccountService extends Service {
         captchaArray, 0, captchaArray.length);
     BitmapDrawable captchaDrawable = new BitmapDrawable(captchaBitmap);
     captchaView.setBackgroundDrawable(captchaDrawable);
+    
+    builder.setOnKeyListener(new OnKeyListener() {
+      @Override
+      public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
+        if (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+          if (preferences.getBoolean("enable_notifications", true))
+            notificationManager.cancel(CAPTCHA_NID);
+          sms.setCaptcha(captchaText.getText().toString());
+          send(activity, account, sms);
+          dialog.dismiss();
+          return true;
+        }
+        return false;
+      }
+    });
     
     builder.setPositiveButton(R.string.ok_button,
         new DialogInterface.OnClickListener() {
@@ -421,7 +447,7 @@ public class AccountService extends Service {
     return notification;
   }
   
-  private void showNetworkDialog(final Activity activity, 
+  private void showNetworkDialog(final ComposeActivity activity, 
       final Account account, final SMS sms) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
@@ -530,7 +556,7 @@ public class AccountService extends Service {
     return notification;
   }
   
-  private void showLimitDialog(final Activity activity, 
+  private void showLimitDialog(final ComposeActivity activity, 
       final Account account, final SMS sms) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
@@ -584,7 +610,7 @@ public class AccountService extends Service {
     return notification;
   }
   
-  private void showReceiverDialog(final Activity activity, 
+  private void showReceiverDialog(final ComposeActivity activity, 
       final Account account, final SMS sms) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
@@ -638,7 +664,7 @@ public class AccountService extends Service {
     return notification;
   }
   
-  private void showMessageDialog(final Activity activity, 
+  private void showMessageDialog(final ComposeActivity activity, 
       final Account account, final SMS sms) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
@@ -692,7 +718,7 @@ public class AccountService extends Service {
     return notification;
   }
   
-  private void showResendDialog(final Activity activity, final SMS sms) {
+  private void showResendDialog(final ComposeActivity activity, final SMS sms) {
     AccountManager accountManager = new AccountManagerAndroid(this);
     final List<Account> accounts = accountManager.getAccounts();
     final CharSequence[] accountLabels = new CharSequence[accounts.size()];

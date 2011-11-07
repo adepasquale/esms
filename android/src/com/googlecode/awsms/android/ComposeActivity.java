@@ -18,15 +18,19 @@
 
 package com.googlecode.awsms.android;
 
+import java.net.URLDecoder;
 import java.util.ArrayList;
 import java.util.List;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.database.Cursor;
 import android.graphics.drawable.AnimationDrawable;
 import android.net.Uri;
 import android.os.AsyncTask;
@@ -37,6 +41,7 @@ import android.text.Annotation;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -56,10 +61,10 @@ import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.googlecode.awsms.R;
 import com.googlecode.awsms.account.AccountManagerAndroid;
 import com.googlecode.awsms.android.AccountService.AccountServiceBinder;
 import com.googlecode.awsms.message.ConversationManagerAndroid;
-import com.googlecode.awsms.R;
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountManager;
 import com.googlecode.esms.message.ConversationManager;
@@ -67,8 +72,6 @@ import com.googlecode.esms.message.SMS;
 
 public class ComposeActivity extends Activity {
 
-  static final String INFORMATION_URL = 
-    "http://code.google.com/p/esms/";
   static final String REPORTING_URL = 
     "http://code.google.com/p/esms/issues/list";
   
@@ -159,8 +162,8 @@ public class ComposeActivity extends Activity {
     receiverText = (AutoCompleteTextView) findViewById(R.id.receiver);
     receiverText.setAdapter(new ReceiverAdapter(this));
     receiverText.setOnItemClickListener(new OnItemClickListener() {
-      public void onItemClick(AdapterView<?> parent, View view, int position,
-          long id) {
+      public void onItemClick(AdapterView<?> parent, 
+          View view, int position, long id) {
         TextView receiverName = (TextView) view
             .findViewById(R.id.receiver_name);
         TextView receiverNumber = (TextView) view
@@ -192,40 +195,6 @@ public class ComposeActivity extends Activity {
 
         toggleButtons(receiverText.getText().length(), 
             messageText.getText().length());
-      }
-    });
-    receiverText.addTextChangedListener(new TextWatcher() {
-      public void beforeTextChanged(CharSequence s, int start, int count,
-          int after) {
-      }
-
-      public void afterTextChanged(Editable s) {
-      }
-
-      public void onTextChanged(CharSequence s, int start, int before, int count) {
-        toggleButtons(s.length(), messageText.length());
-
-        // deleting one char
-        if (before == 1 && count == 0) {
-          if (hasAutocompleted) {
-            receiverText.setText("");
-            receiverText.append(receiverIncomplete);
-            hasAutocompleted = false;
-          } else {
-            receiverIncomplete = s.toString();
-          }
-        }
-
-        // writing one char
-        if (before == 0 && count == 1) {
-          receiverIncomplete = s.toString();
-          hasAutocompleted = false;
-        }
-
-        if (s.length() == 0) {
-          replyContent.setText("");
-          replyDate.setText("");
-        }
       }
     });
 
@@ -275,6 +244,30 @@ public class ComposeActivity extends Activity {
     messageText = (EditText) findViewById(R.id.message);
     sendButton = (Button) findViewById(R.id.send);
     lengthText = (TextView) findViewById(R.id.length);
+    
+    // check if application was started with an intent
+    Intent intent = getIntent();
+    if (savedInstanceState == null && intent != null) {
+      if (intent.getAction().equals(Intent.ACTION_SEND)) {
+        String message = intent.getStringExtra(Intent.EXTRA_TEXT);
+        messageText.setText(message);
+        receiverText.requestFocus();
+      }
+
+      if (intent.getAction().equals(Intent.ACTION_SENDTO)) {
+        String receiver = URLDecoder.decode(
+            intent.getDataString()).replaceAll("[^0-9\\+]*", "");
+        ReceiverAdapter receiverAdapter = new ReceiverAdapter(this);
+        Cursor cursor = receiverAdapter.runQueryOnBackgroundThread(receiver);
+        cursor.moveToFirst();
+        if (!cursor.isAfterLast()) {
+          receiverText.setText(receiverAdapter.convertToString(cursor));
+        } else {
+          receiverText.setText(receiver);
+        }
+        messageText.requestFocus();
+      }
+    }
   }
 
   @Override
@@ -303,27 +296,44 @@ public class ComposeActivity extends Activity {
           AdapterView<?> parent, View view, int position, long id) {
         List<Account> accounts = accountManager.getAccounts();
         account = accounts.get(position);
-        int limit = account.getLimit();
-        int remaining = limit - account.getCount();
-        if (remaining < 0) remaining = 0;
-        if (remaining > limit) remaining = limit;
-        counterText.setText(Integer.toString(remaining));
-        int percentage = (int) 10.0 * remaining / limit;
-        switch (percentage) {
-        case  0: counterImage.setImageResource(R.drawable.ic_counter_0);  break;
-        case  1: counterImage.setImageResource(R.drawable.ic_counter_1);  break;
-        case  2: counterImage.setImageResource(R.drawable.ic_counter_2);  break;
-        case  3: counterImage.setImageResource(R.drawable.ic_counter_3);  break;
-        case  4: counterImage.setImageResource(R.drawable.ic_counter_4);  break;
-        case  5: counterImage.setImageResource(R.drawable.ic_counter_5);  break;
-        case  6: counterImage.setImageResource(R.drawable.ic_counter_6);  break;
-        case  7: counterImage.setImageResource(R.drawable.ic_counter_7);  break;
-        case  8: counterImage.setImageResource(R.drawable.ic_counter_8);  break;
-        case  9: counterImage.setImageResource(R.drawable.ic_counter_9);  break;
-        case 10: counterImage.setImageResource(R.drawable.ic_counter_10); break;
-        }
+        refreshCounter();
         if (accountService != null)
           accountService.login(account);
+      }
+    });
+    
+    receiverText.addTextChangedListener(new TextWatcher() {
+      public void beforeTextChanged(CharSequence s, int start, int count,
+          int after) {
+      }
+
+      public void afterTextChanged(Editable s) {
+      }
+
+      public void onTextChanged(CharSequence s, int start, int before, int count) {
+        toggleButtons(s.length(), messageText.length());
+
+        // deleting one char
+        if (before == 1 && count == 0) {
+          if (hasAutocompleted) {
+            receiverText.setText("");
+            receiverText.append(receiverIncomplete);
+            hasAutocompleted = false;
+          } else {
+            receiverIncomplete = s.toString();
+          }
+        }
+
+        // writing one char
+        if (before == 0 && count == 1) {
+          receiverIncomplete = s.toString();
+          hasAutocompleted = false;
+        }
+
+        if (s.length() == 0) {
+          replyContent.setText("");
+          replyDate.setText("");
+        }
       }
     });
     
@@ -397,13 +407,15 @@ public class ComposeActivity extends Activity {
             return;
           }
         }
-
+        
+        // TODO ask confirmation if account.getCount() == account.getLimit()
+        
         SMS sms = new SMS(messageText.getText().toString());
         sms.setReceiverName(receiverName);
         sms.setReceiverNumber(receiverNumber);
         if (accountService != null)
           accountService.send(ComposeActivity.this, account, sms);
-
+        
         if (!preferences.getBoolean("show_progress", true)) {
           Toast.makeText(ComposeActivity.this, R.string.sending_toast,
               Toast.LENGTH_LONG).show();
@@ -429,8 +441,6 @@ public class ComposeActivity extends Activity {
             };
           }.execute();
         }
-
-        clearFields();
       }
     });
   }
@@ -480,10 +490,7 @@ public class ComposeActivity extends Activity {
       return true;
 
     case R.id.menu_item_information:
-      // TODO modal window with version, homepage, authors
-      Intent informationIntent = new Intent(Intent.ACTION_VIEW);
-      informationIntent.setData(Uri.parse(INFORMATION_URL));
-      startActivity(informationIntent);
+      showInformation();
       return true;
       
     case R.id.menu_item_reporting:
@@ -497,10 +504,36 @@ public class ComposeActivity extends Activity {
       return super.onOptionsItemSelected(item);
     }
   }
+  
+  public void clearFields() {
+    String preference = preferences.getString("clear_message", "");
+    if (preference.contains("R")) receiverText.setText("");
+    if (preference.contains("M")) messageText.setText("");
+  }
 
+  public void refreshCounter() {
+    int limit = account.getLimit();
+    int remaining = limit - account.getCount();
+    if (remaining < 0) remaining = 0;
+    if (remaining > limit) remaining = limit;
+    counterText.setText(Integer.toString(remaining));
+    int percentage = (int) 10.0 * remaining / limit;
+    switch (percentage) {
+    case  0: counterImage.setImageResource(R.drawable.ic_counter_0);  break;
+    case  1: counterImage.setImageResource(R.drawable.ic_counter_1);  break;
+    case  2: counterImage.setImageResource(R.drawable.ic_counter_2);  break;
+    case  3: counterImage.setImageResource(R.drawable.ic_counter_3);  break;
+    case  4: counterImage.setImageResource(R.drawable.ic_counter_4);  break;
+    case  5: counterImage.setImageResource(R.drawable.ic_counter_5);  break;
+    case  6: counterImage.setImageResource(R.drawable.ic_counter_6);  break;
+    case  7: counterImage.setImageResource(R.drawable.ic_counter_7);  break;
+    case  8: counterImage.setImageResource(R.drawable.ic_counter_8);  break;
+    case  9: counterImage.setImageResource(R.drawable.ic_counter_9);  break;
+    case 10: counterImage.setImageResource(R.drawable.ic_counter_10); break;
+    }
+  }
+  
   private void addListItem(String name, String number) {
-    // TODO keep in memory current names and numbers
-    // instead of reading them every time from the UI
     for (int i = 0; i < listSize; ++i) {
       View item = listLinear.getChildAt(i);
       TextView itemNumber = (TextView) item.findViewById(R.id.list_item_number);
@@ -557,12 +590,23 @@ public class ComposeActivity extends Activity {
     else
       sendButton.setEnabled(false);
   }
+  
+  private void showInformation() {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
-  private void clearFields() {
-    String preference = preferences.getString("clear_message", "");
-    if (preference.contains("R"))
-      receiverText.setText("");
-    if (preference.contains("M"))
-      messageText.setText("");
+    LayoutInflater inflater = (LayoutInflater)
+        this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+    LinearLayout infoLinear = (LinearLayout) 
+        inflater.inflate(R.layout.information_dialog, null);
+
+    builder.setView(infoLinear);
+    builder.setNeutralButton(R.string.close_button,
+        new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int which) {
+            dialog.dismiss();
+          }
+        });
+
+    builder.show();
   }
 }

@@ -17,17 +17,26 @@
   along with Ermete SMS.  If not, see <http://www.gnu.org/licenses/>.
   
 -->
-<menu xmlns:android="http://schemas.android.com/apk/res/android">
-	<item android:id="@+id/menu_item_accounts"
-          android:icon="@drawable/ic_menu_accounts"
-          android:title="@string/menu_item_accounts" />
-    <item android:id="@+id/menu_item_settings"
-          android:icon="@drawable/ic_menu_settings"
-          android:title="@string/menu_item_settings" />
-	<item android:id="@+id/menu_item_information" 
-		android:icon="@drawable/ic_menu_information"
-		android:title="@string/menu_item_information" />
-    <item android:id="@+id/menu_item_reporting" 
+<menu xmlns:android="http://schemas.android.com/apk/res/android" >
+
+    <item
+        android:id="@+id/menu_item_accounts"
+        android:icon="@drawable/ic_menu_accounts"
+        android:title="@string/menu_item_accounts"/>
+
+    <item
+        android:id="@+id/menu_item_settings"
+        android:icon="@drawable/ic_menu_settings"
+        android:title="@string/menu_item_settings"/>
+
+    <item
+        android:id="@+id/menu_item_information"
+        android:icon="@drawable/ic_menu_information"
+        android:title="@string/menu_item_information"/>
+
+    <item
+        android:id="@+id/menu_item_reporting"
         android:icon="@drawable/ic_menu_reporting"
-        android:title="@string/menu_item_reporting" />
+        android:title="@string/menu_item_reporting"/>
+
 </menu>
