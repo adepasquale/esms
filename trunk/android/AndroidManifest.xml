@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-
   This file is part of Ermete SMS.
   
   Ermete SMS is free software: you can redistribute it and/or modify
@@ -15,59 +14,49 @@
  
   You should have received a copy of the GNU General Public License
   along with Ermete SMS.  If not, see <http://www.gnu.org/licenses/>.
-  
 -->
-<manifest 
-	xmlns:android="http://schemas.android.com/apk/res/android"
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.googlecode.awsms"
     android:versionCode="16"
-    android:versionName="2.0.0-alpha">
-    
-	<uses-sdk android:minSdkVersion="7" />
-	
+    android:versionName="2.0.0-alpha" >
+
+    <uses-sdk android:minSdkVersion="7" />
+
     <uses-permission android:name="android.permission.INTERNET" />
-	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
-	<uses-permission android:name="android.permission.READ_CONTACTS" />
-	<uses-permission android:name="android.permission.READ_SMS" />
-	<uses-permission android:name="android.permission.WRITE_SMS" />
-	<uses-permission android:name="android.permission.VIBRATE" />
-    
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+    <uses-permission android:name="android.permission.READ_SMS" />
+    <uses-permission android:name="android.permission.WRITE_SMS" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
     <application
-    	android:icon="@drawable/ic_app" 
-    	android:label="@string/app_name">
-    	
+        android:icon="@drawable/ic_app"
+        android:label="@string/app_name" >
         <activity
-        	android:name=".android.ComposeActivity"
-        	android:theme="@android:style/Theme.NoTitleBar"
-        	android:configChanges="keyboardHidden|orientation">
-            <intent-filter>
+            android:configChanges="keyboardHidden|orientation"
+            android:name=".android.ComposeActivity"
+            android:theme="@android:style/Theme.NoTitleBar" >
+            <intent-filter >
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        
-      	<activity
-      		android:name=".android.AccountDisplayActivity" 
-			android:label="@string/account_display_activity"
-			android:configChanges="keyboardHidden|orientation" />
-			
-      	<activity
-      		android:name=".android.AccountCreateActivity" 
-			android:label="@string/account_create_activity"
-			android:configChanges="keyboardHidden|orientation" />
-			
-      	<activity
-      		android:name=".android.AccountModifyActivity" 
-        	android:theme="@android:style/Theme.NoTitleBar"
-			android:configChanges="keyboardHidden|orientation" />
-			
-      	<activity
-      		android:name=".android.SettingsActivity" 
-			android:label="@string/settings_activity"
-			android:configChanges="keyboardHidden|orientation" />
-			
-		<service android:name=".android.AccountService" />
-        
+        <activity
+            android:configChanges="keyboardHidden|orientation"
+            android:label="@string/account_display_activity"
+            android:name=".android.AccountDisplayActivity" />
+        <activity
+            android:configChanges="keyboardHidden|orientation"
+            android:label="@string/account_create_activity"
+            android:name=".android.AccountCreateActivity" />
+        <activity
+            android:configChanges="keyboardHidden|orientation"
+            android:name=".android.AccountModifyActivity"
+            android:theme="@android:style/Theme.NoTitleBar" />
+        <activity
+            android:configChanges="keyboardHidden|orientation"
+            android:label="@string/settings_activity"
+            android:name=".android.SettingsActivity" />
+        <service android:name=".android.AccountService" />
     </application>
-    
-</manifest> 
+</manifest>
