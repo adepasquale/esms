@@ -46,7 +46,7 @@ import com.googlecode.esms.account.AccountConnector;
 import com.googlecode.esms.message.Base64;
 import com.googlecode.esms.message.SMS;
 
-// TODO web, widget and business all in one account
+// TODO web, widget and BUSINESS all in one account
 public class Vodafone extends Account {
   private static final long serialVersionUID = 1L;
 
@@ -172,54 +172,77 @@ public class Vodafone extends Account {
   }
 
   @Override
-  public Result send(SMS sms) {
+  public Result[] send(SMS sms) {
+    int currReceiver = 0;
+    int totReceivers = sms.getReceiverNumber().length;
+    Result[] results = new Result[totReceivers];
+    for (int r = 0; r < totReceivers; ++r)
+      results[r] = Result.UNKNOWN_ERROR;
+    
     try {
       
       Result login = login();
-      if (login != Result.SUCCESSFUL)
-        return login;
+      if (login != Result.SUCCESSFUL) {
+        results[0] = login;
+        return results;
+      }
       
-      if (!senderCurrent.equalsIgnoreCase(sender)) 
-        if (!doSwapSIM()) return Result.SENDER_ERROR;
+      if (!senderCurrent.equalsIgnoreCase(sender)) {
+        if (!doSwapSIM()) {
+          results[0] = Result.SENDER_ERROR;
+          return results;
+        }
+      }
 
-      for (int i = 0; i < sms.getReceiverNumber().length; ++i) {
+      for (int r = 0; r < totReceivers; ++r) {
+        currReceiver = r;
         
         if (sms.getCaptcha() == null || sms.getCaptcha() == "") {
           System.out.println("com.googlecode.esms.provider.Vodafone.doPrecheck()");
           int precheck = doPrecheck();
-          if (precheck != 0) 
-            return getResult(precheck);
+          if (precheck != 0) {
+            results[r] = getResult(precheck);
+            return results;
+          }
           
           System.out.println("com.googlecode.esms.provider.Vodafone.doPrepare()");
-          int prepare = doPrepare(sms, i);
-          if (prepare != 0)
-            return getResult(prepare);
+          int prepare = doPrepare(sms, r);
+          if (prepare != 0) {
+            results[r] = getResult(prepare);
+            return results;
+          }
           
-          if (sms.getCaptchaArray() != null)
-            return Result.CAPTCHA_NEEDED;
+          if (sms.getCaptchaArray() != null) {
+            results[r] = Result.CAPTCHA_NEEDED;
+            return results;
+          }
         }
         
         System.out.println("com.googlecode.esms.provider.Vodafone.doSend()");
-        int send = doSend(sms, i);
-        if (send != 0)
-          return getResult(send);
-        if (sms.getCaptchaArray() != null)
-          return Result.CAPTCHA_NEEDED;
+        int send = doSend(sms, r);
+        if (send != 0) {
+          results[r] = getResult(send);
+          return results;
+        }
+        if (sms.getCaptchaArray() != null) {
+          results[r] = Result.CAPTCHA_NEEDED;
+          return results;
+        }
         
         updateCount();
         count += calcFragments(sms.getMessage().length());
-        
+        results[r] = Result.SUCCESSFUL;
       }
       
     } catch (JDOMException je) {
       je.printStackTrace();
-      return Result.PROVIDER_ERROR;
+      results[currReceiver] = Result.PROVIDER_ERROR;
     } catch (Exception e) {
       e.printStackTrace();
-      return Result.NETWORK_ERROR;
+      results[currReceiver] = Result.NETWORK_ERROR;
     }
     
-    return Result.SUCCESSFUL;
+    return results;
   }
 
   static final String CHECK_USER = 

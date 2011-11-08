@@ -69,8 +69,12 @@ public class Tim extends Account {
   }
 
   @Override
-  public Result send(SMS sms) {
-    return Result.UNSUPPORTED_ERROR;
+  public Result[] send(SMS sms) {
+    int receivers = sms.getReceiverNumber().length;
+    Result[] results = new Result[receivers];
+    for (int r = 0; r < receivers; ++r)
+      results[r] = Result.UNSUPPORTED_ERROR;
+    return results;
   }
 
 }
