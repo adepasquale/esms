@@ -200,7 +200,7 @@ public abstract class Account implements Serializable {
   /**
    * Send an SMS using this account.
    * @param sms Message with parameters
-   * @return enum value, Result.SUCCESSFUL if ok.
+   * @return array of enum value, Result.SUCCESSFUL if ok.
    */
-  public abstract Result send(SMS sms);
+  public abstract Result[] send(SMS sms);
 }
