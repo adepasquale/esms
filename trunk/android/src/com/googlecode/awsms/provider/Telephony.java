@@ -80,9 +80,12 @@ public class Telephony extends Account {
   }
 
   @Override
-  public Result send(SMS sms) {
+  public List<Result> send(SMS sms) {
     // TODO use telephony provider
-    return Result.UNSUPPORTED_ERROR;
+    List<Result> results = new LinkedList<Result>();
+    for (int r = 0; r < sms.getReceivers().size(); ++r)
+      results.add(Result.UNSUPPORTED_ERROR);
+    return results;
   }
 
 }

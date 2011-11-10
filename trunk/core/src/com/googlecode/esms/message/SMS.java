@@ -18,42 +18,59 @@
 
 package com.googlecode.esms.message;
 
+import java.util.LinkedList;
+import java.util.List;
+
 /**
  * Class representing a text message, along with other information such as
  * receivers name and number, sending date, CAPTCHA image or text, etc 
  * @author Andrea De Pasquale
  */
-public class SMS {
-  String[] receiverName;
-  String[] receiverNumber;
+public class SMS implements Cloneable {
+  
+  List<Receiver> receivers;
   String message;
   String date;
 
   byte[] captchaArray;
-  String captcha;
+  String captchaText;
 
   /**
-   * Default constructor.
+   * Message with no receivers.
    * @param message SMS text
    */
   public SMS(String message) {
+    this(message, new LinkedList<Receiver>());
+  }
+  
+  /**
+   * Message with receivers.
+   * @param message SMS text
+   * @param receivers List of receivers
+   */
+  public SMS(String message, List<Receiver> receivers) {
     this.message = message;
+    this.receivers = receivers;
   }
 
-  public String[] getReceiverName() {
-    return receiverName;
+  public List<Receiver> getReceivers() {
+    return receivers;
   }
 
-  public void setReceiverName(String[] receiverName) {
-    this.receiverName = receiverName;
+  public void setReceivers(List<Receiver> receivers) {
+    this.receivers = receivers;
   }
 
-  public String[] getReceiverNumber() {
-    return receiverNumber;
+  public void addReceiver(Receiver receiver) {
+    this.receivers.add(receiver);
   }
-
-  public void setReceiverNumber(String[] receiverNumber) {
-    this.receiverNumber = receiverNumber;
+  
+  public void removeReceiver(Receiver receiver) {
+    this.receivers.remove(receiver);
+  }
+  
+  public void clearReceivers() {
+    this.receivers.clear();
   }
 
   public String getMessage() {
@@ -78,16 +95,26 @@ public class SMS {
 
   public void setCaptchaArray(byte[] captchaArray) {
     this.captchaArray = captchaArray;
-    this.captcha = "";
+    this.captchaText = "";
   }
 
-  public String getCaptcha() {
-    return captcha;
+  public String getCaptchaText() {
+    return captchaText;
   }
 
-  public void setCaptcha(String captcha) {
-    this.captcha = captcha;
+  public void setCaptchaText(String captchaText) {
+    this.captchaText = captchaText;
     this.captchaArray = null;
   }
 
+  public SMS clone() {
+    try {
+      SMS clone = (SMS) super.clone();
+      clone.setReceivers(new LinkedList<Receiver>(this.receivers));
+      return clone;
+    } catch (CloneNotSupportedException e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
 }

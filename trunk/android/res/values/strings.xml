@@ -93,6 +93,9 @@
   <string name="prev_button">Indietro</string>
   <string name="next_button">Avanti</string>
   <string name="close_button">Chiudi</string>
+  <string name="and_connector">e</string>
+  <string name="or_connector">o</string>
+  <string name="other_connector">altri</string>
   <string name="receiver_settings">Prima dell\'invio</string>
   <string name="filter_receiver_setting">Filtraggio rubrica</string>
   <string name="show_pictures_setting">Visualizza fotografie</string>

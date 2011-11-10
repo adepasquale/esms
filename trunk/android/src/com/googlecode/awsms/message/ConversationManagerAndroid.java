@@ -21,6 +21,7 @@ package com.googlecode.awsms.message;
 import java.util.Date;
 
 import com.googlecode.esms.message.ConversationManager;
+import com.googlecode.esms.message.Receiver;
 import com.googlecode.esms.message.SMS;
 
 import android.content.ContentValues;
@@ -139,15 +140,15 @@ public class ConversationManagerAndroid extends ConversationManager {
 
     SMS sms = new SMS(body);
     sms.setDate(new Date(date).toLocaleString());
-    sms.setReceiverNumber(new String[] { address });
+    sms.addReceiver(new Receiver(address));
     return sms;
   }
 
   private void save(Uri uri, SMS sms) {
     String body = sms.getMessage();
-    for (String address : sms.getReceiverNumber()) {
+    for (Receiver receiver : sms.getReceivers()) {
       ContentValues values = new ContentValues();
-      values.put(ADDRESS, address);
+      values.put(ADDRESS, receiver.getNumber());
       values.put(BODY, body);
       context.getContentResolver().insert(uri, values);
     }
@@ -160,7 +161,8 @@ public class ConversationManagerAndroid extends ConversationManager {
     String selection = ADDRESS + " LIKE ? AND " + BODY + "=?";
     String where = ID + "=?";
     
-    for (String address : sms.getReceiverNumber()) {
+    for (Receiver receiver : sms.getReceivers()) {
+      String address = receiver.getNumber();
       int length = address.length();
       if (length > 10) address = address.substring(length-10, length);
       String selectionArgs[] = { "%"+address, body };
