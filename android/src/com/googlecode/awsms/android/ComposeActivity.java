@@ -20,6 +20,7 @@ package com.googlecode.awsms.android;
 
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 import android.app.Activity;
@@ -68,6 +69,7 @@ import com.googlecode.awsms.message.ConversationManagerAndroid;
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountManager;
 import com.googlecode.esms.message.ConversationManager;
+import com.googlecode.esms.message.Receiver;
 import com.googlecode.esms.message.SMS;
 
 public class ComposeActivity extends Activity {
@@ -371,37 +373,36 @@ public class ComposeActivity extends Activity {
 
     sendButton.setOnClickListener(new OnClickListener() {
       public void onClick(View v) {
-        String receiverName[], receiverNumber[];
+        List<Receiver> receivers = new LinkedList<Receiver>();
         if (listSize == 0) {
-          receiverName = new String[1];
-          receiverNumber = new String[1];
-          receiverNumber[0] = receiverText.getText().toString();
+          String name = null;
+          String number = receiverText.getText().toString();
           Spannable s = receiverText.getText();
           Annotation[] annotations = s.getSpans(0, s.length(), Annotation.class);
           for (Annotation a : annotations) {
             if (a.getKey().equals("name"))
-              receiverName[0] = a.getValue();
+              name = a.getValue();
             if (a.getKey().equals("number"))
-              receiverNumber[0] = a.getValue();
+              number = a.getValue();
           }
+          receivers.add(new Receiver(name, number));
         } else {
-          receiverName = new String[listSize];
-          receiverNumber = new String[listSize];
           for (int i = 0; i < listSize; ++i) {
             View listItem = listLinear.getChildAt(i);
             TextView listItemName = (TextView) listItem
                 .findViewById(R.id.list_item_name);
             TextView listItemNumber = (TextView) listItem
                 .findViewById(R.id.list_item_number);
-            receiverName[i] = listItemName.getText().toString();
-            receiverNumber[i] = listItemNumber.getText().toString();
+            receivers.add(new Receiver(
+                listItemName.getText().toString(),
+                listItemNumber.getText().toString()));
           }
         }
         
-        for (int i = 0; i < receiverNumber.length; ++i) {
-          receiverNumber[i] = receiverNumber[i].replaceAll("[^0-9\\+]*", "");
-          int l = receiverNumber[i].length();
-          if (l < 9 || l > 13) {
+        for (Receiver receiver : receivers) {
+          receiver.setNumber(receiver.getNumber().replaceAll("[^0-9\\+]*", ""));
+          int length = receiver.getNumber().length();
+          if (length < 9 || length > 13) {
             Toast.makeText(ComposeActivity.this,
                 R.string.invalid_receiver_toast, Toast.LENGTH_SHORT).show();
             return;
@@ -410,9 +411,7 @@ public class ComposeActivity extends Activity {
         
         // TODO ask confirmation if account.getCount() == account.getLimit()
         
-        SMS sms = new SMS(messageText.getText().toString());
-        sms.setReceiverName(receiverName);
-        sms.setReceiverNumber(receiverNumber);
+        SMS sms = new SMS(messageText.getText().toString(), receivers);
         if (accountService != null)
           accountService.send(ComposeActivity.this, account, sms);
         

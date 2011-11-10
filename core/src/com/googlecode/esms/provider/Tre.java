@@ -18,10 +18,12 @@
 
 package com.googlecode.esms.provider;
 
+import java.util.LinkedList;
 import java.util.List;
 
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountConnector;
+import com.googlecode.esms.account.Account.Result;
 import com.googlecode.esms.message.SMS;
 
 // TODO goText open source project on SourceForge
@@ -69,11 +71,10 @@ public class Tre extends Account {
   }
 
   @Override
-  public Result[] send(SMS sms) {
-    int receivers = sms.getReceiverNumber().length;
-    Result[] results = new Result[receivers];
-    for (int r = 0; r < receivers; ++r)
-      results[r] = Result.UNSUPPORTED_ERROR;
+  public List<Result> send(SMS sms) {
+    List<Result> results = new LinkedList<Result>();
+    for (int r = 0; r < sms.getReceivers().size(); ++r)
+      results.add(Result.UNSUPPORTED_ERROR);
     return results;
   }
 

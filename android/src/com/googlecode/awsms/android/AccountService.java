@@ -59,6 +59,7 @@ import com.googlecode.esms.account.Account.Result;
 import com.googlecode.esms.account.AccountConnector;
 import com.googlecode.esms.account.AccountManager;
 import com.googlecode.esms.message.ConversationManager;
+import com.googlecode.esms.message.Receiver;
 import com.googlecode.esms.message.SMS;
 
 public class AccountService extends Service {
@@ -72,14 +73,15 @@ public class AccountService extends Service {
   ProgressDialog progressDialog;
   
   // notification IDs
-  static final int SENDING_NID = 1;
-  static final int SUCCESSFUL_NID = 2;
-  static final int CAPTCHA_NID = 3;
-  static final int NETWORK_NID = 4;
-  static final int ACCOUNT_NID = 5;
-  static final int LIMIT_NID = 6;
-  static final int RECEIVER_NID = 7;
-  static final int MESSAGE_NID = 8;
+  int currentNID;
+  int sendingNID;
+  int successfulNID;
+  int captchaNID;
+  int networkNID;
+  int accountNID;
+  int limitNID;
+  int receiverNID;
+  int messageNID;
 
   private final IBinder binder = new AccountServiceBinder();
 
@@ -100,6 +102,7 @@ public class AccountService extends Service {
     conversationManager = new ConversationManagerAndroid(this);
     notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
     audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
+    currentNID = (int) new Date().getTime();
   }
 
 //  @Override
@@ -120,7 +123,7 @@ public class AccountService extends Service {
 
   public void send(final ComposeActivity activity, 
       final Account account, final SMS sms) {
-    new AsyncTask<Void, Void, Result>() {
+    new AsyncTask<Void, Void, List<Result>>() {
       
       // prevent errors when preferences are changed during send()
       boolean progress, notifications;
@@ -136,27 +139,27 @@ public class AccountService extends Service {
 
         notifications = preferences.getBoolean("enable_notifications", true);
         if (notifications) {
+          sendingNID = currentNID++;
           AccountService.this.startForeground(
-              SENDING_NID, createSendNotification(sms));
+              sendingNID, createSendNotification(sms));
         }
       }
 
       @Override
-      protected Result doInBackground(Void... params) {
+      protected List<Result> doInBackground(Void... params) {
         int attempts = 5;
         while (true) {
           Log.d(TAG, "call send() #" + attempts);
-          Result result = account.send(sms);
-          // FIXME handle partial failures, e.g. for one receiver only
-          Log.d(TAG, "done send() " + result);
+          List<Result> results = account.send(sms);
+          Log.d(TAG, "done send() " + results);
           AccountManager accountManager = new AccountManagerAndroid(activity);
           accountManager.delete(account);
           accountManager.insert(account);
-          switch (result) {
+          switch (results.get(0)) {
           case PROVIDER_ERROR:
           case NETWORK_ERROR:
           case UNKNOWN_ERROR:
-            if (--attempts == 0) return result;
+            if (--attempts == 0) return results;
             AccountConnector connector = new AccountConnectorAndroid(activity);
             account.setAccountConnector(connector);
             try {
@@ -178,13 +181,13 @@ public class AccountService extends Service {
 //            // CaptchaDecoderAndroid.decode()
 //            // break;
           default:
-            return result;
+            return results;
           }
         }
       }
 
       @Override
-      protected void onPostExecute(Result result) {
+      protected void onPostExecute(List<Result> results) {
         if (progress) {
           if (progressDialog != null) {
             progressDialog.dismiss();
@@ -196,77 +199,114 @@ public class AccountService extends Service {
           AccountService.this.stopForeground(true);
         }
         
-        switch (result) {
-        case SUCCESSFUL:
+        // must handle partial failures
+        int firstNotSuccessful = -1;
+        for (int r = 0; r < results.size(); ++r) {
+          if (results.get(r) != Result.SUCCESSFUL) {
+            firstNotSuccessful = r;
+            break;
+          }
+        }
+        
+        if (firstNotSuccessful == -1) { // all successful
+          
           conversationManager.saveSent(sms);
-          if (notifications)
+          if (notifications) {
+            successfulNID = currentNID++;
             notificationManager.notify(
-                SUCCESSFUL_NID, createSuccessfulNotification(sms));
-          else // toast
+                successfulNID, createSuccessfulNotification(sms));
+          } else { // toast
             Toast.makeText(activity, R.string.sending_successful_toast, 
                 Toast.LENGTH_LONG).show();
+          }
           activity.clearFields();
           activity.refreshCounter();
-          break;
           
-        case CAPTCHA_NEEDED:
-        case CAPTCHA_ERROR:
-          conversationManager.saveFailed(sms);
-          showCaptchaDialog(activity, account, sms);
-          if (notifications)
-            notificationManager.notify(
-                CAPTCHA_NID, createCaptchaNotification());
-          break;
+        } else { // some not successful
           
-        case NETWORK_ERROR:
-        case PROVIDER_ERROR:
-        case UNKNOWN_ERROR:
-          conversationManager.saveFailed(sms);
-          showNetworkDialog(activity, account, sms);
-          if (notifications)
-            notificationManager.notify(
-                NETWORK_NID, createNetworkNotification());
-          break;
+          SMS successful = successfulSMS(sms, firstNotSuccessful);
+          SMS unsuccessful = unsuccessfulSMS(sms, firstNotSuccessful);
           
-        case LOGIN_ERROR:
-        case LOGOUT_ERROR:
-        case SENDER_ERROR:
-        case UNSUPPORTED_ERROR:
-          conversationManager.saveFailed(sms);
-          showAccountDialog(activity, account, sms);
-          if (notifications)
-            notificationManager.notify(
-                ACCOUNT_NID, createAccountNotification());
-          break;
+          switch (results.get(firstNotSuccessful)) {
+          case CAPTCHA_NEEDED:
+          case CAPTCHA_ERROR:
+            conversationManager.saveSent(successful);
+            conversationManager.saveFailed(unsuccessful);
+            showCaptchaDialog(activity, account, successful, unsuccessful);
+            if (notifications) {
+              captchaNID = currentNID++;
+              notificationManager.notify(
+                  captchaNID, createCaptchaNotification());
+            }
+            break;
+            
+          case NETWORK_ERROR:
+          case PROVIDER_ERROR:
+          case UNKNOWN_ERROR:
+            conversationManager.saveSent(successful);
+            conversationManager.saveFailed(unsuccessful);
+            showNetworkDialog(activity, account, successful, unsuccessful);
+            if (notifications) {
+              networkNID = currentNID++;
+              notificationManager.notify(
+                  networkNID, createNetworkNotification());
+            }
+            break;
+            
+          case LOGIN_ERROR:
+          case LOGOUT_ERROR:
+          case SENDER_ERROR:
+          case UNSUPPORTED_ERROR:
+            conversationManager.saveSent(successful);
+            conversationManager.saveFailed(unsuccessful);
+            showAccountDialog(activity, account, successful, unsuccessful);
+            if (notifications) {
+              accountNID = currentNID++;
+              notificationManager.notify(
+                  accountNID, createAccountNotification());
+            }
+            break;
+            
+          case LIMIT_ERROR:
+            conversationManager.saveSent(successful);
+            conversationManager.saveFailed(unsuccessful);
+            showLimitDialog(activity, account, successful, unsuccessful);
+            if (notifications) {
+              limitNID = currentNID++;
+              notificationManager.notify(
+                  limitNID, createLimitNotification());
+            }
+            AccountManager accountManager = 
+                new AccountManagerAndroid(activity);
+            // no more messages available, limit reached
+            account.setCount(account.getLimit(), new Date());
+            accountManager.delete(account);
+            accountManager.insert(account);
+            break;
+            
+          case RECEIVER_ERROR:
+            conversationManager.saveSent(successful);
+            conversationManager.saveFailed(unsuccessful);
+            showReceiverDialog(activity, account, successful, unsuccessful);
+            if (notifications) {
+              receiverNID = currentNID++;
+              notificationManager.notify(
+                  receiverNID, createReceiverNotification());
+            }
+            break;
+            
+          case MESSAGE_ERROR:
+            conversationManager.saveSent(successful);
+            conversationManager.saveFailed(unsuccessful);
+            showMessageDialog(activity, account, successful, unsuccessful);
+            if (notifications) {
+              messageNID = currentNID++;
+              notificationManager.notify(
+                  messageNID, createMessageNotification());
+            }
+            break;
+          }
           
-        case LIMIT_ERROR:
-          conversationManager.saveFailed(sms);
-          showLimitDialog(activity, account, sms);
-          if (notifications)
-            notificationManager.notify(
-                LIMIT_NID, createLimitNotification());
-          AccountManager accountManager = 
-              new AccountManagerAndroid(activity);
-          account.setCount(account.getLimit(), new Date());
-          accountManager.delete(account);
-          accountManager.insert(account);
-          break;
-          
-        case RECEIVER_ERROR:
-          conversationManager.saveFailed(sms);
-          showReceiverDialog(activity, account, sms);
-          if (notifications)
-            notificationManager.notify(
-                LIMIT_NID, createReceiverNotification());
-          break;
-          
-        case MESSAGE_ERROR:
-          conversationManager.saveFailed(sms);
-          showMessageDialog(activity, account, sms);
-          if (notifications)
-            notificationManager.notify(
-                LIMIT_NID, createMessageNotification());
-          break;
         }
       }
 
@@ -279,19 +319,9 @@ public class AccountService extends Service {
   }
 
   private Notification createSendNotification(SMS sms) {
-    String receivers = "";
-    String[] receiverName = sms.getReceiverName();
-    String[] receiverNumber = sms.getReceiverNumber();
-    for (int i = 0; i < receiverName.length; ++i) {
-      if (receiverName[i] != null && !receiverName[i].equals("")) 
-        receivers += receiverName[i];
-      else receivers += receiverNumber[i];
-      if (i != receiverName.length - 1)
-        receivers += ", ";
-    }
-    
     String ticker = String.format(
-        getString(R.string.sending_progress_notification), receivers);
+        getString(R.string.sending_progress_notification),
+        receiverString(sms));
     Notification notification = new Notification(R.drawable.ic_stat_notify, 
         ticker, System.currentTimeMillis());
     Intent intent = new Intent(AccountService.this, ComposeActivity.class);
@@ -317,19 +347,9 @@ public class AccountService extends Service {
   }
   
   private Notification createSuccessfulNotification(SMS sms) {
-    String receivers = "";
-    String[] receiverName = sms.getReceiverName();
-    String[] receiverNumber = sms.getReceiverNumber();
-    for (int i = 0; i < receiverName.length; ++i) {
-      if (receiverName[i] != null && !receiverName[i].equals("")) 
-        receivers += receiverName[i];
-      else receivers += receiverNumber[i];
-      if (i != receiverName.length - 1)
-        receivers += ", ";
-    }
-    
     String ticker = String.format(
-        getString(R.string.sending_successful_notification), receivers);
+        getString(R.string.sending_successful_notification), 
+        receiverString(sms));
     Notification notification = new Notification(R.drawable.ic_stat_notify, 
         ticker, System.currentTimeMillis());
     Intent intent = new Intent(AccountService.this, ComposeActivity.class);
@@ -353,8 +373,9 @@ public class AccountService extends Service {
     return notification;
   }
   
+  // FIXME handle partial failures
   private void showCaptchaDialog(final ComposeActivity activity, 
-      final Account account, final SMS sms) {
+      final Account account, final SMS successful, final SMS unsuccessful) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
     LayoutInflater inflater = (LayoutInflater) this
@@ -368,7 +389,7 @@ public class AccountService extends Service {
     
     builder.setTitle(R.string.captcha_decode_dialog);
     builder.setView(decodeLinear);
-    byte[] captchaArray = sms.getCaptchaArray();
+    byte[] captchaArray = unsuccessful.getCaptchaArray();
     Bitmap captchaBitmap = BitmapFactory.decodeByteArray(
         captchaArray, 0, captchaArray.length);
     BitmapDrawable captchaDrawable = new BitmapDrawable(captchaBitmap);
@@ -379,9 +400,9 @@ public class AccountService extends Service {
       public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
         if (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
           if (preferences.getBoolean("enable_notifications", true))
-            notificationManager.cancel(CAPTCHA_NID);
-          sms.setCaptcha(captchaText.getText().toString());
-          send(activity, account, sms);
+            notificationManager.cancel(captchaNID);
+          unsuccessful.setCaptchaText(captchaText.getText().toString());
+          send(activity, account, unsuccessful);
           dialog.dismiss();
           return true;
         }
@@ -393,9 +414,9 @@ public class AccountService extends Service {
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(CAPTCHA_NID);
-            sms.setCaptcha(captchaText.getText().toString());
-            send(activity, account, sms);
+              notificationManager.cancel(captchaNID);
+            unsuccessful.setCaptchaText(captchaText.getText().toString());
+            send(activity, account, unsuccessful);
           }
         });
 
@@ -403,7 +424,7 @@ public class AccountService extends Service {
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(CAPTCHA_NID);
+              notificationManager.cancel(captchaNID);
             Toast.makeText(activity, R.string.sending_canceled_toast, 
                 Toast.LENGTH_LONG).show();
           }
@@ -412,7 +433,7 @@ public class AccountService extends Service {
     builder.setOnCancelListener(new OnCancelListener() {
           public void onCancel(DialogInterface dialog) {
             if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(CAPTCHA_NID);
+              notificationManager.cancel(captchaNID);
             Toast.makeText(activity, R.string.sending_canceled_toast, 
                 Toast.LENGTH_LONG).show();
           }
@@ -447,8 +468,9 @@ public class AccountService extends Service {
     return notification;
   }
   
+  // FIXME handle partial failures
   private void showNetworkDialog(final ComposeActivity activity, 
-      final Account account, final SMS sms) {
+      final Account account, final SMS successful, final SMS unsuccessful) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
     builder.setTitle(R.string.network_error_dialog);
@@ -458,8 +480,8 @@ public class AccountService extends Service {
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(NETWORK_NID);
-            send(activity, account, sms);
+              notificationManager.cancel(networkNID);
+            send(activity, account, unsuccessful);
           }
         });
 
@@ -467,7 +489,7 @@ public class AccountService extends Service {
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(NETWORK_NID);
+              notificationManager.cancel(networkNID);
             Toast.makeText(activity, R.string.sending_canceled_toast, 
                 Toast.LENGTH_LONG).show();
           }
@@ -501,8 +523,9 @@ public class AccountService extends Service {
     return notification;
   }
   
+  // FIXME handle partial failures
   private void showAccountDialog(final Activity activity, 
-      final Account account, final SMS sms) {
+      final Account account, final SMS successful, final SMS unsuccessful) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
     builder.setTitle(R.string.account_error_dialog);
@@ -512,7 +535,7 @@ public class AccountService extends Service {
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(ACCOUNT_NID);
+              notificationManager.cancel(accountNID);
             startActivity(new Intent(
                 AccountService.this, AccountDisplayActivity.class));
           }
@@ -522,7 +545,7 @@ public class AccountService extends Service {
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(ACCOUNT_NID);
+              notificationManager.cancel(accountNID);
             Toast.makeText(activity, R.string.sending_canceled_toast, 
                 Toast.LENGTH_LONG).show();
           }
@@ -556,8 +579,9 @@ public class AccountService extends Service {
     return notification;
   }
   
+  // FIXME handle partial failures
   private void showLimitDialog(final ComposeActivity activity, 
-      final Account account, final SMS sms) {
+      final Account account, final SMS successful, final SMS unsuccessful) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
     builder.setTitle(R.string.limit_error_dialog);
@@ -567,8 +591,8 @@ public class AccountService extends Service {
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(LIMIT_NID);
-            showResendDialog(activity, sms);
+              notificationManager.cancel(limitNID);
+            showResendDialog(activity, unsuccessful);
           }
         });
 
@@ -576,7 +600,7 @@ public class AccountService extends Service {
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(LIMIT_NID);
+              notificationManager.cancel(limitNID);
             Toast.makeText(activity, R.string.sending_canceled_toast, 
                 Toast.LENGTH_LONG).show();
           }
@@ -610,8 +634,9 @@ public class AccountService extends Service {
     return notification;
   }
   
+  // FIXME handle partial failures
   private void showReceiverDialog(final ComposeActivity activity, 
-      final Account account, final SMS sms) {
+      final Account account, final SMS successful, final SMS unsuccessful) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
     builder.setTitle(R.string.receiver_error_dialog);
@@ -621,8 +646,8 @@ public class AccountService extends Service {
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(RECEIVER_NID);
-            showResendDialog(activity, sms);
+              notificationManager.cancel(receiverNID);
+            showResendDialog(activity, unsuccessful);
           }
         });
 
@@ -630,7 +655,7 @@ public class AccountService extends Service {
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(RECEIVER_NID);
+              notificationManager.cancel(receiverNID);
             Toast.makeText(activity, R.string.sending_canceled_toast, 
                 Toast.LENGTH_LONG).show();
           }
@@ -664,8 +689,9 @@ public class AccountService extends Service {
     return notification;
   }
   
+  // FIXME handle partial failures
   private void showMessageDialog(final ComposeActivity activity, 
-      final Account account, final SMS sms) {
+      final Account account, final SMS successful, final SMS unsuccessful) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
     builder.setTitle(R.string.message_error_dialog);
@@ -675,8 +701,8 @@ public class AccountService extends Service {
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(MESSAGE_NID);
-            showResendDialog(activity, sms);
+              notificationManager.cancel(messageNID);
+            showResendDialog(activity, unsuccessful);
           }
         });
 
@@ -684,7 +710,7 @@ public class AccountService extends Service {
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(MESSAGE_NID);
+              notificationManager.cancel(messageNID);
             Toast.makeText(activity, R.string.sending_canceled_toast, 
                 Toast.LENGTH_LONG).show();
           }
@@ -747,5 +773,50 @@ public class AccountService extends Service {
     });
 
     builder.show();
+  }
+  
+  private String receiverString(SMS sms) {
+    String receiverString = "";
+    List<Receiver> receivers = sms.getReceivers();
+    switch (receivers.size()) {
+    case 2:
+      Receiver r1 = receivers.get(1);
+      receiverString = " "+getString(R.string.and_connector)+" ";
+      if (r1.getName() != null && !r1.getName().equals("")) 
+        receiverString += r1.getName();
+      else receiverString += r1.getNumber();
+    case 1:
+      Receiver r0 = receivers.get(0);
+      if (r0.getName() != null && !r0.getName().equals(""))
+        receiverString = r0.getName() + receiverString;
+      else receiverString = r0.getNumber() + receiverString;
+      break;
+      
+    default:
+      Receiver r = receivers.get(0);
+      if (r.getName() != null && !r.getName().equals("")) 
+        receiverString += r.getName();
+      else receiverString += r.getNumber();
+      receiverString += " "+getString(R.string.and_connector)+" "+
+          getString(R.string.other_connector)+" "+(receivers.size()-1);      
+    }
+    
+    return receiverString;
+  }
+
+  private SMS successfulSMS(SMS sms, int where) {
+    SMS successful = sms.clone();
+    List<Receiver> receivers = sms.getReceivers();
+    for (int r = where; r < receivers.size(); ++r)
+      successful.removeReceiver(receivers.get(r));
+    return successful;
+  }
+  
+  private SMS unsuccessfulSMS(SMS sms, int where) {
+    SMS unsuccessful = sms.clone();
+    List<Receiver> receivers = sms.getReceivers();
+    for (int r = 0; r < where && r < receivers.size(); ++r)
+      unsuccessful.removeReceiver(receivers.get(r));
+    return unsuccessful;
   }
 }

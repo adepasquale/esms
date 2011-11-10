@@ -172,24 +172,24 @@ public class Vodafone extends Account {
   }
 
   @Override
-  public Result[] send(SMS sms) {
+  public List<Result> send(SMS sms) {
     int currReceiver = 0;
-    int totReceivers = sms.getReceiverNumber().length;
-    Result[] results = new Result[totReceivers];
+    int totReceivers = sms.getReceivers().size();
+    List<Result> results = new LinkedList<Result>();
     for (int r = 0; r < totReceivers; ++r)
-      results[r] = Result.UNKNOWN_ERROR;
+      results.add(Result.UNKNOWN_ERROR);
     
     try {
       
       Result login = login();
       if (login != Result.SUCCESSFUL) {
-        results[0] = login;
+        results.set(0, login);
         return results;
       }
       
       if (!senderCurrent.equalsIgnoreCase(sender)) {
         if (!doSwapSIM()) {
-          results[0] = Result.SENDER_ERROR;
+          results.set(0, Result.SENDER_ERROR);
           return results;
         }
       }
@@ -197,23 +197,23 @@ public class Vodafone extends Account {
       for (int r = 0; r < totReceivers; ++r) {
         currReceiver = r;
         
-        if (sms.getCaptcha() == null || sms.getCaptcha() == "") {
+        if (sms.getCaptchaText() == null || sms.getCaptchaText() == "") {
           System.out.println("com.googlecode.esms.provider.Vodafone.doPrecheck()");
           int precheck = doPrecheck();
           if (precheck != 0) {
-            results[r] = getResult(precheck);
+            results.set(r, getResult(precheck));
             return results;
           }
           
           System.out.println("com.googlecode.esms.provider.Vodafone.doPrepare()");
           int prepare = doPrepare(sms, r);
           if (prepare != 0) {
-            results[r] = getResult(prepare);
+            results.set(r, getResult(prepare));
             return results;
           }
           
           if (sms.getCaptchaArray() != null) {
-            results[r] = Result.CAPTCHA_NEEDED;
+            results.set(r, Result.CAPTCHA_NEEDED);
             return results;
           }
         }
@@ -221,25 +221,25 @@ public class Vodafone extends Account {
         System.out.println("com.googlecode.esms.provider.Vodafone.doSend()");
         int send = doSend(sms, r);
         if (send != 0) {
-          results[r] = getResult(send);
+          results.set(r, getResult(send));
           return results;
         }
         if (sms.getCaptchaArray() != null) {
-          results[r] = Result.CAPTCHA_NEEDED;
+          results.set(r, Result.CAPTCHA_NEEDED);
           return results;
         }
         
         updateCount();
         count += calcFragments(sms.getMessage().length());
-        results[r] = Result.SUCCESSFUL;
+        results.set(r, Result.SUCCESSFUL);
       }
       
     } catch (JDOMException je) {
       je.printStackTrace();
-      results[currReceiver] = Result.PROVIDER_ERROR;
+      results.set(currReceiver, Result.PROVIDER_ERROR);
     } catch (Exception e) {
       e.printStackTrace();
-      results[currReceiver] = Result.NETWORK_ERROR;
+      results.set(currReceiver, Result.NETWORK_ERROR);
     }
     
     return results;
@@ -426,7 +426,7 @@ public class Vodafone extends Account {
     HttpPost request = new HttpPost(DO_PREPARE);
     List<NameValuePair> requestData = new ArrayList<NameValuePair>();
     requestData.add(new BasicNameValuePair("receiverNumber", 
-        stripPrefix(sms.getReceiverNumber()[id])));
+        stripPrefix(sms.getReceivers().get(id).getNumber())));
     requestData.add(new BasicNameValuePair("message", sms.getMessage()));
     request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
     HttpResponse response = httpClient.execute(request, httpContext);
@@ -457,9 +457,9 @@ public class Vodafone extends Account {
       IllegalStateException, JDOMException {
     HttpPost request = new HttpPost(DO_SEND);
     List<NameValuePair> requestData = new ArrayList<NameValuePair>();
-    requestData.add(new BasicNameValuePair("verifyCode", sms.getCaptcha()));
+    requestData.add(new BasicNameValuePair("verifyCode", sms.getCaptchaText()));
     requestData.add(new BasicNameValuePair("receiverNumber", 
-        stripPrefix(sms.getReceiverNumber()[id])));
+        stripPrefix(sms.getReceivers().get(id).getNumber())));
     requestData.add(new BasicNameValuePair("message", sms.getMessage()));
     request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
     HttpResponse response = httpClient.execute(request, httpContext);
