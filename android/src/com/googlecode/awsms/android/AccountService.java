@@ -153,8 +153,7 @@ public class AccountService extends Service {
           List<Result> results = account.send(sms);
           Log.d(TAG, "done send() " + results);
           AccountManager accountManager = new AccountManagerAndroid(activity);
-          accountManager.delete(account);
-          accountManager.insert(account);
+          accountManager.update(account.getLabel(), account);
           switch (results.get(0)) {
           case PROVIDER_ERROR:
           case NETWORK_ERROR:
@@ -222,16 +221,18 @@ public class AccountService extends Service {
           activity.clearFields();
           activity.refreshCounter();
           
-        } else { // some not successful
+        } else { // some or all not successful
           
           SMS successful = successfulSMS(sms, firstNotSuccessful);
+          if (successful.getReceivers().size() > 0)
+            conversationManager.saveSent(successful);
+          
           SMS unsuccessful = unsuccessfulSMS(sms, firstNotSuccessful);
+          conversationManager.saveFailed(unsuccessful);
           
           switch (results.get(firstNotSuccessful)) {
           case CAPTCHA_NEEDED:
           case CAPTCHA_ERROR:
-            conversationManager.saveSent(successful);
-            conversationManager.saveFailed(unsuccessful);
             showCaptchaDialog(activity, account, successful, unsuccessful);
             if (notifications) {
               captchaNID = currentNID++;
@@ -243,8 +244,6 @@ public class AccountService extends Service {
           case NETWORK_ERROR:
           case PROVIDER_ERROR:
           case UNKNOWN_ERROR:
-            conversationManager.saveSent(successful);
-            conversationManager.saveFailed(unsuccessful);
             showNetworkDialog(activity, account, successful, unsuccessful);
             if (notifications) {
               networkNID = currentNID++;
@@ -257,8 +256,6 @@ public class AccountService extends Service {
           case LOGOUT_ERROR:
           case SENDER_ERROR:
           case UNSUPPORTED_ERROR:
-            conversationManager.saveSent(successful);
-            conversationManager.saveFailed(unsuccessful);
             showAccountDialog(activity, account, successful, unsuccessful);
             if (notifications) {
               accountNID = currentNID++;
@@ -268,8 +265,6 @@ public class AccountService extends Service {
             break;
             
           case LIMIT_ERROR:
-            conversationManager.saveSent(successful);
-            conversationManager.saveFailed(unsuccessful);
             showLimitDialog(activity, account, successful, unsuccessful);
             if (notifications) {
               limitNID = currentNID++;
@@ -280,13 +275,10 @@ public class AccountService extends Service {
                 new AccountManagerAndroid(activity);
             // no more messages available, limit reached
             account.setCount(account.getLimit(), new Date());
-            accountManager.delete(account);
-            accountManager.insert(account);
+            accountManager.update(account.getLabel(), account);
             break;
             
           case RECEIVER_ERROR:
-            conversationManager.saveSent(successful);
-            conversationManager.saveFailed(unsuccessful);
             showReceiverDialog(activity, account, successful, unsuccessful);
             if (notifications) {
               receiverNID = currentNID++;
@@ -296,8 +288,6 @@ public class AccountService extends Service {
             break;
             
           case MESSAGE_ERROR:
-            conversationManager.saveSent(successful);
-            conversationManager.saveFailed(unsuccessful);
             showMessageDialog(activity, account, successful, unsuccessful);
             if (notifications) {
               messageNID = currentNID++;
@@ -321,7 +311,7 @@ public class AccountService extends Service {
   private Notification createSendNotification(SMS sms) {
     String ticker = String.format(
         getString(R.string.sending_progress_notification),
-        receiverString(sms));
+        shortReceiverString(sms));
     Notification notification = new Notification(R.drawable.ic_stat_notify, 
         ticker, System.currentTimeMillis());
     Intent intent = new Intent(AccountService.this, ComposeActivity.class);
@@ -349,7 +339,7 @@ public class AccountService extends Service {
   private Notification createSuccessfulNotification(SMS sms) {
     String ticker = String.format(
         getString(R.string.sending_successful_notification), 
-        receiverString(sms));
+        shortReceiverString(sms));
     Notification notification = new Notification(R.drawable.ic_stat_notify, 
         ticker, System.currentTimeMillis());
     Intent intent = new Intent(AccountService.this, ComposeActivity.class);
@@ -468,13 +458,19 @@ public class AccountService extends Service {
     return notification;
   }
   
-  // FIXME handle partial failures
   private void showNetworkDialog(final ComposeActivity activity, 
       final Account account, final SMS successful, final SMS unsuccessful) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
-    builder.setTitle(R.string.network_error_dialog);
-    builder.setMessage(R.string.network_error_message);
+    String dialogTitle = getString(R.string.network_error_dialog);
+    String dialogMessage = getString(R.string.network_error_message);
+    
+    if (successful.getReceivers().size() > 0)
+      dialogMessage = String.format(getString(R.string.partial_error_message),
+          fullReceiverString(unsuccessful)) + " " + dialogMessage;
+    
+    builder.setTitle(dialogTitle);
+    builder.setMessage(dialogMessage);
 
     builder.setPositiveButton(R.string.yes_button,
         new DialogInterface.OnClickListener() {
@@ -523,13 +519,19 @@ public class AccountService extends Service {
     return notification;
   }
   
-  // FIXME handle partial failures
   private void showAccountDialog(final Activity activity, 
       final Account account, final SMS successful, final SMS unsuccessful) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
-    builder.setTitle(R.string.account_error_dialog);
-    builder.setMessage(R.string.account_error_message);
+    String dialogTitle = getString(R.string.account_error_dialog);
+    String dialogMessage = getString(R.string.account_error_message);
+    
+    if (successful.getReceivers().size() > 0)
+      dialogMessage = String.format(getString(R.string.partial_error_message),
+          fullReceiverString(unsuccessful)) + " " + dialogMessage;
+    
+    builder.setTitle(dialogTitle);
+    builder.setMessage(dialogMessage);
 
     builder.setPositiveButton(R.string.yes_button,
         new DialogInterface.OnClickListener() {
@@ -579,13 +581,19 @@ public class AccountService extends Service {
     return notification;
   }
   
-  // FIXME handle partial failures
   private void showLimitDialog(final ComposeActivity activity, 
       final Account account, final SMS successful, final SMS unsuccessful) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
-    builder.setTitle(R.string.limit_error_dialog);
-    builder.setMessage(R.string.limit_error_message);
+    String dialogTitle = getString(R.string.limit_error_dialog);
+    String dialogMessage = getString(R.string.limit_error_message);
+    
+    if (successful.getReceivers().size() > 0)
+      dialogMessage = String.format(getString(R.string.partial_error_message),
+          fullReceiverString(unsuccessful)) + " " + dialogMessage;
+    
+    builder.setTitle(dialogTitle);
+    builder.setMessage(dialogMessage);
 
     builder.setPositiveButton(R.string.yes_button,
         new DialogInterface.OnClickListener() {
@@ -634,13 +642,19 @@ public class AccountService extends Service {
     return notification;
   }
   
-  // FIXME handle partial failures
   private void showReceiverDialog(final ComposeActivity activity, 
       final Account account, final SMS successful, final SMS unsuccessful) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
-    builder.setTitle(R.string.receiver_error_dialog);
-    builder.setMessage(R.string.receiver_error_message);
+    String dialogTitle = getString(R.string.receiver_error_dialog);
+    String dialogMessage = getString(R.string.receiver_error_message);
+    
+    if (successful.getReceivers().size() > 0)
+      dialogMessage = String.format(getString(R.string.partial_error_message),
+          fullReceiverString(unsuccessful)) + " " + dialogMessage;
+    
+    builder.setTitle(dialogTitle);
+    builder.setMessage(dialogMessage);
 
     builder.setPositiveButton(R.string.yes_button,
         new DialogInterface.OnClickListener() {
@@ -689,13 +703,19 @@ public class AccountService extends Service {
     return notification;
   }
   
-  // FIXME handle partial failures
   private void showMessageDialog(final ComposeActivity activity, 
       final Account account, final SMS successful, final SMS unsuccessful) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
 
-    builder.setTitle(R.string.message_error_dialog);
-    builder.setMessage(R.string.message_error_message);
+    String dialogTitle = getString(R.string.message_error_dialog);
+    String dialogMessage = getString(R.string.message_error_message);
+    
+    if (successful.getReceivers().size() > 0)
+      dialogMessage = String.format(getString(R.string.partial_error_message),
+          fullReceiverString(unsuccessful)) + " " + dialogMessage;
+    
+    builder.setTitle(dialogTitle);
+    builder.setMessage(dialogMessage);
 
     builder.setPositiveButton(R.string.yes_button,
         new DialogInterface.OnClickListener() {
@@ -775,7 +795,7 @@ public class AccountService extends Service {
     builder.show();
   }
   
-  private String receiverString(SMS sms) {
+  private String shortReceiverString(SMS sms) {
     String receiverString = "";
     List<Receiver> receivers = sms.getReceivers();
     switch (receivers.size()) {
@@ -799,6 +819,34 @@ public class AccountService extends Service {
       else receiverString += r.getNumber();
       receiverString += " "+getString(R.string.and_connector)+" "+
           getString(R.string.other_connector)+" "+(receivers.size()-1);      
+    }
+    
+    return receiverString;
+  }
+  
+  private String fullReceiverString(SMS sms) {
+    String receiverString = "";
+    List<Receiver> receivers = sms.getReceivers();
+    
+    Receiver fr = receivers.get(0);
+    if (fr.getName() != null && !fr.getName().equals("")) 
+      receiverString += fr.getName();
+    else receiverString += fr.getNumber();
+    
+    if (receivers.size() > 1) {
+      for (int i = 1; i < receivers.size()-1; ++i) {
+        receiverString += ", ";
+        Receiver mr = receivers.get(i);
+        if (mr.getName() != null && !mr.getName().equals("")) 
+          receiverString += mr.getName();
+        else receiverString += mr.getNumber();
+      }
+
+      receiverString += " "+getString(R.string.and_connector)+" ";
+      Receiver lr = receivers.get(receivers.size()-1);
+      if (lr.getName() != null && !lr.getName().equals("")) 
+        receiverString += lr.getName();
+      else receiverString += lr.getNumber();
     }
     
     return receiverString;

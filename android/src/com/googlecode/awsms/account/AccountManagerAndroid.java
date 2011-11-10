@@ -150,6 +150,24 @@ public class AccountManagerAndroid extends AccountManager {
   }
 
   @Override
+  public void update(String oldLabel, Account account) {
+    ContentValues values = new ContentValues();
+    values.put(CLASS, account.getClass().getName());
+    values.put(LABEL, account.getLabel());
+    values.put(USERNAME, account.getUsername());
+    values.put(PASSWORD, account.getPassword());
+    values.put(SENDER, account.getSender());
+    values.put(COUNT, account.getCount());
+    values.put(COUNT_DATE, account.getCountDate().getTime());
+    
+    SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
+    String whereClause = CLASS + "=? AND " + LABEL + "=?";
+    String[] whereArgs = { account.getClass().getName(), oldLabel };
+    db.update(TABLE_NAME, values, whereClause, whereArgs);
+    db.close();
+  }
+  
+  @Override
   public void delete(Account oldAccount) {
     SQLiteDatabase db = dbOpenHelper.getWritableDatabase();
     String whereClause = 
