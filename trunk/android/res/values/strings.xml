@@ -63,6 +63,7 @@
   <string name="unsupported_error_toast">Questo tipo di account non è attualmente supportato. Se desideri collaborare, per favore contatta lo sviluppatore.</string>
   <string name="provider_error_toast">Il sito internet potrebbe essere fuori servizio, per favore controlla e riprova più tardi</string>
   <string name="network_error_toast">Errore durante la connessione</string>
+  <string name="partial_error_message">Invio del messaggio per %s non riuscito.</string>
   <string name="captcha_decode_dialog">Decodifica CAPTCHA</string>
   <string name="captcha_decode_notification">Richiesta decodifica manuale del CAPTCHA</string>
   <string name="network_error_dialog">Errore di rete</string>

@@ -191,20 +191,20 @@ public class AccountDisplayActivity extends Activity {
     builder.setPositiveButton(R.string.rename_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
-            String label = labelText.getText().toString();
-            if (label.equalsIgnoreCase(account.getLabel())) return;
+            String oldLabel = account.getLabel();
+            String newLabel = labelText.getText().toString();
+            if (newLabel.equalsIgnoreCase(oldLabel)) return;
             
             for (Account a : accountManager.getAccounts())
-              if (a.getLabel().equalsIgnoreCase(label)) {
+              if (a.getLabel().equalsIgnoreCase(newLabel)) {
                 Toast.makeText(AccountDisplayActivity.this, 
                     R.string.existing_label_toast, Toast.LENGTH_SHORT).show();
                 showRenameDialog(account);
                 return;
               }
             
-            accountManager.delete(account);
-            account.setLabel(label);
-            accountManager.insert(account);
+            account.setLabel(newLabel);
+            accountManager.update(oldLabel, account);
             refreshAccountsList();
           }
         });

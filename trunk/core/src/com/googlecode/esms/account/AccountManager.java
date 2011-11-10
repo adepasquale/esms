@@ -46,8 +46,12 @@ public abstract class AccountManager implements Serializable {
    */
   public abstract void insert(Account newAccount);
   
-  // TODO using this method should avoid accounts reordering
-//  public abstract void update(Account account);
+  /**
+   * Update an existing account that has been modified.
+   * @param oldLabel label before editing
+   * @param account account to update
+   */
+  public abstract void update(String oldLabel, Account account);
   
   /**
    * Delete an account from the list of configured accounts.
