@@ -26,13 +26,20 @@
 	android:paddingRight="10dp"
 >
 
+  <TextView
+    android:text="@+id/partial_error"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:visibility="gone"
+  />
+    
 	<com.googlecode.awsms.android.CaptchaView
-	    android:id="@+id/captcha_image"
-       	android:layout_width="fill_parent"
-       	android:layout_height="wrap_content"
-	    android:layout_gravity="center"
-	    android:layout_margin="5dp"
-	    android:scaleType="fitXY"
+    android:id="@+id/captcha_image"
+    android:layout_width="fill_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:layout_margin="5dp"
+    android:scaleType="fitXY"
 	/>
 
 	<EditText 

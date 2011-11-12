@@ -39,6 +39,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.AudioManager;
 import android.net.Uri;
+import android.opengl.Visibility;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
@@ -46,8 +47,10 @@ import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.googlecode.awsms.R;
@@ -372,10 +375,19 @@ public class AccountService extends Service {
         .getSystemService(Context.LAYOUT_INFLATER_SERVICE);
     LinearLayout decodeLinear = (LinearLayout) inflater.inflate(
         R.layout.captcha_decode_dialog, null);
-    final CaptchaView captchaView = (CaptchaView) decodeLinear
-        .findViewById(R.id.captcha_image);
-    final EditText captchaText = (EditText) decodeLinear
-        .findViewById(R.id.captcha_text);
+    final TextView errorText = (TextView) 
+        decodeLinear.findViewById(R.id.partial_error);
+    final CaptchaView captchaView = (CaptchaView) 
+        decodeLinear.findViewById(R.id.captcha_image);
+    final EditText captchaText = (EditText) 
+        decodeLinear.findViewById(R.id.captcha_text);
+    
+    if (successful.getReceivers().size() > 0) {
+      errorText.setText(String.format(
+          getString(R.string.captcha_partial_message),
+          fullReceiverString(unsuccessful)));
+      errorText.setVisibility(View.VISIBLE);
+    }
     
     builder.setTitle(R.string.captcha_decode_dialog);
     builder.setView(decodeLinear);
@@ -467,7 +479,8 @@ public class AccountService extends Service {
     
     if (successful.getReceivers().size() > 0)
       dialogMessage = String.format(getString(R.string.partial_error_message),
-          fullReceiverString(unsuccessful)) + " " + dialogMessage;
+          fullReceiverString(successful), fullReceiverString(unsuccessful)) + 
+          " " + dialogMessage;
     
     builder.setTitle(dialogTitle);
     builder.setMessage(dialogMessage);
@@ -528,7 +541,8 @@ public class AccountService extends Service {
     
     if (successful.getReceivers().size() > 0)
       dialogMessage = String.format(getString(R.string.partial_error_message),
-          fullReceiverString(unsuccessful)) + " " + dialogMessage;
+          fullReceiverString(successful), fullReceiverString(unsuccessful)) + 
+          " " + dialogMessage;
     
     builder.setTitle(dialogTitle);
     builder.setMessage(dialogMessage);
@@ -590,7 +604,8 @@ public class AccountService extends Service {
     
     if (successful.getReceivers().size() > 0)
       dialogMessage = String.format(getString(R.string.partial_error_message),
-          fullReceiverString(unsuccessful)) + " " + dialogMessage;
+          fullReceiverString(successful), fullReceiverString(unsuccessful)) + 
+          " " + dialogMessage;
     
     builder.setTitle(dialogTitle);
     builder.setMessage(dialogMessage);
@@ -651,7 +666,8 @@ public class AccountService extends Service {
     
     if (successful.getReceivers().size() > 0)
       dialogMessage = String.format(getString(R.string.partial_error_message),
-          fullReceiverString(unsuccessful)) + " " + dialogMessage;
+          fullReceiverString(successful), fullReceiverString(unsuccessful)) + 
+          " " + dialogMessage;
     
     builder.setTitle(dialogTitle);
     builder.setMessage(dialogMessage);
@@ -712,7 +728,8 @@ public class AccountService extends Service {
     
     if (successful.getReceivers().size() > 0)
       dialogMessage = String.format(getString(R.string.partial_error_message),
-          fullReceiverString(unsuccessful)) + " " + dialogMessage;
+          fullReceiverString(successful), fullReceiverString(unsuccessful)) + 
+          " " + dialogMessage;
     
     builder.setTitle(dialogTitle);
     builder.setMessage(dialogMessage);

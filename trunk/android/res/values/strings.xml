@@ -39,8 +39,8 @@
   <string name="sending_successful_notification">Messaggio per %s inviato</string>
   <string name="sending_successful_toast">Il messaggio è stato inviato</string>
   <string name="sending_canceled_toast">L\'invio è stato cancellato</string>
-  <string name="menu_item_accounts">Accounts</string>
-  <string name="menu_item_settings">Preferenze</string>
+  <string name="menu_item_accounts">Account</string>
+  <string name="menu_item_settings">Impostazioni</string>
   <string name="menu_item_information">Informazioni</string>
   <string name="menu_item_reporting">Feedback</string>
   <string name="account_display_activity">Gestione account</string>
@@ -63,7 +63,8 @@
   <string name="unsupported_error_toast">Questo tipo di account non è attualmente supportato. Se desideri collaborare, per favore contatta lo sviluppatore.</string>
   <string name="provider_error_toast">Il sito internet potrebbe essere fuori servizio, per favore controlla e riprova più tardi</string>
   <string name="network_error_toast">Errore durante la connessione</string>
-  <string name="partial_error_message">Invio del messaggio per %s non riuscito.</string>
+  <string name="partial_error_message">Messaggio per %1$s inviato, messaggio per %2$s non inviato.</string>
+  <string name="captcha_partial_message">Messaggio per %s non inviato, decodifica manualmente il CAPTCHA per ritentare.</string>
   <string name="captcha_decode_dialog">Decodifica CAPTCHA</string>
   <string name="captcha_decode_notification">Richiesta decodifica manuale del CAPTCHA</string>
   <string name="network_error_dialog">Errore di rete</string>
