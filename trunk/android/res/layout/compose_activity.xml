@@ -21,186 +21,168 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:background="@android:color/white"
-    android:orientation="vertical"
->
+    android:orientation="vertical" >
 
     <LinearLayout
         android:id="@+id/sender_linear"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:paddingTop="5dp"
+        android:background="@drawable/top_gradient"
+        android:orientation="horizontal"
         android:paddingBottom="5dp"
         android:paddingLeft="5dp"
         android:paddingRight="5dp"
-        android:orientation="horizontal"
-        android:background="@drawable/top_gradient"
-    >
-        
-        <RelativeLayout
-        	android:id="@+id/counter_relative"
-        	android:layout_width="wrap_content"
-	        android:layout_height="wrap_content"
- 	       	android:layout_marginLeft="7dp"
-	       	android:layout_marginRight="7dp"
-	       	android:layout_gravity="center"
-        >
+        android:paddingTop="5dp" >
 
-	        <ImageView
-	            android:id="@+id/counter_image"
-	        	android:layout_width="wrap_content"
-	        	android:layout_height="wrap_content"
-	        	android:layout_centerInParent="true"
-	        	android:src="@drawable/sending_progress"
-	        />
-	        
-	        <TextView
-	        	android:id="@+id/counter_text"
-	        	android:layout_width="wrap_content"
-	        	android:layout_height="wrap_content"
-	        	android:layout_centerInParent="true"
-	        	android:textColor="@android:color/white"
-				android:textSize="16sp"
-				android:textStyle="bold"
-	        />
-	        
+        <RelativeLayout
+            android:id="@+id/counter_relative"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginLeft="7dp"
+            android:layout_marginRight="7dp" >
+
+            <ImageView
+                android:id="@+id/counter_image"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:src="@drawable/ic_counter_0" />
+
+            <TextView
+                android:id="@+id/counter_text"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerInParent="true"
+                android:text="0"
+                android:textColor="@android:color/white"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+            
         </RelativeLayout>
-        
+
         <Spinner
-        	android:id="@+id/sender_spinner"
-        	android:layout_weight="1.0"
-        	android:layout_width="wrap_content"
-        	android:layout_height="wrap_content"
-        	android:layout_marginLeft="5dp"
-        	android:layout_marginRight="10dp"
-        	android:prompt="@string/sender_prompt"
-        />
-                
+            android:id="@+id/sender_spinner"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="5dp"
+            android:layout_marginRight="10dp"
+            android:layout_weight="1.0"
+            android:prompt="@string/sender_prompt" />
+
         <View
-        	android:layout_width="2dp"
-        	android:layout_height="fill_parent"
-        	android:background="@drawable/divider_vertical"
-        />
-        
+            android:layout_width="2dp"
+            android:layout_height="fill_parent"
+            android:background="@drawable/divider_vertical" />
+
         <ImageButton
             android:id="@+id/clear_button"
-        	android:layout_width="wrap_content"
-        	android:layout_height="wrap_content"
-        	android:layout_marginLeft="7dp"
-        	android:layout_marginRight="7dp"
-        	android:layout_gravity="center"
-        	android:src="@drawable/clear_button"
-        	android:background="@drawable/square_button"
-        />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginLeft="7dp"
+            android:layout_marginRight="7dp"
+            android:background="@drawable/square_button"
+            android:src="@drawable/clear_button" />
         
     </LinearLayout>
 
-	<ScrollView
-      	android:layout_weight="1.0"
-      	android:layout_width="fill_parent"
-      	android:layout_height="0dp"
-	>
+    <ScrollView
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.0" >
 
-		<LinearLayout
-	        android:layout_width="fill_parent"
-	        android:layout_height="wrap_content"
-	        android:orientation="vertical"
-        >			
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" >
 
-		    <LinearLayout
-		        android:id="@+id/receiver_linear"
-		        android:layout_width="fill_parent"
-		        android:layout_height="wrap_content"
-		        android:paddingTop="5dp"
-		        android:paddingBottom="5dp"
-		        android:paddingLeft="5dp"
-		        android:paddingRight="5dp"
-		        android:orientation="horizontal"
-		    >
-		        
-		        <AutoCompleteTextView
-		        	android:id="@+id/receiver"
-		       		android:layout_weight="1.0"
-		        	android:layout_width="wrap_content"
-		        	android:layout_height="wrap_content"
-		        	android:nextFocusDown="@+id/message"
-		        	android:hint="@string/receiver_hint"
-		        	android:singleLine="true"
-		        />
-		        
-		        <ImageButton
-		            android:id="@+id/plus_button"
-		        	android:layout_width="wrap_content"
-		        	android:layout_height="wrap_content"
-		        	android:layout_marginLeft="10dp"
-		        	android:layout_marginRight="10dp"
-		        	android:src="@drawable/ic_btn_plus"
-		        	android:background="@drawable/round_button"
-		        />
-		        
-		    </LinearLayout>
-		
-		    <LinearLayout
-		    	android:id="@+id/list_linear"
-		     	android:layout_weight="1.0"
-		     	android:layout_width="fill_parent"
-		     	android:layout_height="0dp"
-		        android:orientation="vertical"
-		        android:visibility="gone"
-		   	/>
-		   	
-		    <LinearLayout
-		    	android:id="@+id/reply_linear"
-		      	android:layout_weight="1.0"
-		      	android:layout_width="fill_parent"
-		      	android:layout_height="0dp"
-		     	android:paddingLeft="10dp"
-				android:paddingRight="10dp"
-		        android:orientation="vertical"
-		        android:visibility="visible"
-		   	>
-		   	
-		   		<TextView
-		   			android:id="@+id/reply_content"
-					android:layout_width="fill_parent"
-					android:layout_height="wrap_content"
-					android:textColor="@android:color/black"
-					android:textSize="15sp"
-		   		/>
-		   		
-		   		<TextView
-		   			android:id="@+id/reply_date"
-					android:layout_width="fill_parent"
-					android:layout_height="wrap_content"
-					android:gravity="right"
-					android:textColor="@android:color/darker_gray"
-					android:textSize="12sp"
-					android:singleLine="true"
-		   		/>
-		   	
-		   	</LinearLayout>
-		
-		</LinearLayout>
+            <LinearLayout
+                android:id="@+id/receiver_linear"
+                android:layout_width="fill_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:paddingBottom="5dp"
+                android:paddingLeft="5dp"
+                android:paddingRight="5dp"
+                android:paddingTop="5dp" >
 
-	</ScrollView>
-	
+                <AutoCompleteTextView
+                    android:id="@+id/receiver"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1.0"
+                    android:hint="@string/receiver_hint"
+                    android:nextFocusDown="@+id/message"
+                    android:singleLine="true" />
+
+                <ImageButton
+                    android:id="@+id/plus_button"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginLeft="10dp"
+                    android:layout_marginRight="10dp"
+                    android:background="@drawable/round_button"
+                    android:src="@drawable/ic_btn_plus" />
+                
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/list_linear"
+                android:layout_width="fill_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1.0"
+                android:orientation="vertical"
+                android:visibility="gone" />
+
+            <LinearLayout
+                android:id="@+id/reply_linear"
+                android:layout_width="fill_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1.0"
+                android:orientation="vertical"
+                android:paddingLeft="10dp"
+                android:paddingRight="10dp"
+                android:visibility="visible" >
+
+                <TextView
+                    android:id="@+id/reply_content"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@android:color/black"
+                    android:textSize="15sp" />
+
+                <TextView
+                    android:id="@+id/reply_date"
+                    android:layout_width="fill_parent"
+                    android:layout_height="wrap_content"
+                    android:gravity="right"
+                    android:singleLine="true"
+                    android:textColor="@android:color/darker_gray"
+                    android:textSize="12sp" />
+                
+            </LinearLayout>
+            
+        </LinearLayout>
+        
+    </ScrollView>
+
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:gravity="bottom"
-    >
+        android:orientation="vertical" >
 
         <LinearLayout
             android:id="@+id/message_linear"
-            android:orientation="horizontal"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:paddingTop="5dp"
+            android:background="@drawable/bottom_gradient"
+            android:orientation="horizontal"
             android:paddingBottom="5dp"
             android:paddingLeft="5dp"
             android:paddingRight="5dp"
-            android:background="@drawable/bottom_gradient"
-        >
+            android:paddingTop="5dp" >
 
             <EditText
                 android:id="@+id/message"
@@ -208,46 +190,42 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1.0"
                 android:autoText="true"
-                android:capitalize="sentences"
-                android:nextFocusRight="@+id/send_button"
-                android:hint="@string/message_hint"
-                android:maxLines="3"
-                android:inputType="textShortMessage|textAutoCorrect|textCapSentences|textMultiLine"
-                android:imeOptions="actionSend|flagNoEnterAction"
                 android:background="@android:drawable/edit_text"
+                android:capitalize="sentences"
+                android:hint="@string/message_hint"
+                android:imeOptions="actionSend|flagNoEnterAction"
+                android:inputType="textShortMessage|textAutoCorrect|textCapSentences|textMultiLine"
                 android:maxLength="500"
-            />
+                android:maxLines="3"
+                android:nextFocusRight="@+id/send_button" />
 
             <LinearLayout
-                android:orientation="vertical"
                 android:layout_width="wrap_content"
                 android:layout_height="fill_parent"
-            >
+                android:orientation="vertical" >
 
                 <Button
                     android:id="@+id/send"
-                    android:enabled="false"
-                    android:layout_marginLeft="5dp"
+                    style="?android:attr/buttonStyle"
                     android:layout_width="wrap_content"
                     android:layout_height="0dp"
+                    android:layout_marginLeft="5dp"
                     android:layout_weight="1.0"
-                    style="?android:attr/buttonStyle"
+                    android:enabled="false"
                     android:nextFocusLeft="@+id/message"
-                    android:text="@string/send_button"
-                />
+                    android:text="@string/send_button" />
 
                 <TextView
                     android:id="@+id/length"
                     android:layout_width="fill_parent"
                     android:layout_height="wrap_content"
                     android:gravity="center_horizontal|bottom"
-                    android:textColor="@android:color/black"
-                    android:textSize="11sp"
+                    android:paddingBottom="5dp"
                     android:paddingLeft="3dp"
                     android:paddingRight="3dp"
-                    android:paddingBottom="5dp"
-                    android:visibility="gone"
-                />
+                    android:textColor="@android:color/black"
+                    android:textSize="11sp"
+                    android:visibility="gone" />
                 
             </LinearLayout>
             

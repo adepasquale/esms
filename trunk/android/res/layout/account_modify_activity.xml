@@ -21,205 +21,186 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:background="@android:color/black"
-    android:orientation="vertical"
->
+    android:orientation="vertical" >
 
     <LinearLayout
         android:id="@+id/title_linear"
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:padding="5dp"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
         android:background="@drawable/top_gradient"
-    >
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="5dp" >
 
         <ImageView
             android:id="@+id/title_logo"
-        	android:layout_width="wrap_content"
-        	android:layout_height="wrap_content"
-        	android:layout_marginLeft="10dp"
-        	android:layout_marginRight="10dp"
-        />
-        
-        <TextView
-        	android:id="@+id/title_text"
-        	android:layout_weight="1.0"
-        	android:layout_width="wrap_content"
-        	android:layout_height="wrap_content"
-        	android:layout_marginLeft="10dp"
-        	android:layout_marginRight="10dp"
-        	android:textColor="@android:color/white"
-			android:textSize="18sp"
-			android:textStyle="bold"
-        />
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp" />
 
-	</LinearLayout>
-	
-	<LinearLayout
-		android:id="@+id/login_linear"
-		android:layout_weight="1.0"
-	    android:layout_width="fill_parent"
-	    android:layout_height="0dp"
-	    android:orientation="vertical"
-	    android:padding="5dp"
-	    android:visibility="gone"
-	>
-	
         <TextView
-        	android:layout_width="fill_parent"
-        	android:layout_height="wrap_content"
-        	android:paddingTop="10dp"
-        	android:paddingLeft="5dp"
-        	android:paddingRight="5dp"
-        	android:paddingBottom="10dp"
-        	android:text="@string/login_text"
-        	android:textColor="@android:color/white"
-			android:textSize="16sp"
-        />
-	
+            android:id="@+id/title_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:layout_marginRight="10dp"
+            android:layout_weight="1.0"
+            android:textColor="@android:color/white"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+        
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/login_linear"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.0"
+        android:orientation="vertical"
+        android:padding="5dp"
+        android:visibility="gone" >
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="10dp"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="10dp"
+            android:text="@string/login_text"
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
+
         <EditText
             android:id="@+id/username_text"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:nextFocusDown="@+id/password_text"
             android:hint="@string/username_hint"
-            android:singleLine="true"
-        />
+            android:nextFocusDown="@+id/password_text"
+            android:inputType="textNoSuggestions"
+            android:singleLine="true" />
 
-		<View
-			android:layout_width="fill_parent"
-            android:layout_height="5dp"
-		/>
+        <View
+            android:layout_width="fill_parent"
+            android:layout_height="5dp" />
 
         <EditText
             android:id="@+id/password_text"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:nextFocusDown="@+id/next_button"
             android:hint="@string/password_hint"
-            android:singleLine="true"
+            android:nextFocusDown="@+id/next_button"
             android:password="true"
-        />
-        
-        <TextView
-        	android:layout_width="fill_parent"
-        	android:layout_height="wrap_content"
-        	android:paddingTop="10dp"
-        	android:paddingLeft="5dp"
-        	android:paddingRight="5dp"
-        	android:paddingBottom="5dp"
-        	android:text="@string/login_disclaimer"
-        	android:textColor="#A0A0A0"
-			android:textSize="14sp"
-        />
-	
-	</LinearLayout>
-	
-	<LinearLayout
-		android:id="@+id/sender_linear"
-		android:layout_weight="1.0"
-	    android:layout_width="fill_parent"
-	    android:layout_height="0dp"
-	    android:orientation="vertical"
-	    android:padding="5dp"
-	    android:visibility="gone"
-	>
-	
-        <TextView
-        	android:layout_width="fill_parent"
-        	android:layout_height="wrap_content"
-        	android:paddingTop="10dp"
-        	android:paddingLeft="5dp"
-        	android:paddingRight="5dp"
-        	android:paddingBottom="5dp"
-        	android:text="@string/sender_text"
-        	android:textColor="@android:color/white"
-			android:textSize="16sp"
-        />
-        
-		<RadioGroup
-			android:id="@+id/sender_radio"
-		    android:layout_width="fill_parent"
-		    android:layout_height="wrap_content"
-		    android:orientation="vertical"
-		    android:padding="5dp"
-		/>
+            android:singleLine="true" />
 
-	</LinearLayout>
-	
-	<LinearLayout
-		android:id="@+id/label_linear"
-		android:layout_weight="1.0"
-	    android:layout_width="fill_parent"
-	    android:layout_height="0dp"
-	    android:orientation="vertical"
-	    android:padding="5dp"
-	    android:visibility="gone"
-	>
-	
         <TextView
-        	android:layout_width="fill_parent"
-        	android:layout_height="wrap_content"
-        	android:paddingTop="10dp"
-        	android:paddingLeft="5dp"
-        	android:paddingRight="5dp"
-        	android:paddingBottom="10dp"
-        	android:text="@string/label_text"
-        	android:textColor="@android:color/white"
-			android:textSize="16sp"
-        />
-	
-        <EditText
-			android:id="@+id/label_text"
-			android:layout_width="fill_parent"
-			android:layout_height="wrap_content"
-			android:nextFocusDown="@+id/next_button"
-			android:capitalize="sentences"
-			android:singleLine="true"
-			android:maxLength="12"
-        />
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="5dp"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="10dp"
+            android:text="@string/login_disclaimer"
+            android:textColor="#A0A0A0"
+            android:textSize="14sp" />
         
-	</LinearLayout>
-	
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/sender_linear"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.0"
+        android:orientation="vertical"
+        android:padding="5dp"
+        android:visibility="gone" >
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="5dp"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="10dp"
+            android:text="@string/sender_text"
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
+
+        <RadioGroup
+            android:id="@+id/sender_radio"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="5dp" />
+        
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/label_linear"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1.0"
+        android:orientation="vertical"
+        android:padding="5dp"
+        android:visibility="gone" >
+
+        <TextView
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:paddingBottom="10dp"
+            android:paddingLeft="5dp"
+            android:paddingRight="5dp"
+            android:paddingTop="10dp"
+            android:text="@string/label_text"
+            android:textColor="@android:color/white"
+            android:textSize="16sp" />
+
+        <EditText
+            android:id="@+id/label_text"
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:capitalize="sentences"
+            android:maxLength="12"
+            android:nextFocusDown="@+id/next_button"
+            android:singleLine="true" />
+        
+    </LinearLayout>
+
     <LinearLayout
         android:layout_width="fill_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
         android:gravity="bottom"
-    >
-	
-	    <LinearLayout
-	        android:orientation="horizontal"
-	        android:layout_width="fill_parent"
-	        android:layout_height="wrap_content"
-	        android:gravity="center_horizontal"
-	        android:padding="5dp"
-	        android:background="@drawable/bottom_gradient"
-	    >
-		
-		    <Button
-		        android:id="@+id/prev_button"
-				android:layout_weight="0.5"
-		        android:layout_width="0dp"
-		        android:layout_height="wrap_content"
-		        android:drawableLeft="@drawable/ic_btn_prev"
-		        android:drawablePadding="5dp"
-		        android:text="@string/prev_button"
-		    />
-		    
-   		    <Button
-		        android:id="@+id/next_button"
-				android:layout_weight="0.5"
-		        android:layout_width="0dp"
-		        android:layout_height="wrap_content"
-		        android:drawableRight="@drawable/ic_btn_next"
-		        android:drawablePadding="5dp"
-		        android:text="@string/next_button"
-		    />
-		    
-	   	</LinearLayout>
-   	
-   	</LinearLayout>
+        android:orientation="vertical" >
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bottom_gradient"
+            android:gravity="center_horizontal"
+            android:orientation="horizontal"
+            android:padding="5dp" >
+
+            <Button
+                android:id="@+id/prev_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.5"
+                android:drawableLeft="@drawable/ic_btn_prev"
+                android:drawablePadding="5dp"
+                android:text="@string/prev_button" />
+
+            <Button
+                android:id="@+id/next_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.5"
+                android:drawablePadding="5dp"
+                android:drawableRight="@drawable/ic_btn_next"
+                android:text="@string/next_button" />
+            
+        </LinearLayout>
+        
+    </LinearLayout>
     
 </LinearLayout>

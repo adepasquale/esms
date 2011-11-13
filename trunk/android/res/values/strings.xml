@@ -19,11 +19,11 @@
 -->
 <resources>
   <string name="app_name">Ermete SMS</string>
-  <string name="app_version">versione 2.0.0</string>
-  <string name="app_author_title">Autori:</string>
+  <string name="app_version">versione %s</string>
+  <string name="app_author_title">Autori</string>
   <string name="app_author_value">Andrea De Pasquale\nAlberto Gasparin</string>
-  <string name="app_homepage_title">Homepage:</string>
-  <string name="app_homepage_value">code.google.com/p/esms</string>
+  <string name="app_homepage_title">Homepage</string>
+  <string name="app_homepage_value">http://code.google.com/p/esms</string>
   <string name="sender_prompt">Mittente</string>
   <string name="no_label_text">(etichetta)</string>
   <string name="receiver_hint">Destinatario</string>
@@ -47,11 +47,10 @@
   <string name="account_rename_message">Rinomina l\'etichetta dell\'account:</string>
   <string name="account_delete_message">Sei sicuro di voler eliminare l\'account?</string>
   <string name="no_accounts_text">(nessun account)</string>
-  <string name="menu_item_create">Nuovo account</string>
-  <string name="account_create_button">Nuovo account</string>
+  <string name="create_button">Nuovo account</string>
   <string name="account_create_activity">Aggiungi un account</string>
   <string name="welcome_message">Prima di poter inviare un messaggio, è necessario configurare almeno un account.</string>
-  <string name="account_modify_activity">Account</string>
+  <string name="account_text">Account</string>
   <string name="login_text">Nome utente e password:</string>
   <string name="username_hint">Nome utente</string>
   <string name="password_hint">Password</string>
@@ -60,6 +59,7 @@
   <string name="login_error_toast">Nome utente o password non validi</string>
   <string name="logout_progress_dialog">Uscita in corso...</string>
   <string name="logout_error_toast">Errore durante l\'uscita, ritentare o riavviare l\'applicazione</string>
+  <string name="overview_text">L\'account \"%s\" è stato creato o modificato con successo. Potrai selezionarlo dal menu a tendina nella schermata principale dell\'applicazione.</string>
   <string name="unsupported_error_toast">Questo tipo di account non è attualmente supportato. Se desideri collaborare, per favore contatta lo sviluppatore.</string>
   <string name="provider_error_toast">Il sito internet potrebbe essere fuori servizio, per favore controlla e riprova più tardi</string>
   <string name="network_error_toast">Errore durante la connessione</string>
@@ -94,19 +94,20 @@
   <string name="no_button">No</string>
   <string name="prev_button">Indietro</string>
   <string name="next_button">Avanti</string>
+  <string name="end_button">Fine</string>
   <string name="close_button">Chiudi</string>
   <string name="and_connector">e</string>
   <string name="or_connector">o</string>
   <string name="other_connector">altri</string>
-  <string name="receiver_settings">Prima dell\'invio</string>
-  <string name="filter_receiver_setting">Filtraggio rubrica</string>
-  <string name="show_pictures_setting">Visualizza fotografie</string>
-  <string name="sending_settings">Durante l\'invio</string>
-  <string name="show_progress_setting">Mostra avanzamento</string>
+  <string name="receiver_settings">Interfaccia</string>
+  <string name="filter_receiver_setting">Filtra numeri rubrica</string>
+  <string name="show_pictures_setting">Mostra foto contatti</string>
+  <string name="background_send_setting">Invia in background</string>
+  <string name="sending_settings">Notifiche</string>
   <string name="enable_notifications_setting">Attiva notifiche</string>
   <string name="notification_ringtone_setting">Suoneria notifiche</string>
   <string name="notification_vibration_setting">Vibrazione notifiche</string>
-  <string name="conversation_settings">Dopo l\'invio</string>
+  <string name="conversation_settings">Conversazione</string>
   <string name="save_message_setting">Salva messaggi inviati</string>
   <string name="clear_message_setting">Cancella automaticamente</string>
 </resources>

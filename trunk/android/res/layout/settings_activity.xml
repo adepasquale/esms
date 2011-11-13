@@ -17,79 +17,65 @@
   along with Ermete SMS.  If not, see <http://www.gnu.org/licenses/>.
   
 -->
-<PreferenceScreen
-	xmlns:android="http://schemas.android.com/apk/res/android"
->
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android" >
 
-	<PreferenceCategory
-		android:title="@string/receiver_settings"
-	>
-	
-		<ListPreference
-			android:title="@string/filter_receiver_setting"
-			android:key="filter_receiver" 
-			android:entries="@array/receiver_filtering_entries" 
-			android:entryValues="@array/receiver_filtering_values"
-			android:defaultValue=""
-		/>
-		
-		<CheckBoxPreference
-			android:title="@string/show_pictures_setting"
-			android:key="show_pictures"
-			android:defaultValue="true"
-		/>
-		
-	</PreferenceCategory>
-	
-	<PreferenceCategory
-		android:title="@string/sending_settings"
-	>
-	
-		<CheckBoxPreference
-			android:title="@string/show_progress_setting"
-			android:key="show_progress"
-			android:defaultValue="true"
-			android:enabled="false"
-		/>
-			
-		<CheckBoxPreference
-			android:title="@string/enable_notifications_setting"
-			android:key="enable_notifications"
-			android:defaultValue="true"
-		/>
-			
-		<RingtonePreference
-			android:title="@string/notification_ringtone_setting"
-			android:key="notification_ringtone"
-			android:ringtoneType="notification"
-		/>
-		
-		<ListPreference
-			android:title="@string/notification_vibration_setting"
-			android:key="notification_vibration" 
-			android:entries="@array/notification_vibration_entries" 
-			android:entryValues="@array/notification_vibration_values"
-			android:defaultValue="S"
-		/>
-		
-	</PreferenceCategory>
-	
-	<PreferenceCategory android:title="@string/conversation_settings">
-	
-		<CheckBoxPreference
-			android:title="@string/save_message_setting"
-			android:key="save_message"
-			android:defaultValue="true"
-		/>
-			
-		<ListPreference
-			android:title="@string/clear_message_setting"
-			android:key="clear_message" 
-			android:entries="@array/clear_message_entries" 
-			android:entryValues="@array/clear_message_values"
-			android:defaultValue=""
-		/>
-		
-	</PreferenceCategory>
-	
+    <PreferenceCategory android:title="@string/receiver_settings" >
+
+        <ListPreference
+            android:defaultValue=""
+            android:entries="@array/receiver_filtering_entries"
+            android:entryValues="@array/receiver_filtering_values"
+            android:key="filter_receiver"
+            android:title="@string/filter_receiver_setting" />
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="show_pictures"
+            android:title="@string/show_pictures_setting" />
+
+        <CheckBoxPreference
+            android:defaultValue="false"
+            android:enabled="false"
+            android:key="background_send"
+            android:title="@string/background_send_setting" />
+        
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/sending_settings" >
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="enable_notifications"
+            android:title="@string/enable_notifications_setting" />
+
+        <RingtonePreference
+            android:key="notification_ringtone"
+            android:ringtoneType="notification"
+            android:title="@string/notification_ringtone_setting" />
+
+        <ListPreference
+            android:defaultValue="S"
+            android:entries="@array/notification_vibration_entries"
+            android:entryValues="@array/notification_vibration_values"
+            android:key="notification_vibration"
+            android:title="@string/notification_vibration_setting" />
+        
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/conversation_settings" >
+
+        <CheckBoxPreference
+            android:defaultValue="true"
+            android:key="save_message"
+            android:title="@string/save_message_setting" />
+
+        <ListPreference
+            android:defaultValue=""
+            android:entries="@array/clear_message_entries"
+            android:entryValues="@array/clear_message_values"
+            android:key="clear_message"
+            android:title="@string/clear_message_setting" />
+        
+    </PreferenceCategory>
+
 </PreferenceScreen>
