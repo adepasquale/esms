@@ -31,6 +31,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager.NameNotFoundException;
 import android.database.Cursor;
 import android.graphics.drawable.AnimationDrawable;
 import android.net.Uri;
@@ -73,9 +75,6 @@ import com.googlecode.esms.message.Receiver;
 import com.googlecode.esms.message.SMS;
 
 public class ComposeActivity extends Activity {
-
-  static final String REPORTING_URL = 
-    "http://code.google.com/p/esms/issues/list";
   
   ConversationManager conversationManager;
   AccountManager accountManager;
@@ -121,8 +120,6 @@ public class ComposeActivity extends Activity {
     preferences = PreferenceManager.getDefaultSharedPreferences(this);
     conversationManager = new ConversationManagerAndroid(this);
     accountManager = new AccountManagerAndroid(ComposeActivity.this);
-    if (accountManager.getAccounts().size() == 0)
-      startActivity(new Intent(this, AccountDisplayActivity.class));
 
     serviceConnection = new ServiceConnection() {
       public void onServiceConnected(ComponentName name, IBinder service) {
@@ -249,7 +246,8 @@ public class ComposeActivity extends Activity {
     
     // check if application was started with an intent
     Intent intent = getIntent();
-    if (savedInstanceState == null && intent != null) {
+    if (savedInstanceState == null && 
+        intent != null && intent.getAction() != null) {
       if (intent.getAction().equals(Intent.ACTION_SEND)) {
         String message = intent.getStringExtra(Intent.EXTRA_TEXT);
         messageText.setText(message);
@@ -276,6 +274,22 @@ public class ComposeActivity extends Activity {
   public void onResume() {
     super.onResume(); 
     
+    if (accountManager.getAccounts().size() == 0) {
+      AlertDialog.Builder builder = new AlertDialog.Builder(this);
+      builder.setTitle(R.string.app_name);
+      builder.setMessage(R.string.welcome_message);
+      builder.setPositiveButton(R.string.create_button, 
+          new DialogInterface.OnClickListener() {
+        public void onClick(DialogInterface dialog, int which) {
+          startActivity(new Intent(
+              ComposeActivity.this,
+              AccountCreateActivity.class));
+        }
+      });
+      builder.setCancelable(false);
+      builder.show();
+    }
+    
     counterImage = (ImageView) findViewById(R.id.counter_image);
     counterText = (TextView) findViewById(R.id.counter_text);
 
@@ -288,8 +302,8 @@ public class ComposeActivity extends Activity {
     }
     ArrayAdapter<CharSequence> senderAdapter = new ArrayAdapter<CharSequence>(
         this, android.R.layout.simple_spinner_item, providers);
-    senderAdapter
-        .setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+    senderAdapter.setDropDownViewResource(
+        android.R.layout.simple_spinner_dropdown_item);
     senderSpinner = (Spinner) findViewById(R.id.sender_spinner);
     senderSpinner.setAdapter(senderAdapter);
     senderSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
@@ -415,7 +429,7 @@ public class ComposeActivity extends Activity {
         if (accountService != null)
           accountService.send(ComposeActivity.this, account, sms);
         
-        if (!preferences.getBoolean("show_progress", true)) {
+        if (preferences.getBoolean("background_send", false)) {
           Toast.makeText(ComposeActivity.this, R.string.sending_toast,
               Toast.LENGTH_LONG).show();
           
@@ -495,6 +509,8 @@ public class ComposeActivity extends Activity {
     case R.id.menu_item_reporting:
       // TODO use IssueTrackerAPI with custom input form
       Intent reportingIntent = new Intent(Intent.ACTION_VIEW);
+      final String REPORTING_URL = 
+          "http://code.google.com/p/esms/issues/list";
       reportingIntent.setData(Uri.parse(REPORTING_URL));
       startActivity(reportingIntent);
       return true;
@@ -595,16 +611,28 @@ public class ComposeActivity extends Activity {
 
     LayoutInflater inflater = (LayoutInflater)
         this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    LinearLayout infoLinear = (LinearLayout) 
+    LinearLayout informationLinear = (LinearLayout) 
         inflater.inflate(R.layout.information_dialog, null);
-
-    builder.setView(infoLinear);
+    TextView versionText = (TextView) 
+        informationLinear.findViewById(R.id.app_version);
+    
+    builder.setView(informationLinear);
     builder.setNeutralButton(R.string.close_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             dialog.dismiss();
           }
         });
+    
+    try {
+      PackageInfo packageInfo = 
+          getPackageManager().getPackageInfo(getPackageName(), 0);
+      versionText.setText(String.format(
+          getString(R.string.app_version),
+          packageInfo.versionName));
+    } catch (NameNotFoundException e) {
+      e.printStackTrace();
+    }
 
     builder.show();
   }

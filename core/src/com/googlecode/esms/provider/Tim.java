@@ -23,7 +23,6 @@ import java.util.List;
 
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountConnector;
-import com.googlecode.esms.account.Account.Result;
 import com.googlecode.esms.message.SMS;
 
 // TODO goText open source project on SourceForge

@@ -114,8 +114,8 @@ public class AccountModifyActivity extends Activity {
 //          R.drawable.ic_logo_tre));
     }
     
-    titleText.setText(getString(R.string.account_modify_activity) + " "
-        + newAccount.getLabel());
+    titleText.setText(getString(R.string.account_text) + 
+        " " + newAccount.getLabel());
 
     if (action.equals(AccountIntents.DO_AUTHENTICATION)) {
       loginLinear.setVisibility(View.VISIBLE);
@@ -163,6 +163,7 @@ public class AccountModifyActivity extends Activity {
       });
 
       prevButton.setOnClickListener(new OnClickListener() {
+        @Override
         public void onClick(View v) {
           AccountModifyActivity.this.finish();
         }
@@ -170,6 +171,7 @@ public class AccountModifyActivity extends Activity {
       
       toggleNextButton(usernameText.length(), passwordText.length());
       nextButton.setOnClickListener(new OnClickListener() {
+        @Override
         public void onClick(View v) {
           new AsyncTask<Void, Void, Account.Result>() {
             ProgressDialog progress;
@@ -387,9 +389,10 @@ public class AccountModifyActivity extends Activity {
           }
           
           Intent intent = new Intent(AccountModifyActivity.this,
-              AccountDisplayActivity.class);
-          intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+              AccountOverviewActivity.class);
+          intent.putExtra(AccountIntents.NEW_ACCOUNT, newAccount);
           startActivity(intent);
+//          intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         }
       });
     }

@@ -39,7 +39,6 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.media.AudioManager;
 import android.net.Uri;
-import android.opengl.Visibility;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.IBinder;
@@ -129,14 +128,14 @@ public class AccountService extends Service {
     new AsyncTask<Void, Void, List<Result>>() {
       
       // prevent errors when preferences are changed during send()
-      boolean progress, notifications;
+      boolean background, notifications;
 
       @Override
       protected void onPreExecute() {
         conversationManager.saveOutbox(sms);
         
-        progress = preferences.getBoolean("show_progress", true);
-        if (progress) {
+        background = preferences.getBoolean("background_send", false);
+        if (!background) {
           progressDialog = showProgressDialog(activity);
         }
 
@@ -190,11 +189,9 @@ public class AccountService extends Service {
 
       @Override
       protected void onPostExecute(List<Result> results) {
-        if (progress) {
-          if (progressDialog != null) {
-            progressDialog.dismiss();
-            progressDialog = null;
-          }
+        if (!background && progressDialog != null) {
+          progressDialog.dismiss();
+          progressDialog = null;
         }
 
         if (notifications) {

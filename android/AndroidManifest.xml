@@ -70,6 +70,10 @@
             android:theme="@android:style/Theme.NoTitleBar" />
         <activity
             android:configChanges="keyboardHidden|orientation"
+            android:name=".android.AccountOverviewActivity"
+            android:theme="@android:style/Theme.NoTitleBar" />
+        <activity
+            android:configChanges="keyboardHidden|orientation"
             android:label="@string/settings_activity"
             android:name=".android.SettingsActivity" />
         <service android:name=".android.AccountService" />

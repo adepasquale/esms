@@ -28,9 +28,6 @@ import android.content.res.Resources;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.LayoutInflater;
-import android.view.Menu;
-import android.view.MenuInflater;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.View.OnLongClickListener;
@@ -41,8 +38,8 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.googlecode.awsms.account.AccountManagerAndroid;
 import com.googlecode.awsms.R;
+import com.googlecode.awsms.account.AccountManagerAndroid;
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountManager;
 
@@ -51,7 +48,7 @@ public class AccountDisplayActivity extends Activity {
   AccountManager accountManager;
 
   LinearLayout accountsLinear;
-  Button createButton;
+  Button backButton, createButton;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -59,10 +56,26 @@ public class AccountDisplayActivity extends Activity {
     setContentView(R.layout.account_display_activity);
 
     accountManager = new AccountManagerAndroid(AccountDisplayActivity.this);
-    if (accountManager.getAccounts().size() == 0) showWelcomeDialog();
-
     accountsLinear = (LinearLayout) findViewById(R.id.accounts_linear);
     refreshAccountsList();
+    
+    backButton = (Button) findViewById(R.id.back_button);
+    backButton.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        AccountDisplayActivity.this.finish();
+      }
+    });
+    
+    createButton = (Button) findViewById(R.id.create_button);
+    createButton.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        startActivity(new Intent(
+            AccountDisplayActivity.this,
+            AccountCreateActivity.class));
+      }
+    });
   }
 
   private void refreshAccountsList() {
@@ -126,13 +139,13 @@ public class AccountDisplayActivity extends Activity {
 
       accountsLinear.addView(listItem);
     }
-
+    
     if (accounts.size() == 0) {
       View listEmpty = getLayoutInflater().inflate(
           R.layout.account_display_list_empty, null);
       accountsLinear.addView(listEmpty);
     }
-    
+
     accountsLinear.invalidate();
   }
 
@@ -256,51 +269,5 @@ public class AccountDisplayActivity extends Activity {
         });
 
     builder.show();
-  }
-
-  @Override
-  public void onBackPressed() {
-    if (accountManager.getAccounts().size() == 0)
-      showWelcomeDialog();
-    else super.onBackPressed();
-  }
-  
-  private void showWelcomeDialog() {
-    AlertDialog.Builder builder = new AlertDialog.Builder(this);
-    builder.setTitle(R.string.app_name);
-    builder.setMessage(R.string.welcome_message);
-
-    builder.setPositiveButton(
-        R.string.account_create_button, new DialogInterface.OnClickListener() {
-      public void onClick(DialogInterface dialog, int which) {
-        startActivity(new Intent(
-            AccountDisplayActivity.this,
-            AccountCreateActivity.class));
-      }
-    });
-
-    builder.setCancelable(false);
-    builder.show();
-  }
-  
-  @Override
-  public boolean onCreateOptionsMenu(Menu menu) {
-    MenuInflater inflater = getMenuInflater();
-    inflater.inflate(R.layout.create_menu, menu);
-    return true;
-  }
-
-  @Override
-  public boolean onOptionsItemSelected(MenuItem item) {
-    switch (item.getItemId()) {
-    case R.id.menu_item_create:
-      startActivity(new Intent(
-          AccountDisplayActivity.this,
-          AccountCreateActivity.class));
-      return true;
-
-    default:
-      return super.onOptionsItemSelected(item);
-    }
   }
 }
