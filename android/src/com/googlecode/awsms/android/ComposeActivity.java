@@ -20,15 +20,18 @@ package com.googlecode.awsms.android;
 
 import java.net.URLDecoder;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
@@ -40,6 +43,7 @@ import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
+import android.telephony.SmsMessage;
 import android.text.Annotation;
 import android.text.Editable;
 import android.text.Spannable;
@@ -85,6 +89,11 @@ public class ComposeActivity extends Activity {
   ServiceConnection serviceConnection;
   AccountService accountService;
   boolean serviceBound;
+  
+  BroadcastReceiver broadcastReceiver;
+  IntentFilter intentFilter;
+  static final String ACTION_SMS_RECEIVED = 
+      "android.provider.Telephony.SMS_RECEIVED";
 
   ImageView counterImage;
   AnimationDrawable counterAnimation;
@@ -137,12 +146,52 @@ public class ComposeActivity extends Activity {
       serviceBound = true;
     }
 
+    intentFilter = new IntentFilter();
+    intentFilter.addAction(ACTION_SMS_RECEIVED);
+    broadcastReceiver = new BroadcastReceiver() {
+      @Override
+      public void onReceive(Context context, Intent intent) {
+        Bundle bundle = intent.getExtras();
+        if (bundle != null) {
+          Object[] pdus = (Object[]) bundle.get("pdus");
+          for (Object pdu : pdus) {
+            SmsMessage message = SmsMessage.createFromPdu((byte[]) pdu);
+            if (listSize == 0) {
+              String number = receiverText.getText().toString();
+              Spannable s = receiverText.getText();
+              Annotation[] annotations = 
+                  s.getSpans(0, s.length(), Annotation.class);
+              for (Annotation a : annotations)
+                if (a.getKey().equals("number"))
+                  number = a.getValue();
+              
+              String address = message.getOriginatingAddress();
+              int addressLength = address.length();
+              if (addressLength > 10) 
+                address = address.substring(addressLength-10, addressLength);
+              int numberLength = number.length();
+              if (numberLength > 10) 
+                number = number.substring(numberLength-10, numberLength);
+              
+              if (number.equals(address)) {
+                replyContent.setText(message.getMessageBody());
+                long date = message.getTimestampMillis();
+                replyDate.setText(new Date(date).toLocaleString());
+              }
+            }
+          }
+        }
+      }
+    };
+    registerReceiver(broadcastReceiver, intentFilter);
+    
     clearButton = (ImageButton) findViewById(R.id.clear_button);
     clearButton.setEnabled(false);
     clearButton.setOnClickListener(new OnClickListener() {
       public void onClick(View v) {
         clearButton.setEnabled(false);
         receiverText.setText("");
+        receiverText.requestFocus();
         receiverIncomplete = "";
         hasAutocompleted = false;
         listLinear.setVisibility(View.GONE);
@@ -177,17 +226,20 @@ public class ComposeActivity extends Activity {
             replyContent.setText(reply.getMessage());
             replyDate.setText(reply.getDate());
           }
+          messageText.requestFocus();
         } else if (listSize < MAX_LIST_SIZE) {
           String name = receiverName.getText().toString();
           String number = receiverNumber.getText().toString();
           addListItem(name, number);
           receiverText.setText("");
+          receiverText.requestFocus();
           String t = String.format(
               getString(R.string.positive_receiver_toast), 
               name + " (" + number + ")");
           Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
         } else {
           receiverText.setText("");
+          receiverText.requestFocus();
           String t = getString(R.string.maximum_receivers_toast);
           Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
         }
@@ -228,6 +280,7 @@ public class ComposeActivity extends Activity {
           Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
         }
         receiverText.setText("");
+        receiverText.requestFocus();
         receiverIncomplete = "";
         hasAutocompleted = false;
       }
@@ -251,6 +304,7 @@ public class ComposeActivity extends Activity {
       if (intent.getAction().equals(Intent.ACTION_SEND)) {
         String message = intent.getStringExtra(Intent.EXTRA_TEXT);
         messageText.setText(message);
+        clearButton.setEnabled(true);
         receiverText.requestFocus();
       }
 
@@ -266,6 +320,12 @@ public class ComposeActivity extends Activity {
           receiverText.setText(receiver);
         }
         messageText.requestFocus();
+        clearButton.setEnabled(true);
+        SMS reply = conversationManager.loadInbox(receiver);
+        if (reply != null) {
+          replyContent.setText(reply.getMessage());
+          replyDate.setText(reply.getDate());
+        }
       }
     }
   }
@@ -475,6 +535,7 @@ public class ComposeActivity extends Activity {
       serviceBound = false;
     }
     
+    unregisterReceiver(broadcastReceiver);
     super.onDestroy();
   }
 
