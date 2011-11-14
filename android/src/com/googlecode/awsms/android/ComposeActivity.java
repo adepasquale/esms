@@ -372,7 +372,7 @@ public class ComposeActivity extends Activity {
           AdapterView<?> parent, View view, int position, long id) {
         List<Account> accounts = accountManager.getAccounts();
         account = accounts.get(position);
-        refreshCounter();
+        refreshCounter(); // FIXME refresh remaining chars
         if (accountService != null)
           accountService.login(account);
       }
