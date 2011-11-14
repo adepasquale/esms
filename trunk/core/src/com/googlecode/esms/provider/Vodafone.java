@@ -51,6 +51,29 @@ public class Vodafone extends Account {
 
   static final String PROVIDER = "Vodafone";
 
+  static final String CHECK_USER = 
+    "https://www.vodafone.it/190/trilogy/jsp/utility/checkUser.jsp";
+  static final String DO_LOGIN = 
+    "https://www.vodafone.it/190/trilogy/jsp/login.do";
+//  static final String DO_LOGOUT = 
+//    "http://www.vodafone.it/190/trilogy/jsp/logout.do";
+  static final String DO_SWAPSIM = 
+    "https://www.vodafone.it/190/trilogy/jsp/swapSim.do";
+  static final String DO_PRECHECK = 
+    "https://www.vodafone.it/190/fsms/precheck.do?channel=VODAFONE_DW";
+  static final String DO_PREPARE = 
+    "https://www.vodafone.it/190/fsms/prepare.do?channel=VODAFONE_DW";
+  static final String DO_SEND = 
+    "https://www.vodafone.it/190/fsms/send.do?channel=VODAFONE_DW";
+
+  boolean loggedIn;
+  boolean isConsumer;
+  boolean isCorporate;
+  boolean isBlocked;
+  String senderCurrent;
+  List<String> senderList;
+  String usernameCurrent;
+  
   public Vodafone(AccountConnector connector) {
     super(connector);
 
@@ -244,29 +267,6 @@ public class Vodafone extends Account {
     return results;
   }
 
-  static final String CHECK_USER = 
-    "https://www.vodafone.it/190/trilogy/jsp/utility/checkUser.jsp";
-  static final String DO_LOGIN = 
-    "https://www.vodafone.it/190/trilogy/jsp/login.do";
-//  static final String DO_LOGOUT = 
-//    "http://www.vodafone.it/190/trilogy/jsp/logout.do";
-  static final String DO_SWAPSIM = 
-    "https://www.vodafone.it/190/trilogy/jsp/swapSim.do";
-  static final String DO_PRECHECK = 
-    "https://www.vodafone.it/190/fsms/precheck.do?channel=VODAFONE_DW";
-  static final String DO_PREPARE = 
-    "https://www.vodafone.it/190/fsms/prepare.do?channel=VODAFONE_DW";
-  static final String DO_SEND = 
-    "https://www.vodafone.it/190/fsms/send.do?channel=VODAFONE_DW";
-
-  boolean loggedIn;
-  boolean isConsumer;
-  boolean isCorporate;
-  boolean isBlocked;
-  String senderCurrent;
-  List<String> senderList;
-  String usernameCurrent;
-  
   private void checkUser() throws ClientProtocolException, IOException, 
       IllegalStateException, JDOMException {
     HttpGet request = new HttpGet(CHECK_USER);
@@ -322,7 +322,7 @@ public class Vodafone extends Account {
     checkUser();
     if (!loggedIn) return true;
     else return false;
-  }  
+  }
 
   private Result getResult(int code) {
     switch (code) {
