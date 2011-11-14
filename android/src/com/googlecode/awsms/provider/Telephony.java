@@ -48,13 +48,11 @@ public class Telephony extends Account {
   
   @Override
   public int calcRemaining(int length) {
-    // TODO use same method of default app
     return 0;
   }
 
   @Override
   public int calcFragments(int length) {
-    // TODO use same method of default app
     return 0;
   }
 
@@ -81,7 +79,7 @@ public class Telephony extends Account {
 
   @Override
   public List<Result> send(SMS sms) {
-    // TODO use telephony provider
+    // TODO use telephony provider to send SMS
     List<Result> results = new LinkedList<Result>();
     for (int r = 0; r < sms.getReceivers().size(); ++r)
       results.add(Result.UNSUPPORTED_ERROR);

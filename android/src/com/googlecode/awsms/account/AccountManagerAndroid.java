@@ -87,7 +87,6 @@ public class AccountManagerAndroid extends AccountManager {
 //    providers.add(new Telephony(context));
     providers.add(new Vodafone(connector));
     providers.add(new Tim(connector));
-//    providers.add(new Tre(connector));
     return providers;
   }
     

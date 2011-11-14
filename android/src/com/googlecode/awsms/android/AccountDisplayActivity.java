@@ -100,11 +100,11 @@ public class AccountDisplayActivity extends Activity {
       listItemLabel.setText(label);
       listItemSender.setText(account.getSender());
       
-      if (account.getProvider().equals("Telefono")) {
+//      if (account.getProvider().equals("Telefono")) {
 //        listItemLogo.setImageBitmap(
 //            BitmapFactory.decodeResource(getResources(),
 //            R.drawable.ic_logo_SIM));
-      }
+//      }
       
       if (account.getProvider().equals("Vodafone")) {
         listItemLogo.setImageBitmap(
@@ -116,12 +116,6 @@ public class AccountDisplayActivity extends Activity {
         listItemLogo.setImageBitmap(
             BitmapFactory.decodeResource(getResources(), 
             R.drawable.ic_logo_tim));
-      }
-      
-      if (account.getProvider().equals("Tre")) {
-//        listItemLogo.setImageBitmap(
-//            BitmapFactory.decodeResource(getResources(), 
-//            R.drawable.ic_logo_tre));
       }
       
       listItemLinear.setOnClickListener(new OnClickListener() {

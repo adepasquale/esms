@@ -46,7 +46,6 @@ import com.googlecode.esms.account.AccountConnector;
 import com.googlecode.esms.message.Base64;
 import com.googlecode.esms.message.SMS;
 
-// TODO web, widget and BUSINESS all in one account
 public class Vodafone extends Account {
   private static final long serialVersionUID = 1L;
 

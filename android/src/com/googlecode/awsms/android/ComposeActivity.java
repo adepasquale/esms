@@ -582,7 +582,7 @@ public class ComposeActivity extends Activity {
   }
   
   public void clearFields() {
-    String preference = preferences.getString("clear_message", "");
+    String preference = preferences.getString("clear_message", "M");
     if (preference.contains("R")) receiverText.setText("");
     if (preference.contains("M")) messageText.setText("");
   }

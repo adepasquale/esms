@@ -23,6 +23,7 @@ package com.googlecode.esms.message;
  * @author Andrea De Pasquale
  */
 public abstract class ConversationManager {
+  // TODO change SMS to List<SMS>
   
   /**
    * Load last draft of message for some receiver.

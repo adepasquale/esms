@@ -363,7 +363,6 @@ public class AccountService extends Service {
     return notification;
   }
   
-  // FIXME handle partial failures
   private void showCaptchaDialog(final ComposeActivity activity, 
       final Account account, final SMS successful, final SMS unsuccessful) {
     AlertDialog.Builder builder = new AlertDialog.Builder(activity);
