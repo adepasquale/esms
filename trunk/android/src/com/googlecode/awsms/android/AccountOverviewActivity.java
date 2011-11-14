@@ -61,11 +61,11 @@ public class AccountOverviewActivity extends Activity {
         intent.getSerializableExtra(AccountIntents.NEW_ACCOUNT);
     account.setAccountConnector(new AccountConnectorAndroid(this));
     
-    if (account.getProvider().equals("Telefono")) {
+//    if (account.getProvider().equals("Telefono")) {
 //      titleLogo.setImageBitmap(
 //          BitmapFactory.decodeResource(getResources(),
 //          R.drawable.ic_logo_SIM));
-    }
+//    }
     
     if (account.getProvider().equals("Vodafone")) {
       titleLogo.setImageBitmap(
@@ -77,12 +77,6 @@ public class AccountOverviewActivity extends Activity {
       titleLogo.setImageBitmap(
           BitmapFactory.decodeResource(getResources(), 
           R.drawable.ic_logo_tim));
-    }
-    
-    if (account.getProvider().equals("Tre")) {
-//      titleLogo.setImageBitmap(
-//          BitmapFactory.decodeResource(getResources(), 
-//          R.drawable.ic_logo_tre));
     }
     
     titleText.setText(

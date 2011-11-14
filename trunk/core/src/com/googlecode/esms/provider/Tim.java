@@ -25,7 +25,6 @@ import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountConnector;
 import com.googlecode.esms.message.SMS;
 
-// TODO goText open source project on SourceForge
 public class Tim extends Account {
   private static final long serialVersionUID = 1L;
 

@@ -70,7 +70,7 @@
             android:title="@string/save_message_setting" />
 
         <ListPreference
-            android:defaultValue=""
+            android:defaultValue="M"
             android:entries="@array/clear_message_entries"
             android:entryValues="@array/clear_message_values"
             android:key="clear_message"

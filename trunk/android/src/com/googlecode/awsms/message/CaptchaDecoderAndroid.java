@@ -22,13 +22,9 @@ import com.googlecode.esms.message.CaptchaDecoder;
 
 public class CaptchaDecoderAndroid extends CaptchaDecoder {
 
-  CaptchaDecoderAndroid() {
-    // TODO Auto-generated method stub
-  }
-  
   @Override
   public String decode(byte[] pixels, int width, int height) {
-    // TODO Auto-generated method stub
+    // TODO libautocaptcha
     return null;
   }
 
