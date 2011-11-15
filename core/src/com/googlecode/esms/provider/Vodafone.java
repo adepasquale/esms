@@ -240,8 +240,10 @@ public class Vodafone extends Account {
         
         // filter wrong CAPTCHA characters
         String captchaText = sms.getCaptchaText();
-        captchaText.replaceAll("[^1-9A-NP-Za-np-z]*", "");
-        sms.setCaptchaText(captchaText);
+        if (captchaText != null) {
+          captchaText.replaceAll("[^1-9A-NP-Za-np-z]*", "");
+          sms.setCaptchaText(captchaText);
+        }
         
         int send = doSend(sms, r);
         if (send != 0) {
