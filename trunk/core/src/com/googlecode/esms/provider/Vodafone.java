@@ -220,14 +220,12 @@ public class Vodafone extends Account {
         currReceiver = r;
         
         if (sms.getCaptchaText() == null || sms.getCaptchaText() == "") {
-          System.out.println("com.googlecode.esms.provider.Vodafone.doPrecheck()");
           int precheck = doPrecheck();
           if (precheck != 0) {
             results.set(r, getResult(precheck));
             return results;
           }
           
-          System.out.println("com.googlecode.esms.provider.Vodafone.doPrepare()");
           int prepare = doPrepare(sms, r);
           if (prepare != 0) {
             results.set(r, getResult(prepare));
@@ -240,7 +238,11 @@ public class Vodafone extends Account {
           }
         }
         
-        System.out.println("com.googlecode.esms.provider.Vodafone.doSend()");
+        // filter wrong CAPTCHA characters
+        String captchaText = sms.getCaptchaText();
+        captchaText.replaceAll("[^1-9A-NP-Za-np-z]*", "");
+        sms.setCaptchaText(captchaText);
+        
         int send = doSend(sms, r);
         if (send != 0) {
           results.set(r, getResult(send));
@@ -401,22 +403,21 @@ public class Vodafone extends Account {
 
   private String stripPrefix(String receiver) {
     final String PREFIX = "39";
-    String pZero = "00" + PREFIX;
-    String pPlus = "+" + PREFIX;
-
     receiver = receiver.replaceAll("[^0-9\\+]*", "");
     int lNumber = receiver.length();
-    int lZero = pZero.length();
+
+    String pPlus = "+" + PREFIX;
     int lPlus = pPlus.length();
-
-    if (lNumber > lZero && receiver.substring(0, lZero).equals(pZero)) {
-      return receiver.substring(lZero);
-    }
-
     if (lNumber > lPlus && receiver.substring(0, lPlus).equals(pPlus)) {
       return receiver.substring(lPlus);
     }
 
+    String pZero = "00" + PREFIX;
+    int lZero = pZero.length();
+    if (lNumber > lZero && receiver.substring(0, lZero).equals(pZero)) {
+      return receiver.substring(lZero);
+    }
+    
     return receiver;
   }
   

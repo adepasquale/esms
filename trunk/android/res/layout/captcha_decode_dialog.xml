@@ -49,7 +49,6 @@
 		android:singleLine="true"
 		android:inputType="textCapCharacters|textNoSuggestions"
     android:imeOptions="actionNone"
-		android:maxLength="5"
 	/>
 		
 </LinearLayout>
