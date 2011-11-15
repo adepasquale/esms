@@ -149,7 +149,7 @@ public class AccountService extends Service {
 
       @Override
       protected List<Result> doInBackground(Void... params) {
-        int attempts = 5;
+        int attempts = 3;
         while (true) {
           Log.d(TAG, "call send() #" + attempts);
           List<Result> results = account.send(sms);
@@ -164,7 +164,7 @@ public class AccountService extends Service {
             AccountConnector connector = new AccountConnectorAndroid(activity);
             account.setAccountConnector(connector);
             try {
-              Thread.sleep(2500);
+              Thread.sleep(1000);
             } catch (InterruptedException e) { 
               e.printStackTrace();
             }

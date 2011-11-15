@@ -64,7 +64,8 @@
             android:id="@+id/overview_text"
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:textSize="16sp" />
+            android:textColor="@android:color/white"
+            android:textSize="17sp" />
         
     </LinearLayout>
     
