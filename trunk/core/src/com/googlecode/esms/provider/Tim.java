@@ -67,7 +67,7 @@ public class Tim extends Account {
   static final Pattern PATTERN_LOGIN = Pattern.compile(
       "("+RE_SENDER_LIST+")|("+DO_LOGOUT+")");
   
-  static final String RE_SESSION_EXPIRED =
+  static final String RE_GENERIC_ERROR =
       "<span\\s+([^>]*\\s+)?class=\"errore\"\\s*([^>]*)?>([^<]*)</span>";
   static final String RE_MESSAGE_COUNT = 
       "<img\\s+([^>]*\\s+)?alt=\"SMS inviati\"\\s*([^>]*)?>" +
@@ -75,10 +75,20 @@ public class Tim extends Account {
   static final String RE_FORM_DATA =
       "<input\\s+([^>]*\\s+)?name=\"t:formdata\"\\s+([^>]*\\s+)?" +
       "value=\"([^\"]*)\"\\s*([^>]*)?>";
+  static final String RE_CAPTCHA_ERROR =
+      "Le lettere che hai inserito non corrispondono a quelle presenti nell'immagine";
+  static final String RE_RESULTS =
+      "<span\\s*([^>]*)?>([0-9]{9,10})</span>" +
+      "<span\\s*([^>]*)?>-</span>" +
+      "<span\\s*([^>]*)?>([^<]*)?</span>";
+  // SMS non inviato, il numero non è TIM
+  // SMS inviato
   static final Pattern PATTERN_ADD_DISPATCH_NEW = Pattern.compile(
-      "("+RE_SESSION_EXPIRED+")|("+RE_MESSAGE_COUNT+")|("+RE_FORM_DATA+")");
-  static final Pattern PATTERN_ADD_DISPATCH_FORM = Pattern.compile(
-      "("+RE_FORM_DATA+")");
+      "("+RE_GENERIC_ERROR+")|("+RE_MESSAGE_COUNT+")|("+RE_FORM_DATA+")");
+  static final Pattern PATTERN_ADD_DISPATCH_FORM = 
+      Pattern.compile("("+RE_FORM_DATA+")");
+  static final Pattern PATTERN_VALIDATE_CAPTCHA_FORM = Pattern.compile(
+      "("+RE_GENERIC_ERROR+")|("+RE_CAPTCHA_ERROR+")|("+RE_RESULTS+")");
   
   boolean loggedIn;
   String senderCurrent;
@@ -215,19 +225,12 @@ public class Tim extends Account {
         
       } else {
       
-//      int send = doSend(sms);
-//      if (send != 0) {
-//        results.set(r, getResult(send));
-//        return results;
-//      }
-//      if (sms.getCaptchaArray() != null) {
-//        results.set(r, Result.CAPTCHA_NEEDED);
-//        return results;
-//      }
-//      
-//      updateCount();
-//      count += calcFragments(sms.getMessage().length());
-//      results.set(r, Result.SUCCESSFUL);
+        boolean validateCaptchaForm = validateCaptchaForm(sms, results);
+        if (!validateCaptchaForm) return results;
+        
+        // reorder results and update count
+//        updateCount();
+//        ++count;
         
       }
       
@@ -332,9 +335,9 @@ public class Tim extends Account {
           response.getEntity().getContent(), PATTERN_ADD_DISPATCH_NEW);
       response.getEntity().consumeContent();
       
-      Pattern session = Pattern.compile(RE_SESSION_EXPIRED);
+      Pattern error = Pattern.compile(RE_GENERIC_ERROR);
       for (String s : strings) {
-        Matcher m = session.matcher(s);
+        Matcher m = error.matcher(s);
         if (m.find()) return Result.LOGIN_ERROR;
       }
       
@@ -427,7 +430,34 @@ public class Tim extends Account {
     }
   }
   
-//  private Result validateCaptchaForm(SMS sms) {
-//    
-//  }
+  private boolean validateCaptchaForm(SMS sms, List<Result> results) {
+    try {
+      
+      HttpPost request = new HttpPost(VALIDATE_CAPTCHA_FORM);
+      List<NameValuePair> requestData = new ArrayList<NameValuePair>();
+      requestData.add(new BasicNameValuePair("t:ac", "Dispatch"));
+      requestData.add(new BasicNameValuePair("t:formdata", formData));
+      requestData.add(new BasicNameValuePair("verificationCode", sms.getCaptchaText()));
+      request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
+      HttpResponse response = httpClient.execute(request, httpContext);
+      List<String> strings = findPattern(
+          response.getEntity().getContent(), PATTERN_VALIDATE_CAPTCHA_FORM);
+      response.getEntity().consumeContent();
+
+      for (String s : strings)
+        System.out.println(s);
+      
+//      sms.setCaptchaText("");
+//      results.set(0, Result.CAPTCHA_ERROR);
+//      return false;
+
+      results.set(0, Result.UNKNOWN_ERROR);
+      return false;
+      
+    } catch (Exception e) {
+      e.printStackTrace();
+      results.set(0, Result.NETWORK_ERROR);
+      return false;
+    }
+  }
 }
