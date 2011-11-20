@@ -67,6 +67,8 @@ public class Tim extends Account {
   static final Pattern PATTERN_LOGIN = Pattern.compile(
       "("+RE_SENDER_LIST+")|("+DO_LOGOUT+")");
   
+  static final String RE_LIMIT_ERROR =
+      "<div\\s+([^>]*\\s+)?class=\"errore\"\\s*([^>]*)?>([^<]*)<br/>";
   static final String RE_GENERIC_ERROR =
       "<span\\s+([^>]*\\s+)?class=\"errore\"\\s*([^>]*)?>([^<]*)</span>";
   static final String RE_MESSAGE_COUNT = 
@@ -75,20 +77,29 @@ public class Tim extends Account {
   static final String RE_FORM_DATA =
       "<input\\s+([^>]*\\s+)?name=\"t:formdata\"\\s+([^>]*\\s+)?" +
       "value=\"([^\"]*)\"\\s*([^>]*)?>";
-  static final String RE_CAPTCHA_ERROR =
-      "Le lettere che hai inserito non corrispondono a quelle presenti nell'immagine";
   static final String RE_RESULTS =
       "<span\\s*([^>]*)?>([0-9]{9,10})</span>" +
       "<span\\s*([^>]*)?>-</span>" +
       "<span\\s*([^>]*)?>([^<]*)?</span>";
-  // SMS non inviato, il numero non è TIM
-  // SMS inviato
+  static final String RE_BLOCKING_ERROR =
+      "<div\\s+([^>]*\\s+)?class=\"t-error\"\\s*([^>]*)?>" +
+      "<div>Attenzione:</div><ul><li>([^<]*)</li></ul></div>";
+  
   static final Pattern PATTERN_ADD_DISPATCH_NEW = Pattern.compile(
-      "("+RE_GENERIC_ERROR+")|("+RE_MESSAGE_COUNT+")|("+RE_FORM_DATA+")");
+      "("+RE_LIMIT_ERROR+")|("+RE_GENERIC_ERROR+")|" +
+      "("+RE_MESSAGE_COUNT+")|("+RE_FORM_DATA+")");
   static final Pattern PATTERN_ADD_DISPATCH_FORM = 
       Pattern.compile("("+RE_FORM_DATA+")");
   static final Pattern PATTERN_VALIDATE_CAPTCHA_FORM = Pattern.compile(
-      "("+RE_GENERIC_ERROR+")|("+RE_CAPTCHA_ERROR+")|("+RE_RESULTS+")");
+      "("+RE_GENERIC_ERROR+")|("+RE_BLOCKING_ERROR+")|("+RE_RESULTS+")");
+  
+  static final String LIMIT_ERROR = 
+      "Oggi hai raggiunto il numero massimo di SMS gratis";
+  static final String RECEIVER_ERROR = 
+      "I seguenti numeri non sono corretti";
+  static final String CAPTCHA_ERROR =
+      "Le lettere che hai inserito non corrispondono " +
+      "a quelle presenti nell'immagine";
   
   boolean loggedIn;
   String senderCurrent;
@@ -106,6 +117,14 @@ public class Tim extends Account {
     senderList = new LinkedList<String>();
   }
 
+  @Override
+  protected void initAccountConnector() {
+    httpClient.getParams().setParameter(
+        "http.protocol.allow-circular-redirects", true);
+    httpClient.getParams().setParameter("http.useragent", 
+        "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1)");
+  }
+  
   @Override
   public int calcRemaining(int length) {
     if (length == 0) {
@@ -227,11 +246,21 @@ public class Tim extends Account {
       
         boolean validateCaptchaForm = validateCaptchaForm(sms, results);
         if (!validateCaptchaForm) return results;
+
+        updateCount();
+        List<Receiver> sortedReceivers = new LinkedList<Receiver>();
         
-        // reorder results and update count
-//        updateCount();
-//        ++count;
+        for (int r = 0; r < sms.getReceivers().size(); ++r)
+          if (results.get(r).equals(Result.SUCCESSFUL)) {
+            sortedReceivers.add(sms.getReceivers().get(r));
+            ++count;
+          }
         
+        for (int r = 0; r < sms.getReceivers().size(); ++r)
+          if (!results.get(r).equals(Result.SUCCESSFUL))
+            sortedReceivers.add(sms.getReceivers().get(r));
+        
+        sms.setReceivers(sortedReceivers);
       }
       
     } catch (Exception e) {
@@ -334,6 +363,13 @@ public class Tim extends Account {
       List<String> strings = findPattern(
           response.getEntity().getContent(), PATTERN_ADD_DISPATCH_NEW);
       response.getEntity().consumeContent();
+
+      Pattern noMore = Pattern.compile(RE_LIMIT_ERROR);
+      for (String s : strings) {
+        Matcher m = noMore.matcher(s);
+        if (m.find() && m.group(3).contains(LIMIT_ERROR)) 
+          return Result.LIMIT_ERROR;
+      }
       
       Pattern error = Pattern.compile(RE_GENERIC_ERROR);
       for (String s : strings) {
@@ -385,25 +421,25 @@ public class Tim extends Account {
     
     try {
       
-      HttpPost postRequest = new HttpPost(ADD_DISPATCH_FORM);
-      List<NameValuePair> postRequestData = new ArrayList<NameValuePair>();
-      postRequestData.add(new BasicNameValuePair("t:formdata", formData));
-      postRequestData.add(new BasicNameValuePair("recipientType", "FREE_NUMBERS"));
-      postRequestData.add(new BasicNameValuePair("t:formdata", separateFreeNumbers));
-      postRequestData.add(new BasicNameValuePair("freeNumbers", freeNumbers));
-      postRequestData.add(new BasicNameValuePair("t:formdata", ""));
-      postRequestData.add(new BasicNameValuePair("contactListId", ""));
-      postRequestData.add(new BasicNameValuePair("t:formdata", ""));
-      postRequestData.add(new BasicNameValuePair("contactsIdString", ""));
-      postRequestData.add(new BasicNameValuePair("deliverySmsClass", "STANDARD"));
-      postRequestData.add(new BasicNameValuePair("textAreaStandard", sms.getMessage()));
-      postRequestData.add(new BasicNameValuePair("textAreaFlash", ""));
-      postRequestData.add(new BasicNameValuePair("modelsSelect", ""));
-      postRequest.setEntity(new UrlEncodedFormEntity(postRequestData, HTTP.UTF_8));
-      HttpResponse postResponse = httpClient.execute(postRequest, httpContext);
+      HttpPost request = new HttpPost(ADD_DISPATCH_FORM);
+      List<NameValuePair> requestData = new ArrayList<NameValuePair>();
+      requestData.add(new BasicNameValuePair("t:formdata", formData));
+      requestData.add(new BasicNameValuePair("recipientType", "FREE_NUMBERS"));
+      requestData.add(new BasicNameValuePair("t:formdata", separateFreeNumbers));
+      requestData.add(new BasicNameValuePair("freeNumbers", freeNumbers));
+      requestData.add(new BasicNameValuePair("t:formdata", ""));
+      requestData.add(new BasicNameValuePair("contactListId", ""));
+      requestData.add(new BasicNameValuePair("t:formdata", ""));
+      requestData.add(new BasicNameValuePair("contactsIdString", ""));
+      requestData.add(new BasicNameValuePair("deliverySmsClass", "STANDARD"));
+      requestData.add(new BasicNameValuePair("textAreaStandard", sms.getMessage()));
+      requestData.add(new BasicNameValuePair("textAreaFlash", ""));
+      requestData.add(new BasicNameValuePair("modelsSelect", ""));
+      request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
+      HttpResponse response = httpClient.execute(request, httpContext);
       List<String> strings = findPattern(
-          postResponse.getEntity().getContent(), PATTERN_ADD_DISPATCH_FORM);
-      postResponse.getEntity().consumeContent();
+          response.getEntity().getContent(), PATTERN_ADD_DISPATCH_FORM);
+      response.getEntity().consumeContent();
       
       formData = null;
       Pattern data = Pattern.compile(RE_FORM_DATA);
@@ -415,19 +451,28 @@ public class Tim extends Account {
       if (formData == null)
         return Result.PROVIDER_ERROR;
 
-      HttpGet getRequest = new HttpGet(VALIDATE_CAPTCHA_IMAGE);
-      HttpResponse getResponse = httpClient.execute(getRequest, httpContext);
-      if (getResponse.getStatusLine().getStatusCode() != 200)
-        return Result.PROVIDER_ERROR;
-      
-      sms.setCaptchaArray(toByteArray(getResponse.getEntity().getContent()));
-      getResponse.getEntity().consumeContent();
-      return Result.CAPTCHA_NEEDED;
+      Result validateCaptchaImage = validateCaptchaImage(sms);
+      if (validateCaptchaImage == Result.SUCCESSFUL)
+        validateCaptchaImage = Result.CAPTCHA_NEEDED;
+      return validateCaptchaImage;
       
     } catch (Exception e) {
       e.printStackTrace();
       return Result.NETWORK_ERROR;
     }
+  }
+  
+  private Result validateCaptchaImage(SMS sms) 
+      throws ClientProtocolException, IOException {
+    HttpGet request = new HttpGet(VALIDATE_CAPTCHA_IMAGE);
+    HttpResponse response = httpClient.execute(request, httpContext);
+    if (response.getStatusLine().getStatusCode() != 200)
+      return Result.PROVIDER_ERROR;
+    
+    sms.setCaptchaText("");
+    sms.setCaptchaArray(toByteArray(response.getEntity().getContent()));
+    response.getEntity().consumeContent();
+    return Result.SUCCESSFUL;
   }
   
   private boolean validateCaptchaForm(SMS sms, List<Result> results) {
@@ -444,13 +489,57 @@ public class Tim extends Account {
           response.getEntity().getContent(), PATTERN_VALIDATE_CAPTCHA_FORM);
       response.getEntity().consumeContent();
 
-      for (String s : strings)
-        System.out.println(s);
+      Pattern error = Pattern.compile(RE_GENERIC_ERROR);
+      for (String s : strings) {
+        Matcher m = error.matcher(s);
+        if (m.find()) {
+          // Result.LIMIT_ERROR ?
+          results.set(0, Result.UNKNOWN_ERROR);
+          return false;
+        }
+      }
       
-//      sms.setCaptchaText("");
-//      results.set(0, Result.CAPTCHA_ERROR);
-//      return false;
+      Pattern captcha = Pattern.compile(RE_BLOCKING_ERROR);
+      for (String s : strings) {
+        Matcher m = captcha.matcher(s);
+        if (m.find()) {
+          String errorString = m.group(3);
+          if (errorString.contains(RECEIVER_ERROR)) {
+            results.set(0, Result.RECEIVER_ERROR);
+          } else if (errorString.contains(CAPTCHA_ERROR)) {
+            Result validateCaptchaImage = validateCaptchaImage(sms);
+            if (validateCaptchaImage == Result.SUCCESSFUL)
+              validateCaptchaImage = Result.CAPTCHA_ERROR;
+            results.set(0, validateCaptchaImage);
+          } else {
+            results.set(0, Result.UNKNOWN_ERROR);
+          }
+          return false;
+        }
+      }
 
+      boolean successful = false;
+      Pattern completed = Pattern.compile(RE_RESULTS);
+      for (String s : strings) {
+        Matcher m = completed.matcher(s);
+        if (m.find()) {
+          successful = true;
+          String number = m.group(2);
+          for (int r = 0; r < sms.getReceivers().size(); ++r) {
+            String receiver = sms.getReceivers().get(r).getNumber();
+            if (receiver.contains(number)) {
+              String what = m.group(5);
+              if (what.equals("SMS inviato")) {
+                results.set(r, Result.SUCCESSFUL);
+              } else if (what.contains("il numero non è TIM")) {
+                results.set(r, Result.RECEIVER_ERROR);
+              }
+            }
+          }
+        }
+      }
+      
+      if (successful) return true;
       results.set(0, Result.UNKNOWN_ERROR);
       return false;
       
