@@ -276,6 +276,7 @@ public class AccountService extends Service {
             // no more messages available, limit reached
             account.setCount(account.getLimit(), new Date());
             accountManager.update(account.getLabel(), account);
+            activity.refreshCounter();
             break;
             
           case RECEIVER_ERROR:
