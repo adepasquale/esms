@@ -362,7 +362,7 @@ public class AccountModifyActivity extends Activity {
             new AccountManagerAndroid(AccountModifyActivity.this);
           if (oldAccount != null) accountManager.delete(oldAccount);
           
-          String label = labelText.getText().toString();
+          String label = labelText.getText().toString().trim();
           for (Account account : accountManager.getAccounts())
             if (account.getLabel().equalsIgnoreCase(label)) {
               if (oldAccount != null) accountManager.insert(oldAccount);
