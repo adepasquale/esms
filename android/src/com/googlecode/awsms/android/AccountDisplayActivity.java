@@ -199,7 +199,7 @@ public class AccountDisplayActivity extends Activity {
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             String oldLabel = account.getLabel();
-            String newLabel = labelText.getText().toString();
+            String newLabel = labelText.getText().toString().trim();
             if (newLabel.equalsIgnoreCase(oldLabel)) return;
             
             for (Account a : accountManager.getAccounts())
