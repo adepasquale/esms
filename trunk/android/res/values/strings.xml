@@ -54,7 +54,7 @@
   <string name="login_text">Nome utente e password:</string>
   <string name="username_hint">Nome utente</string>
   <string name="password_hint">Password</string>
-  <string name="login_disclaimer">I dati inseriti saranno memorizzati sul telefono al solo scopo di automatizzare la procedura di invio.</string>
+  <string name="login_disclaimer">I dati inseriti saranno memorizzati su questo dispositivo al solo scopo di automatizzare la procedura di invio.</string>
   <string name="login_progress_dialog">Accesso in corso...</string>
   <string name="login_error_toast">Nome utente o password non validi</string>
   <string name="logout_progress_dialog">Uscita in corso...</string>
