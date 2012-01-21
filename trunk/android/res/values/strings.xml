@@ -59,7 +59,7 @@
   <string name="login_error_toast">Nome utente o password non validi</string>
   <string name="logout_progress_dialog">Uscita in corso...</string>
   <string name="logout_error_toast">Errore durante l\'uscita, ritentare o riavviare l\'applicazione</string>
-  <string name="overview_text">L\'account \"%s\" è stato creato o modificato con successo. Potrai selezionarlo dal menu a tendina nella schermata principale dell\'applicazione.</string>
+  <string name="overview_text">L\'account \"%1$s\" è stato %2$s con successo. Potrai selezionarlo dal menu a tendina nella schermata principale dell\'applicazione.</string>
   <string name="unsupported_error_toast">Questo tipo di account non è attualmente supportato. Se desideri collaborare, per favore contatta lo sviluppatore.</string>
   <string name="provider_error_toast">Il sito internet potrebbe essere fuori servizio, per favore controlla e riprova più tardi</string>
   <string name="network_error_toast">Errore durante la connessione</string>
@@ -99,6 +99,8 @@
   <string name="and_connector">e</string>
   <string name="or_connector">o</string>
   <string name="other_connector">altri</string>
+  <string name="overview_create">creato</string>
+  <string name="overview_modify">modificato</string>
   <string name="receiver_settings">Interfaccia</string>
   <string name="filter_receiver_setting">Filtra numeri rubrica</string>
   <string name="show_pictures_setting">Mostra foto contatti</string>

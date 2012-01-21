@@ -382,11 +382,13 @@ public class AccountModifyActivity extends Activity {
             editor.commit();
           }
           
-          Intent intent = new Intent(AccountModifyActivity.this,
+          Intent intent = new Intent(
+              AccountModifyActivity.this,
               AccountOverviewActivity.class);
           intent.putExtra(AccountIntents.NEW_ACCOUNT, newAccount);
+          if (oldAccount != null)
+            intent.putExtra(AccountIntents.ACTION_MODIFY, true);
           startActivity(intent);
-//          intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
         }
       });
     }
