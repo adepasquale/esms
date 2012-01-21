@@ -23,7 +23,7 @@
   <string name="app_author_title">Autori</string>
   <string name="app_author_value">Andrea De Pasquale\nAlberto Gasparin</string>
   <string name="app_homepage_title">Homepage</string>
-  <string name="app_homepage_value">http://code.google.com/p/esms</string>
+  <string name="app_homepage_value">http://ermetesms.it/</string>
   <string name="sender_prompt">Mittente</string>
   <string name="no_label_text">(etichetta)</string>
   <string name="receiver_hint">Destinatario</string>

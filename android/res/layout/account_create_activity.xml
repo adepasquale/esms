@@ -29,5 +29,41 @@
         android:layout_height="0dp"
         android:layout_weight="1.0"
         android:orientation="vertical" />
+    
+    <LinearLayout
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:gravity="bottom"
+        android:orientation="vertical" >
+
+        <LinearLayout
+            android:layout_width="fill_parent"
+            android:layout_height="wrap_content"
+            android:background="@drawable/bottom_gradient"
+            android:gravity="center_horizontal"
+            android:orientation="horizontal"
+            android:padding="5dp" >
+
+            <Button
+                android:id="@+id/prev_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.5"
+                android:drawableLeft="@drawable/ic_btn_prev"
+                android:drawablePadding="5dp"
+                android:text="@string/prev_button" />
+
+            <Button
+                android:id="@+id/next_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.5"
+                android:drawablePadding="5dp"
+                android:drawableRight="@drawable/ic_btn_next"
+                android:text="@string/next_button" />
+            
+        </LinearLayout>
+        
+    </LinearLayout>
 
 </LinearLayout>
