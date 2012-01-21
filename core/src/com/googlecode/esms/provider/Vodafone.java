@@ -18,10 +18,9 @@
 
 package com.googlecode.esms.provider;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.PushbackReader;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -275,8 +274,17 @@ public class Vodafone extends Account {
       IllegalStateException, JDOMException {
     HttpGet request = new HttpGet(CHECK_USER);
     HttpResponse response = httpClient.execute(request, httpContext);
-    Document document = 
-        new SAXBuilder().build(response.getEntity().getContent());
+    
+    PushbackReader reader = new PushbackReader(
+        new InputStreamReader(response.getEntity().getContent()));
+    
+    // fix wrong XML header 
+    int first = reader.read();
+    while (first != 60)
+      first = reader.read();
+    reader.unread(first);
+    
+    Document document = new SAXBuilder().build(reader);
     response.getEntity().consumeContent();
     Element root = document.getRootElement();
     Element liChild = root.getChild("logged-in");
@@ -291,10 +299,11 @@ public class Vodafone extends Account {
       isCorporate = userChild.getChild("is-corporate").getValue().equals("true");
       isBlocked = userChild.getChild("is-blocked").getValue().equals("true");
       senderCurrent = userChild.getChild("current-msisdn").getValue();
-      Element asChild = userChild.getChild("all-sims");
-      @SuppressWarnings("unchecked")
-      List<Element> mChildren = asChild.getChildren("msisdn");
-      for (Element mChild : mChildren) senderList.add(mChild.getValue());
+      senderList.add(senderCurrent); // TODO support other SIM
+//      Element asChild = userChild.getChild("all-sims");
+//      @SuppressWarnings("unchecked")
+//      List<Element> mChildren = asChild.getChildren("msisdn");
+//      for (Element mChild : mChildren) senderList.add(mChild.getValue());
       usernameCurrent = root.getChild("security").getChild("username").getValue();
     }
   }
@@ -362,30 +371,20 @@ public class Vodafone extends Account {
 
   private int doPrecheck() throws ClientProtocolException, 
       IOException, JDOMException {
-    Document document = null;
+    HttpGet request = new HttpGet(DO_PRECHECK);
+    HttpResponse response = httpClient.execute(request, httpContext);
 
-    // to solve XML header problem
-    boolean skip = true;
-    boolean done = false;
-
-    do {
-      try {
-        HttpGet request = new HttpGet(DO_PRECHECK);
-        HttpResponse response = httpClient.execute(request, httpContext);
-
-        Reader reader = new BufferedReader(
-            new InputStreamReader(response.getEntity().getContent()));
-        if (skip) reader.skip(13);
-
-        document = new SAXBuilder().build(reader);
-        response.getEntity().consumeContent();
-        done = true;
-
-      } catch (JDOMException jdom) {
-        if (skip) skip = false;
-        else throw jdom;
-      }
-    } while (!done);
+    PushbackReader reader = new PushbackReader(
+        new InputStreamReader(response.getEntity().getContent()));
+    
+    // fix wrong XML header 
+    int first = reader.read();
+    while (first != 60)
+      first = reader.read();
+    reader.unread(first);
+    
+    Document document = new SAXBuilder().build(reader);
+    response.getEntity().consumeContent();
 
     Element root = document.getRootElement();
     @SuppressWarnings("unchecked")
@@ -432,7 +431,17 @@ public class Vodafone extends Account {
     requestData.add(new BasicNameValuePair("message", sms.getMessage()));
     request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
     HttpResponse response = httpClient.execute(request, httpContext);
-    Document document = new SAXBuilder().build(response.getEntity().getContent());
+    
+    PushbackReader reader = new PushbackReader(
+        new InputStreamReader(response.getEntity().getContent()));
+    
+    // fix wrong XML header 
+    int first = reader.read();
+    while (first != 60)
+      first = reader.read();
+    reader.unread(first);
+    
+    Document document = new SAXBuilder().build(reader);
     response.getEntity().consumeContent();
 
     Element root = document.getRootElement();
@@ -465,7 +474,17 @@ public class Vodafone extends Account {
     requestData.add(new BasicNameValuePair("message", sms.getMessage()));
     request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
     HttpResponse response = httpClient.execute(request, httpContext);
-    Document document = new SAXBuilder().build(response.getEntity().getContent());
+    
+    PushbackReader reader = new PushbackReader(
+        new InputStreamReader(response.getEntity().getContent()));
+    
+    // fix wrong XML header 
+    int first = reader.read();
+    while (first != 60)
+      first = reader.read();
+    reader.unread(first);
+    
+    Document document = new SAXBuilder().build(reader);
     response.getEntity().consumeContent();
 
     Element root = document.getRootElement();
