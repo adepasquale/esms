@@ -23,12 +23,14 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
+import android.widget.Button;
+import android.widget.CheckedTextView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.googlecode.awsms.account.AccountManagerAndroid;
 import com.googlecode.awsms.R;
+import com.googlecode.awsms.account.AccountManagerAndroid;
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountManager;
 
@@ -37,6 +39,9 @@ public class AccountCreateActivity extends Activity {
   AccountManager accountManager;
 
   LinearLayout providersLinear;
+  Button prevButton, nextButton;
+  
+  boolean[] checked;
 
   @Override
   public void onCreate(Bundle savedInstanceState) {
@@ -44,7 +49,7 @@ public class AccountCreateActivity extends Activity {
     setContentView(R.layout.account_create_activity);
 
     accountManager = new AccountManagerAndroid(AccountCreateActivity.this);
-
+    
     providersLinear = (LinearLayout) findViewById(R.id.providers_linear);
     for (final Account provider : accountManager.getProviders()) {
 
@@ -80,15 +85,52 @@ public class AccountCreateActivity extends Activity {
       listItemLinear.setOnClickListener(new OnClickListener() {
         @Override
         public void onClick(View v) {
-          Intent intent = new Intent(AccountCreateActivity.this,
-              AccountModifyActivity.class);
-          intent.setAction(AccountIntents.DO_AUTHENTICATION);
-          intent.putExtra(AccountIntents.NEW_ACCOUNT, provider);
-          startActivity(intent);
+          for (int i = 0; i < providersLinear.getChildCount(); ++i) {
+            View listItem = providersLinear.getChildAt(i);
+            CheckedTextView listItemProvider = (CheckedTextView) 
+                listItem.findViewById(R.id.list_item_provider);
+            listItemProvider.setChecked(false);
+          }
+          
+          CheckedTextView listItemProvider = 
+              (CheckedTextView) v.findViewById(R.id.list_item_provider);
+          listItemProvider.toggle();
+          nextButton.setEnabled(true);
         }
       });
 
       providersLinear.addView(listItem);
     }
+    
+    prevButton = (Button) findViewById(R.id.prev_button);
+    prevButton.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        AccountCreateActivity.this.finish();
+      }
+    });
+    
+    nextButton = (Button) findViewById(R.id.next_button);
+    nextButton.setEnabled(false);
+    nextButton.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Account provider = null;
+        for (int i = 0; i < providersLinear.getChildCount(); ++i) {
+          View listItem = providersLinear.getChildAt(i);
+          CheckedTextView listItemProvider = (CheckedTextView) 
+              listItem.findViewById(R.id.list_item_provider);
+          if (listItemProvider.isChecked()) 
+            provider = accountManager.getProviders().get(i);
+        }
+        
+        Intent intent = new Intent(
+            AccountCreateActivity.this,
+            AccountModifyActivity.class);
+        intent.setAction(AccountIntents.DO_AUTHENTICATION);
+        intent.putExtra(AccountIntents.NEW_ACCOUNT, provider);
+        startActivity(intent);
+      }
+    });
   }
 }
