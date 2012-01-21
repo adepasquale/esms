@@ -24,17 +24,18 @@ public class AccountIntents {
   
   public static final String DO_AUTHENTICATION =
       PACKAGE_NAME + ".DO_AUTHENTICATION";
-  
   public static final String CHOOSE_SENDER =
       PACKAGE_NAME + ".CHOOSE_SENDER";
-  
   public static final String CHOOSE_LABEL =
       PACKAGE_NAME + ".CHOOSE_LABEL";
   
   public static final String NEW_ACCOUNT = 
       PACKAGE_NAME + ".NEW_ACCOUNT";
-  
   public static final String OLD_ACCOUNT = 
       PACKAGE_NAME + ".OLD_ACCOUNT";
   
+  public static final String ACTION_CREATE =
+      PACKAGE_NAME + ".ACTION_CREATE";
+  public static final String ACTION_MODIFY =
+      PACKAGE_NAME + ".ACTION_MODIFY";
 }

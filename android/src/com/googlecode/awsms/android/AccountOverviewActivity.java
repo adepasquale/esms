@@ -17,12 +17,6 @@
 
 package com.googlecode.awsms.android;
 
-import com.googlecode.awsms.R;
-import com.googlecode.awsms.account.AccountConnectorAndroid;
-import com.googlecode.awsms.account.AccountManagerAndroid;
-import com.googlecode.esms.account.Account;
-import com.googlecode.esms.account.AccountManager;
-
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.BitmapFactory;
@@ -33,13 +27,21 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.googlecode.awsms.R;
+import com.googlecode.awsms.account.AccountConnectorAndroid;
+import com.googlecode.awsms.account.AccountManagerAndroid;
+import com.googlecode.esms.account.Account;
+import com.googlecode.esms.account.AccountManager;
+
 public class AccountOverviewActivity extends Activity {
   
   AccountManager accountManager;
-
+  boolean modified;
+  
   ImageView titleLogo;
   TextView titleText;
   TextView overviewText;
+  
   Button endButton;
   Button createButton;
   
@@ -60,7 +62,8 @@ public class AccountOverviewActivity extends Activity {
     Account account = (Account) 
         intent.getSerializableExtra(AccountIntents.NEW_ACCOUNT);
     account.setAccountConnector(new AccountConnectorAndroid(this));
-    
+    modified = intent.getBooleanExtra(AccountIntents.ACTION_MODIFY, false);
+
 //    if (account.getProvider().equals("Telefono")) {
 //      titleLogo.setImageBitmap(
 //          BitmapFactory.decodeResource(getResources(),
@@ -83,20 +86,12 @@ public class AccountOverviewActivity extends Activity {
         getString(R.string.account_text) + 
         " " + account.getLabel());
     
+    String action = getString(R.string.overview_create);
+    if (modified) action = getString(R.string.overview_modify); 
+    
     overviewText.setText(String.format(
         getString(R.string.overview_text), 
-        account.getLabel()));
-    
-    endButton.setOnClickListener(new OnClickListener() {
-      @Override
-      public void onClick(View v) {
-        Intent intent = new Intent(
-            AccountOverviewActivity.this,
-            ComposeActivity.class);
-        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
-        startActivity(intent);
-      }
-    });
+        account.getLabel(), action));
     
     createButton.setOnClickListener(new OnClickListener() {
       @Override
@@ -108,5 +103,39 @@ public class AccountOverviewActivity extends Activity {
         startActivity(intent);        
       }
     });
+    
+    endButton.setOnClickListener(new OnClickListener() {
+      @Override
+      public void onClick(View v) {
+        Intent intent;
+        if (modified) {
+          intent = new Intent(
+              AccountOverviewActivity.this,
+              AccountDisplayActivity.class);
+        } else {
+          intent = new Intent(
+              AccountOverviewActivity.this,
+              ComposeActivity.class);
+        }
+        intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        startActivity(intent);
+      }
+    });
+  }
+  
+  @Override
+  public void onBackPressed() {
+    Intent intent;
+    if (modified) {
+      intent = new Intent(
+          AccountOverviewActivity.this,
+          AccountDisplayActivity.class);
+    } else {
+      intent = new Intent(
+          AccountOverviewActivity.this,
+          ComposeActivity.class);
+    }
+    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    startActivity(intent);
   }
 }

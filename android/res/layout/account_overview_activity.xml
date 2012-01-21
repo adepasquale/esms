@@ -82,20 +82,20 @@
             android:gravity="center_horizontal"
             android:orientation="horizontal"
             android:padding="5dp" >
-
-            <Button
-                android:id="@+id/end_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="0.5"
-                android:text="@string/end_button" />
-
+            
             <Button
                 android:id="@+id/create_button"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="0.5"
                 android:text="@string/create_button" />
+            
+            <Button
+                android:id="@+id/end_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="0.5"
+                android:text="@string/end_button" />
             
         </LinearLayout>
         
