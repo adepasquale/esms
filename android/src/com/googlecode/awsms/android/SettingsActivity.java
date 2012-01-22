@@ -36,17 +36,20 @@ public class SettingsActivity extends PreferenceActivity {
     super.onCreate(savedInstanceState);
     addPreferencesFromResource(R.layout.settings_activity);
 
-    enableNotifications = (CheckBoxPreference) findPreference("enable_notifications");
-    enableNotifications
-        .setOnPreferenceClickListener(new OnPreferenceClickListener() {
+    enableNotifications = 
+        (CheckBoxPreference) findPreference("enable_notifications");
+    enableNotifications.setOnPreferenceClickListener(
+        new OnPreferenceClickListener() {
           public boolean onPreferenceClick(Preference preference) {
             toggleNotificationSettings();
             return false;
           }
         });
 
-    notificationRingtone = (Preference) findPreference("notification_ringtone");
-    notificationVibration = (Preference) findPreference("notification_vibration");
+    notificationRingtone = 
+        (Preference) findPreference("notification_ringtone");
+    notificationVibration = 
+        (Preference) findPreference("notification_vibration");
     toggleNotificationSettings();
   }
 

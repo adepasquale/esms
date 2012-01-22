@@ -33,6 +33,10 @@ import com.googlecode.awsms.account.AccountManagerAndroid;
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountManager;
 
+/**
+ * Confirm successful account creation or modification.
+ * @author Andrea De Pasquale
+ */
 public class AccountOverviewActivity extends Activity {
   
   AccountManager accountManager;

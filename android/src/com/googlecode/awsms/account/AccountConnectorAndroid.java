@@ -152,7 +152,8 @@ public class AccountConnectorAndroid extends AccountConnector {
       queryBuilder.setTables(TABLE_NAME);
       SQLiteDatabase db = dbOpenHelper.getReadableDatabase();
       String projection[] = { VERSION, NAME, VALUE, DOMAIN, PATH, EXPIRY }; 
-      Cursor c = queryBuilder.query(db, projection, null, null, null, null, null);
+      Cursor c = queryBuilder.query(
+          db, projection, null, null, null, null, null);
       c.moveToFirst();
       
       while (!c.isAfterLast()) {

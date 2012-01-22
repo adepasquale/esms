@@ -84,6 +84,7 @@
   <string name="message_error_notification">Errore nel testo del messaggio</string>
   <string name="account_prompt_dialog">Seleziona account:</string>
   <string name="sender_text">Seleziona SIM:</string>
+  <string name="sender_disclaimer">Al momento è possibile selezionare soltanto la SIM principale associata all\'account.</string>
   <string name="label_text">Assegna un\'etichetta:</string>
   <string name="existing_label_toast">Etichetta già esistente, selezionare un altro nome</string>
   <string name="settings_activity">Impostazioni di Ermete SMS</string>

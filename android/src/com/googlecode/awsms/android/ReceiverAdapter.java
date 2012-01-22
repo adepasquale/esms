@@ -121,8 +121,8 @@ public class ReceiverAdapter extends ResourceCursorAdapter implements
 
   @Override
   public CharSequence convertToString(Cursor cursor) {
-    SpannableString receiver = new SpannableString(cursor.getString(2) + " <"
-        + cursor.getString(3) + ">");
+    SpannableString receiver = new SpannableString(
+        cursor.getString(2) + " <" + cursor.getString(3) + ">");
 
     receiver.setSpan(new Annotation("number", cursor.getString(3)), 0,
         receiver.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);

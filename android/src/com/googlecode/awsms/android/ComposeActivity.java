@@ -78,6 +78,10 @@ import com.googlecode.esms.message.ConversationManager;
 import com.googlecode.esms.message.Receiver;
 import com.googlecode.esms.message.SMS;
 
+/**
+ * Choose account and receivers, compose the message and send! 
+ * @author Andrea De Pasquale
+ */
 public class ComposeActivity extends Activity {
   
   ConversationManager conversationManager;
@@ -99,6 +103,7 @@ public class ComposeActivity extends Activity {
   AnimationDrawable counterAnimation;
   TextView counterText;
 
+  static final String DEFAULT_SENDER = "default_sender";
   Spinner senderSpinner;
   ImageButton clearButton;
 
@@ -148,143 +153,29 @@ public class ComposeActivity extends Activity {
 
     intentFilter = new IntentFilter();
     intentFilter.addAction(ACTION_SMS_RECEIVED);
-    broadcastReceiver = new BroadcastReceiver() {
-      @Override
-      public void onReceive(Context context, Intent intent) {
-        Bundle bundle = intent.getExtras();
-        if (bundle != null) {
-          Object[] pdus = (Object[]) bundle.get("pdus");
-          for (Object pdu : pdus) {
-            SmsMessage message = SmsMessage.createFromPdu((byte[]) pdu);
-            if (listSize == 0) {
-              String number = receiverText.getText().toString();
-              Spannable s = receiverText.getText();
-              Annotation[] annotations = 
-                  s.getSpans(0, s.length(), Annotation.class);
-              for (Annotation a : annotations)
-                if (a.getKey().equals("number"))
-                  number = a.getValue();
-              
-              String address = message.getOriginatingAddress();
-              int addressLength = address.length();
-              if (addressLength > 10) 
-                address = address.substring(addressLength-10, addressLength);
-              int numberLength = number.length();
-              if (numberLength > 10) 
-                number = number.substring(numberLength-10, numberLength);
-              
-              if (number.equals(address)) {
-                replyContent.setText(message.getMessageBody());
-                long date = message.getTimestampMillis();
-                replyDate.setText(new Date(date).toLocaleString());
-              }
-            }
-          }
-        }
-      }
-    };
+    broadcastReceiver = new IncomingMessageBroadcastReceiver();
     registerReceiver(broadcastReceiver, intentFilter);
+    
+    counterImage = (ImageView) findViewById(R.id.counter_image);
+    counterText = (TextView) findViewById(R.id.counter_text);
     
     clearButton = (ImageButton) findViewById(R.id.clear_button);
     clearButton.setEnabled(false);
     clearButton.setOnClickListener(new OnClickListener() {
       public void onClick(View v) {
-        clearButton.setEnabled(false);
-        receiverText.setText("");
+        clearFields();
+        refresh();
         receiverText.requestFocus();
-        receiverIncomplete = "";
-        hasAutocompleted = false;
-        listLinear.setVisibility(View.GONE);
-        listLinear.removeViews(0, listSize);
-        listSize = 0;
-        replyLinear.setVisibility(View.VISIBLE);
-        replyContent.setText("");
-        replyDate.setText("");
-        messageText.setText("");
-        lengthText.setVisibility(View.GONE);
-        lengthText.setText("");
-        sendButton.setEnabled(false);
       }
     });
 
     receiverText = (AutoCompleteTextView) findViewById(R.id.receiver);
     receiverText.setAdapter(new ReceiverAdapter(this));
-    receiverText.setOnItemClickListener(new OnItemClickListener() {
-      public void onItemClick(AdapterView<?> parent, 
-          View view, int position, long id) {
-        TextView receiverName = (TextView) view
-            .findViewById(R.id.receiver_name);
-        TextView receiverNumber = (TextView) view
-            .findViewById(R.id.receiver_number);
-
-        hasAutocompleted = true;
-
-        if (listSize == 0) {
-          SMS reply = 
-            conversationManager.loadInbox(receiverNumber.getText().toString());
-          if (reply != null) {
-            replyContent.setText(reply.getMessage());
-            replyDate.setText(reply.getDate());
-          }
-          messageText.requestFocus();
-        } else if (listSize < MAX_LIST_SIZE) {
-          String name = receiverName.getText().toString();
-          String number = receiverNumber.getText().toString();
-          addListItem(name, number);
-          receiverText.setText("");
-          receiverText.requestFocus();
-          String t = String.format(
-              getString(R.string.positive_receiver_toast), 
-              name + " (" + number + ")");
-          Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
-        } else {
-          receiverText.setText("");
-          receiverText.requestFocus();
-          String t = getString(R.string.maximum_receivers_toast);
-          Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
-        }
-
-        toggleButtons(receiverText.getText().length(), 
-            messageText.getText().length());
-      }
-    });
+    receiverText.setOnItemClickListener(
+        new ReceiverAutocompleteClickListener());
 
     plusButton = (ImageButton) findViewById(R.id.plus_button);
-    plusButton.setOnClickListener(new OnClickListener() {
-      public void onClick(View v) {
-        String name = "";
-        String number = receiverText.getText().toString();
-
-        Spannable s = receiverText.getText();
-        Annotation[] annotations = s.getSpans(0, s.length(), Annotation.class);
-        for (Annotation a : annotations) {
-          if (a.getKey().equals("name"))
-            name = a.getValue();
-          if (a.getKey().equals("number"))
-            number = a.getValue();
-        }
-
-        number = number.replaceAll("[^0-9\\+]*", "");
-        if (number.equals("")) return;
-        
-        if (listSize >= MAX_LIST_SIZE) {
-          String t = getString(R.string.maximum_receivers_toast);
-          Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
-          return;
-        }
-
-        addListItem(name, number);
-        if (listSize > 1) {
-          String t = String.format(
-              getString(R.string.positive_receiver_toast), number);
-          Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
-        }
-        receiverText.setText("");
-        receiverText.requestFocus();
-        receiverIncomplete = "";
-        hasAutocompleted = false;
-      }
-    });
+    plusButton.setOnClickListener(new InsertReceiverClickListener());
 
     listLinear = (LinearLayout) findViewById(R.id.list_linear);
     listSize = 0;
@@ -297,14 +188,12 @@ public class ComposeActivity extends Activity {
     sendButton = (Button) findViewById(R.id.send);
     lengthText = (TextView) findViewById(R.id.length);
     
-    // check if application was started with an intent
-    Intent intent = getIntent();
-    if (savedInstanceState == null && 
-        intent != null && intent.getAction() != null) {
+    Intent intent = getIntent(); // started with an intent?
+    if (intent != null && intent.getAction() != null) {
       if (intent.getAction().equals(Intent.ACTION_SEND)) {
         String message = intent.getStringExtra(Intent.EXTRA_TEXT);
         messageText.setText(message);
-        clearButton.setEnabled(true);
+        clearReceiverField();
         receiverText.requestFocus();
       }
 
@@ -314,208 +203,57 @@ public class ComposeActivity extends Activity {
         ReceiverAdapter receiverAdapter = new ReceiverAdapter(this);
         Cursor cursor = receiverAdapter.runQueryOnBackgroundThread(receiver);
         cursor.moveToFirst();
-        if (!cursor.isAfterLast()) {
+        if (!cursor.isAfterLast())
           receiverText.setText(receiverAdapter.convertToString(cursor));
-        } else {
-          receiverText.setText(receiver);
-        }
-        messageText.requestFocus();
-        clearButton.setEnabled(true);
+        else receiverText.setText(receiver);
         SMS reply = conversationManager.loadInbox(receiver);
         if (reply != null) {
           replyContent.setText(reply.getMessage());
           replyDate.setText(reply.getDate());
         }
+        clearMessageField();
+        messageText.requestFocus();
       }
     }
   }
-
+  
   @Override
   public void onResume() {
-    super.onResume(); 
+    super.onResume();
     
-    if (accountManager.getAccounts().size() == 0) {
-      AlertDialog.Builder builder = new AlertDialog.Builder(this);
-      builder.setTitle(R.string.app_name);
-      builder.setMessage(R.string.welcome_message);
-      builder.setPositiveButton(R.string.create_button, 
-          new DialogInterface.OnClickListener() {
-        public void onClick(DialogInterface dialog, int which) {
-          startActivity(new Intent(
-              ComposeActivity.this,
-              AccountCreateActivity.class));
-        }
-      });
-      builder.setCancelable(false);
-      builder.show();
-    }
+    if (accountManager.getAccounts().size() == 0)
+      showWelcomeDialog(); // must configure at least one account
     
-    counterImage = (ImageView) findViewById(R.id.counter_image);
-    counterText = (TextView) findViewById(R.id.counter_text);
-
-    ArrayList<CharSequence> providers = new ArrayList<CharSequence>();
+    ArrayList<CharSequence> senderLabels = new ArrayList<CharSequence>();
     for (Account account : accountManager.getAccounts()) {
       String label = account.getLabel();
       if (label == null || label.equals(""))
         label = getString(R.string.no_label_text);
-      providers.add(label);
+      senderLabels.add(label);
     }
+    
     ArrayAdapter<CharSequence> senderAdapter = new ArrayAdapter<CharSequence>(
-        this, android.R.layout.simple_spinner_item, providers);
+        this, android.R.layout.simple_spinner_item, senderLabels);
     senderAdapter.setDropDownViewResource(
         android.R.layout.simple_spinner_dropdown_item);
     senderSpinner = (Spinner) findViewById(R.id.sender_spinner);
     senderSpinner.setAdapter(senderAdapter);
-    senderSpinner.setOnItemSelectedListener(new OnItemSelectedListener() {
-      public void onNothingSelected(AdapterView<?> parent) { }
-      public void onItemSelected(
-          AdapterView<?> parent, View view, int position, long id) {
-        List<Account> accounts = accountManager.getAccounts();
-        account = accounts.get(position);
-        refreshCounter(); // FIXME refresh remaining chars
-        if (accountService != null)
-          accountService.login(account);
-      }
-    });
+    senderSpinner.setOnItemSelectedListener(new SenderSelectedListener());
+    int defaultSender = preferences.getInt(DEFAULT_SENDER, -1);
+    if (defaultSender != -1) senderSpinner.setSelection(defaultSender);
     
-    receiverText.addTextChangedListener(new TextWatcher() {
-      public void beforeTextChanged(CharSequence s, int start, int count,
-          int after) {
+    if (account != null) {
+      List<Account> accounts = accountManager.getAccounts();
+      for (int a = 0; a < accounts.size(); ++a) {
+        if (account.getLabel().equals(accounts.get(a).getLabel()))
+          senderSpinner.setSelection(a);
       }
-
-      public void afterTextChanged(Editable s) {
-      }
-
-      public void onTextChanged(CharSequence s, int start, int before, int count) {
-        toggleButtons(s.length(), messageText.length());
-
-        // deleting one char
-        if (before == 1 && count == 0) {
-          if (hasAutocompleted) {
-            receiverText.setText("");
-            receiverText.append(receiverIncomplete);
-            hasAutocompleted = false;
-          } else {
-            receiverIncomplete = s.toString();
-          }
-        }
-
-        // writing one char
-        if (before == 0 && count == 1) {
-          receiverIncomplete = s.toString();
-          hasAutocompleted = false;
-        }
-
-        if (s.length() == 0) {
-          replyContent.setText("");
-          replyDate.setText("");
-        }
-      }
-    });
+    }
     
-    messageWatcher = new TextWatcher() {
-      public void beforeTextChanged(CharSequence s, int start, int count,
-          int after) {
-      }
-
-      public void afterTextChanged(Editable s) {
-      }
-
-      public void onTextChanged(CharSequence s, int start, int before, int count) {
-        int l = s.toString().replaceAll("\\s+$", "").replaceAll("\\s{2,}", " ")
-            .length();
-
-        int r = account.calcRemaining(l);
-        int f = account.calcFragments(l);
-
-        if (f > 1 || (f == 1 && r < 20)) {
-          lengthText.setVisibility(View.VISIBLE);
-          lengthText.setText(r + " / " + f);
-        } else {
-          if (messageText.getLineCount() > 3)
-            lengthText.setVisibility(View.INVISIBLE);
-          else
-            lengthText.setVisibility(View.GONE);
-          lengthText.setText("");
-        }
-
-        toggleButtons(receiverText.getText().length(), l);
-      }
-    };
-    
+    receiverText.addTextChangedListener(new ReceiverTextWatcher());
+    messageWatcher = new MessageTextWatcher();
     messageText.addTextChangedListener(messageWatcher);
-
-    sendButton.setOnClickListener(new OnClickListener() {
-      public void onClick(View v) {
-        List<Receiver> receivers = new LinkedList<Receiver>();
-        if (listSize == 0) {
-          String name = null;
-          String number = receiverText.getText().toString();
-          Spannable s = receiverText.getText();
-          Annotation[] annotations = s.getSpans(0, s.length(), Annotation.class);
-          for (Annotation a : annotations) {
-            if (a.getKey().equals("name"))
-              name = a.getValue();
-            if (a.getKey().equals("number"))
-              number = a.getValue();
-          }
-          receivers.add(new Receiver(name, number));
-        } else {
-          for (int i = 0; i < listSize; ++i) {
-            View listItem = listLinear.getChildAt(i);
-            TextView listItemName = (TextView) listItem
-                .findViewById(R.id.list_item_name);
-            TextView listItemNumber = (TextView) listItem
-                .findViewById(R.id.list_item_number);
-            receivers.add(new Receiver(
-                listItemName.getText().toString(),
-                listItemNumber.getText().toString()));
-          }
-        }
-        
-        for (Receiver receiver : receivers) {
-          receiver.setNumber(receiver.getNumber().replaceAll("[^0-9\\+]*", ""));
-          int length = receiver.getNumber().length();
-          if (length < 9 || length > 13) {
-            Toast.makeText(ComposeActivity.this,
-                R.string.invalid_receiver_toast, Toast.LENGTH_SHORT).show();
-            return;
-          }
-        }
-        
-        // TODO ask confirmation if account.getCount() == account.getLimit()
-        
-        SMS sms = new SMS(messageText.getText().toString(), receivers);
-        if (accountService != null)
-          accountService.send(ComposeActivity.this, account, sms);
-        
-        if (preferences.getBoolean("background_send", false)) {
-          Toast.makeText(ComposeActivity.this, R.string.sending_toast,
-              Toast.LENGTH_LONG).show();
-          
-          counterImage.setImageResource(R.drawable.sending_progress);
-          counterAnimation = (AnimationDrawable) counterImage.getDrawable();
-          counterAnimation.start();
-
-          // disable the button and re-enable it after some time
-          sendButton.setEnabled(false);
-          new AsyncTask<Void, Void, Void>() {
-            protected Void doInBackground(Void... params) {
-              try {
-                Thread.sleep(3500); // Toast.LENGTH_LONG
-              } catch (InterruptedException e) {
-                e.printStackTrace();
-              }
-              return null;
-            }
-
-            protected void onPostExecute(Void result) {
-              sendButton.setEnabled(true);
-            };
-          }.execute();
-        }
-      }
-    });
+    sendButton.setOnClickListener(new SendButtonClickListener());
   }
   
   @Override
@@ -523,8 +261,6 @@ public class ComposeActivity extends Activity {
     senderSpinner.setOnItemSelectedListener(null);
     messageText.removeTextChangedListener(messageWatcher);
     sendButton.setOnClickListener(null);
-    
-    // TODO save app status (account, single/multiple receiver, message text)
     super.onPause();
   }
   
@@ -564,7 +300,7 @@ public class ComposeActivity extends Activity {
       return true;
 
     case R.id.menu_item_information:
-      showInformation();
+      showInformationDialog();
       return true;
       
     case R.id.menu_item_reporting:
@@ -580,19 +316,123 @@ public class ComposeActivity extends Activity {
       return super.onOptionsItemSelected(item);
     }
   }
+
+  private void insertReceiver(String name, String number) {
+    // check if receiver already exists
+    for (int i = 0; i < listSize; ++i) {
+      View item = listLinear.getChildAt(i);
+      TextView itemNumber = 
+          (TextView) item.findViewById(R.id.list_item_number);
+      if (itemNumber.getText().toString().equals(number)) {
+        Toast.makeText(ComposeActivity.this, 
+            R.string.negative_receiver_toast,
+            Toast.LENGTH_SHORT).show();
+        return;
+      }
+    }
+
+    View listItem = getLayoutInflater().inflate(
+        R.layout.receiver_list_item, null);
+    TextView listItemName = 
+        (TextView) listItem.findViewById(R.id.list_item_name);
+    TextView listItemNumber = 
+        (TextView) listItem.findViewById(R.id.list_item_number);
+    ImageButton listItemButton = 
+        (ImageButton) listItem.findViewById(R.id.list_item_button);
+
+    listItemName.setText(name);
+    listItemNumber.setText(number);
+    listItemButton.setTag(listItem);
+    listItemButton.setOnClickListener(new OnClickListener() {
+      public void onClick(View view) {
+        deleteReceiver(view);
+      }
+    });
+
+    listLinear.addView(listItem);
+    ++listSize;
+    refresh();
+  }
   
-  public void clearFields() {
-    String preference = preferences.getString("clear_message", "M");
-    if (preference.contains("R")) receiverText.setText("");
-    if (preference.contains("M")) messageText.setText("");
+  private void deleteReceiver(View view) {
+    listLinear.removeView((View) view.getTag());
+    --listSize;
+    refresh();
   }
 
-  public void refreshCounter() {
+  public List<Receiver> getReceivers() {
+    List<Receiver> receivers = new LinkedList<Receiver>();
+    
+    if (listSize == 0) {
+      
+      String name = null;
+      String number = receiverText.getText().toString();
+      Spannable s = receiverText.getText();
+      Annotation[] annotations = s.getSpans(0, s.length(), Annotation.class);
+      for (Annotation a : annotations) {
+        if (a.getKey().equals("name"))
+          name = a.getValue();
+        if (a.getKey().equals("number"))
+          number = a.getValue();
+      }
+      receivers.add(new Receiver(name, number));
+      
+    } else {
+      
+      for (int i = 0; i < listSize; ++i) {
+        View listItem = listLinear.getChildAt(i);
+        TextView listItemName = (TextView) listItem
+            .findViewById(R.id.list_item_name);
+        TextView listItemNumber = (TextView) listItem
+            .findViewById(R.id.list_item_number);
+        receivers.add(new Receiver(
+            listItemName.getText().toString(),
+            listItemNumber.getText().toString()));
+      }
+      
+    }
+    
+    return receivers;
+  }
+  
+  public void refresh() {
+    toggleButtons();
+    updateCounter();
+    updateLayout();
+    updateLength();
+  }
+  
+  public void clearFields() {
+    clearFields(true, true);
+  }
+  
+  public void clearFields(boolean receiver, boolean message) {
+    if (receiver) clearReceiverField(); 
+    if (message) clearMessageField();
+  }
+  
+  private void clearReceiverField() {
+    receiverText.setText("");
+    receiverIncomplete = "";
+    hasAutocompleted = false;
+    listSize = 0;
+    updateLayout();
+  }
+  
+  private void clearMessageField() {
+    messageText.setText("");
+    updateLength();
+  }
+  
+  public void updateCounter() {
+    if (account == null) return;
+    
     int limit = account.getLimit();
     int remaining = limit - account.getCount();
     if (remaining < 0) remaining = 0;
     if (remaining > limit) remaining = limit;
     counterText.setText(Integer.toString(remaining));
+    
     int percentage = (int) 10.0 * remaining / limit;
     switch (percentage) {
     case  0: counterImage.setImageResource(R.drawable.ic_counter_0);  break;
@@ -609,65 +449,73 @@ public class ComposeActivity extends Activity {
     }
   }
   
-  private void addListItem(String name, String number) {
-    for (int i = 0; i < listSize; ++i) {
-      View item = listLinear.getChildAt(i);
-      TextView itemNumber = (TextView) item.findViewById(R.id.list_item_number);
-      if (itemNumber.getText().toString().equals(number)) {
-        Toast.makeText(ComposeActivity.this, R.string.negative_receiver_toast,
-            Toast.LENGTH_SHORT).show();
-        return;
-      }
+  public void updateLength() {
+    updateLength(messageText.getText().length());
+  }
+  
+  public void updateLength(int length) {
+    if (account == null) return;
+    
+    int r = account.calcRemaining(length);
+    int f = account.calcFragments(length);
+
+    if (f > 1 || (f == 1 && r < 20)) {
+      lengthText.setVisibility(View.VISIBLE);
+      lengthText.setText(r + " / " + f);
+    } else {
+      if (messageText.getLineCount() > 3)
+        lengthText.setVisibility(View.INVISIBLE);
+      else lengthText.setVisibility(View.GONE);
+      lengthText.setText("");
     }
-
-    View listItem = getLayoutInflater().inflate(
-        R.layout.receiver_list_item, null);
-    TextView listItemName = (TextView) listItem
-        .findViewById(R.id.list_item_name);
-    TextView listItemNumber = (TextView) listItem
-        .findViewById(R.id.list_item_number);
-    ImageButton listItemButton = (ImageButton) listItem
-        .findViewById(R.id.list_item_button);
-
-    listItemName.setText(name);
-    listItemNumber.setText(number);
-    listItemButton.setTag(listItem);
-    listItemButton.setOnClickListener(new OnClickListener() {
-      public void onClick(View view) {
-        listLinear.removeView((View) view.getTag());
-        if (--listSize == 0) {
-          listLinear.setVisibility(View.GONE);
-          replyLinear.setVisibility(View.VISIBLE);
-          toggleButtons(receiverText.getText().length(), 
-              messageText.getText().length());
-        }
-      }
-    });
-
-    listLinear.addView(listItem);
-    if (++listSize == 1) {
+  }
+  
+  private void updateLayout() {
+    switch (listSize) {
+    case 1:
       listLinear.setVisibility(View.VISIBLE);
       replyLinear.setVisibility(View.GONE);
       replyContent.setText("");
       replyDate.setText("");
-      toggleButtons(receiverText.getText().length(), 
-          messageText.getText().length());
+      break;
+      
+    case 0:
+      listLinear.removeAllViews();
+      listLinear.setVisibility(View.GONE);
+      replyLinear.setVisibility(View.VISIBLE);
+      replyContent.setText("");
+      replyDate.setText("");
+      break;
+      
+    default:
     }
   }
-
-  private void toggleButtons(int lReceiver, int lMessage) {
-    if (lReceiver > 0 || listSize > 0 || lMessage > 0)
-      clearButton.setEnabled(true);
-    else
-      clearButton.setEnabled(false);
-
-    if ((lReceiver > 0 || listSize > 0) && account.calcFragments(lMessage) > 0)
-      sendButton.setEnabled(true);
-    else
-      sendButton.setEnabled(false);
+  
+  public void toggleButtons() {
+    toggleButtons(
+        receiverText.getText().length(),
+        messageText.getText().length());
   }
   
-  private void showInformation() {
+  public void toggleButtons(int receiverLength, int messageLength) {
+    toggleClearButton(receiverLength, messageLength);
+    toggleSendButton(receiverLength, messageLength);
+  }
+  
+  private void toggleClearButton(int receiverLength, int messageLength) {
+    if (receiverLength > 0 || listSize > 0 || messageLength > 0)
+      clearButton.setEnabled(true);
+    else clearButton.setEnabled(false);
+  }
+
+  private void toggleSendButton(int receiverLength, int messageLength) {
+    if ((receiverLength > 0 || listSize > 0) && 
+        account != null && account.calcFragments(messageLength) > 0)
+      sendButton.setEnabled(true);
+    else sendButton.setEnabled(false);
+  }
+  
+  private void showInformationDialog() {
     AlertDialog.Builder builder = new AlertDialog.Builder(this);
 
     LayoutInflater inflater = (LayoutInflater)
@@ -692,9 +540,271 @@ public class ComposeActivity extends Activity {
           getString(R.string.app_version),
           packageInfo.versionName));
     } catch (NameNotFoundException e) {
-      e.printStackTrace();
+      versionText.setText("");
     }
 
     builder.show();
+  }
+  
+  private void showWelcomeDialog() {
+    AlertDialog.Builder builder = new AlertDialog.Builder(this);
+    builder.setTitle(R.string.app_name);
+    builder.setMessage(R.string.welcome_message);
+    builder.setPositiveButton(R.string.create_button, 
+        new DialogInterface.OnClickListener() {
+      public void onClick(DialogInterface dialog, int which) {
+        startActivity(new Intent(
+            ComposeActivity.this,
+            AccountCreateActivity.class));
+      }
+    });
+    
+    builder.setCancelable(false);
+    builder.show();
+  }
+  
+  private class IncomingMessageBroadcastReceiver extends BroadcastReceiver {
+    @Override
+    public void onReceive(Context context, Intent intent) {
+      Bundle bundle = intent.getExtras();
+      if (bundle != null) {
+        Object[] pdus = (Object[]) bundle.get("pdus");
+        for (Object pdu : pdus) {
+          SmsMessage message = SmsMessage.createFromPdu((byte[]) pdu);
+          if (listSize == 0) { // only if one receiver is selected
+            String number = receiverText.getText().toString();
+            Spannable s = receiverText.getText();
+            Annotation[] annotations = 
+                s.getSpans(0, s.length(), Annotation.class);
+            for (Annotation a : annotations)
+              if (a.getKey().equals("number"))
+                number = a.getValue();
+            
+            String address = message.getOriginatingAddress();
+            int addressLength = address.length();
+            if (addressLength > 10) 
+              address = address.substring(addressLength-10, addressLength);
+            int numberLength = number.length();
+            if (numberLength > 10) 
+              number = number.substring(numberLength-10, numberLength);
+            
+            if (number.equals(address)) {
+              replyContent.setText(message.getMessageBody());
+              long date = message.getTimestampMillis();
+              replyDate.setText(new Date(date).toLocaleString());
+            }
+          }
+        }
+      }
+    }
+  }
+  
+  private class ReceiverAutocompleteClickListener 
+      implements OnItemClickListener {
+    public void onItemClick(AdapterView<?> parent, 
+        View view, int position, long id) {
+      TextView receiverName = 
+          (TextView) view.findViewById(R.id.receiver_name);
+      TextView receiverNumber = 
+          (TextView) view.findViewById(R.id.receiver_number);
+
+      hasAutocompleted = true;
+
+      if (listSize == 0) {
+        
+        SMS reply = 
+          conversationManager.loadInbox(receiverNumber.getText().toString());
+        if (reply != null) {
+          replyContent.setText(reply.getMessage());
+          replyDate.setText(reply.getDate());
+        }
+        messageText.requestFocus();
+        
+      } else if (listSize < MAX_LIST_SIZE) {
+        
+        String name = receiverName.getText().toString();
+        String number = receiverNumber.getText().toString();
+        insertReceiver(name, number);
+        receiverText.setText("");
+        receiverText.requestFocus();
+        String t = String.format(
+            getString(R.string.positive_receiver_toast), 
+            name + " (" + number + ")");
+        Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
+        
+      } else {
+        
+        receiverText.setText("");
+        receiverText.requestFocus();
+        String t = getString(R.string.maximum_receivers_toast);
+        Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
+        
+      }
+
+      toggleButtons();
+    }
+  }
+  
+  private class InsertReceiverClickListener implements OnClickListener {
+    public void onClick(View v) {
+      String name = "";
+      String number = receiverText.getText().toString();
+
+      Spannable s = receiverText.getText();
+      Annotation[] annotations = s.getSpans(0, s.length(), Annotation.class);
+      for (Annotation a : annotations) {
+        if (a.getKey().equals("name"))
+          name = a.getValue();
+        if (a.getKey().equals("number"))
+          number = a.getValue();
+      }
+
+      number = number.replaceAll("[^0-9\\+]*", "");
+      if (number.equals("")) return;
+      
+      if (listSize >= MAX_LIST_SIZE) {
+        String t = getString(R.string.maximum_receivers_toast);
+        Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
+        return;
+      }
+
+      insertReceiver(name, number);
+      if (listSize > 1) {
+        String t = String.format(
+            getString(R.string.positive_receiver_toast), number);
+        Toast.makeText(ComposeActivity.this, t, Toast.LENGTH_SHORT).show();
+      }
+      
+      receiverText.setText("");
+      receiverText.requestFocus();
+      receiverIncomplete = "";
+      hasAutocompleted = false;
+    }
+  }
+  
+  private class SenderSelectedListener implements OnItemSelectedListener {
+    public void onNothingSelected(AdapterView<?> parent) {
+      // do nothing
+    }
+    
+    public void onItemSelected(
+        AdapterView<?> parent, View view, int position, long id) {
+      List<Account> accounts = accountManager.getAccounts();
+      account = accounts.get(position);
+      SharedPreferences.Editor editor = preferences.edit();
+      editor.putInt(DEFAULT_SENDER, position);
+      editor.commit();
+      refresh();
+      if (accountService != null)
+        accountService.login(account);
+    }
+  }
+  
+  private class ReceiverTextWatcher implements TextWatcher {
+    public void beforeTextChanged(
+        CharSequence s, int start, int count, int after) {
+      // do nothing
+    }
+
+    public void afterTextChanged(Editable s) {
+      // do nothing
+    }
+
+    public void onTextChanged(
+        CharSequence s, int start, int before, int count) {
+      toggleButtons(s.length(), messageText.length());
+
+      // deleting one char
+      if (before == 1 && count == 0) {
+        if (hasAutocompleted) {
+          receiverText.setText("");
+          receiverText.append(receiverIncomplete);
+          hasAutocompleted = false;
+        } else {
+          receiverIncomplete = s.toString();
+        }
+      }
+
+      // writing one char
+      if (before == 0 && count == 1) {
+        receiverIncomplete = s.toString();
+        hasAutocompleted = false;
+      }
+
+      if (s.length() == 0) {
+        replyContent.setText("");
+        replyDate.setText("");
+      }
+    }
+  }
+  
+  private class MessageTextWatcher implements TextWatcher {
+    public void beforeTextChanged(
+        CharSequence s, int start, int count, int after) {
+      // do nothing
+    }
+
+    public void afterTextChanged(Editable s) {
+      // do nothing
+    }
+
+    public void onTextChanged(
+        CharSequence s, int start, int before, int count) {
+      int l = s.toString().replaceAll("\\s+$", "")
+          .replaceAll("\\s{2,}", " ").length();
+      updateLength(l);
+      toggleButtons(receiverText.getText().length(), l);
+    }
+  }
+  
+  private class SendButtonClickListener implements OnClickListener {
+    public void onClick(View v) {
+      List<Receiver> receivers = getReceivers();
+      for (Receiver receiver : receivers) {
+        receiver.setNumber(receiver.getNumber().replaceAll("[^0-9\\+]*", ""));
+        int length = receiver.getNumber().length();
+        if (length < 9 || length > 13) {
+          Toast.makeText(ComposeActivity.this,
+              R.string.invalid_receiver_toast, Toast.LENGTH_SHORT).show();
+          return;
+        }
+      }
+      
+      // TODO ask confirmation if account.getCount() == account.getLimit()
+      
+      SMS sms = new SMS(messageText.getText().toString(), receivers);
+      if (accountService != null)
+        accountService.send(ComposeActivity.this, account, sms);
+      
+      if (preferences.getBoolean("background_send", false)) {
+        Toast.makeText(ComposeActivity.this, R.string.sending_toast,
+            Toast.LENGTH_LONG).show();
+        
+        counterImage.setImageResource(R.drawable.sending_progress);
+        counterAnimation = (AnimationDrawable) counterImage.getDrawable();
+        counterAnimation.start();
+
+        // disable the button and re-enable it after some time
+        sendButton.setEnabled(false);
+        new AsyncTask<Void, Void, Void>() {
+          protected Void doInBackground(Void... params) {
+            sleep(3500); // Toast.LENGTH_LONG
+            return null;
+          }
+
+          protected void onPostExecute(Void result) {
+            sendButton.setEnabled(true);
+          };
+        }.execute();
+      }
+    }
+  }
+  
+  private void sleep(int milliseconds) {
+    try {
+      Thread.sleep(milliseconds);
+    } catch (InterruptedException e) { 
+      e.printStackTrace();
+    }
   }
 }

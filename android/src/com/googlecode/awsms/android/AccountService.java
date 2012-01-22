@@ -58,13 +58,17 @@ import com.googlecode.awsms.account.AccountManagerAndroid;
 import com.googlecode.awsms.message.ConversationManagerAndroid;
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.Account.Result;
-import com.googlecode.esms.account.AccountConnector;
 import com.googlecode.esms.account.AccountManager;
 import com.googlecode.esms.message.ConversationManager;
 import com.googlecode.esms.message.Receiver;
 import com.googlecode.esms.message.SMS;
 
+/**
+ * Performs sending in foreground or in background.
+ * @author Andrea De Pasquale
+ */
 public class AccountService extends Service {
+  // TODO change back to AsyncTask?
   
   static final String TAG = "AccountService";
 
@@ -73,6 +77,9 @@ public class AccountService extends Service {
   NotificationManager notificationManager;
   AudioManager audioManager;
   ProgressDialog progressDialog;
+  
+  // prevent errors when preferences are changed during send()
+  boolean background, notifications;
   
   // notification IDs
   int currentNID;
@@ -102,7 +109,8 @@ public class AccountService extends Service {
   public void onCreate() {
     preferences = PreferenceManager.getDefaultSharedPreferences(this);
     conversationManager = new ConversationManagerAndroid(this);
-    notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+    notificationManager = (NotificationManager) getSystemService(
+        Context.NOTIFICATION_SERVICE);
     audioManager = (AudioManager) getSystemService(Context.AUDIO_SERVICE);
     currentNID = (int) new Date().getTime();
   }
@@ -127,33 +135,24 @@ public class AccountService extends Service {
       final Account account, final SMS sms) {
     new AsyncTask<Void, Void, List<Result>>() {
       
-      // prevent errors when preferences are changed during send()
-      boolean background, notifications;
-
       @Override
       protected void onPreExecute() {
         conversationManager.saveOutbox(sms);
         
         background = preferences.getBoolean("background_send", false);
-        if (!background) {
-          progressDialog = showProgressDialog(activity);
-        }
+        if (!background) progressDialog = showProgressDialog(activity);
 
         notifications = preferences.getBoolean("enable_notifications", true);
-        if (notifications) {
-          sendingNID = currentNID++;
-          AccountService.this.startForeground(
-              sendingNID, createSendNotification(sms));
-        }
+        if (notifications) showSendNotification(sms);
       }
 
       @Override
       protected List<Result> doInBackground(Void... params) {
         int attempts = 3;
         while (true) {
-          Log.d(TAG, "call send() #" + attempts);
+          Log.d(TAG, "call send(), " + attempts + " remaining");
           List<Result> results = account.send(sms);
-          Log.d(TAG, "done send() " + results);
+          Log.d(TAG, "done send() with result " + results);
           AccountManager accountManager = new AccountManagerAndroid(activity);
           accountManager.update(account.getLabel(), account);
           switch (results.get(0)) {
@@ -161,26 +160,11 @@ public class AccountService extends Service {
           case NETWORK_ERROR:
           case UNKNOWN_ERROR:
             if (--attempts == 0) return results;
-            AccountConnector connector = new AccountConnectorAndroid(activity);
-            account.setAccountConnector(connector);
-            try {
-              Thread.sleep(1000);
-            } catch (InterruptedException e) { 
-              e.printStackTrace();
-            }
+            account.setAccountConnector(
+                new AccountConnectorAndroid(activity));
+            sleep(1000); // wait one second before retrying
             break;
-//          case CAPTCHA_NEEDED:
-//            byte[] captchaArray = sms.getCaptchaArray();
-//            Bitmap captchaBitmap = BitmapFactory.decodeByteArray(
-//                captchaArray, 0, captchaArray.length);
-//            if (captchaBitmap == null) return Result.CAPTCHA_ERROR;
-//            int w = captchaBitmap.getWidth();
-//            int h = captchaBitmap.getHeight();
-//            int[] pixels = new int[w*h];
-//            captchaBitmap.getPixels(pixels, 0, w, 0, 0, w, h);
-//            // (alpha << 24) | (red << 16) | (green << 8) | blue
-//            // CaptchaDecoderAndroid.decode()
-//            // break;
+            
           default:
             return results;
           }
@@ -211,15 +195,16 @@ public class AccountService extends Service {
           
           conversationManager.saveSent(sms);
           if (notifications) {
-            successfulNID = currentNID++;
-            notificationManager.notify(
-                successfulNID, createSuccessfulNotification(sms));
+            showSuccessfulNotification(sms);
           } else { // toast
-            Toast.makeText(activity, R.string.sending_successful_toast, 
+            Toast.makeText(activity, 
+                R.string.sending_successful_toast, 
                 Toast.LENGTH_LONG).show();
           }
-          activity.clearFields();
-          activity.refreshCounter();
+          
+          String preference = preferences.getString("clear_message", "M");
+          activity.clearFields(preference.contains("R"), preference.contains("M"));
+          activity.updateCounter();
           
         } else { // some or all not successful
           
@@ -234,22 +219,14 @@ public class AccountService extends Service {
           case CAPTCHA_NEEDED:
           case CAPTCHA_ERROR:
             showCaptchaDialog(activity, account, successful, unsuccessful);
-            if (notifications) {
-              captchaNID = currentNID++;
-              notificationManager.notify(
-                  captchaNID, createCaptchaNotification());
-            }
+            if (notifications) showCaptchaNotification();
             break;
             
           case NETWORK_ERROR:
           case PROVIDER_ERROR:
           case UNKNOWN_ERROR:
             showNetworkDialog(activity, account, successful, unsuccessful);
-            if (notifications) {
-              networkNID = currentNID++;
-              notificationManager.notify(
-                  networkNID, createNetworkNotification());
-            }
+            if (notifications) showNetworkNotification();
             break;
             
           case LOGIN_ERROR:
@@ -257,44 +234,27 @@ public class AccountService extends Service {
           case SENDER_ERROR:
           case UNSUPPORTED_ERROR:
             showAccountDialog(activity, account, successful, unsuccessful);
-            if (notifications) {
-              accountNID = currentNID++;
-              notificationManager.notify(
-                  accountNID, createAccountNotification());
-            }
+            if (notifications) showAccountNotification();
             break;
             
           case LIMIT_ERROR:
             showLimitDialog(activity, account, successful, unsuccessful);
-            if (notifications) {
-              limitNID = currentNID++;
-              notificationManager.notify(
-                  limitNID, createLimitNotification());
-            }
-            AccountManager accountManager = 
-                new AccountManagerAndroid(activity);
+            if (notifications) showLimitNotification();
+            AccountManager accountManager = new AccountManagerAndroid(activity);
             // no more messages available, limit reached
             account.setCount(account.getLimit(), new Date());
             accountManager.update(account.getLabel(), account);
-            activity.refreshCounter();
+            activity.updateCounter();
             break;
             
           case RECEIVER_ERROR:
             showReceiverDialog(activity, account, successful, unsuccessful);
-            if (notifications) {
-              receiverNID = currentNID++;
-              notificationManager.notify(
-                  receiverNID, createReceiverNotification());
-            }
+            if (notifications) showReceiverNotification();
             break;
             
           case MESSAGE_ERROR:
             showMessageDialog(activity, account, successful, unsuccessful);
-            if (notifications) {
-              messageNID = currentNID++;
-              notificationManager.notify(
-                  messageNID, createMessageNotification());
-            }
+            if (notifications) showMessageNotification();
             break;
           }
           
@@ -309,59 +269,22 @@ public class AccountService extends Service {
         getString(R.string.sending_progress_dialog), true, false);
   }
 
-  private Notification createSendNotification(SMS sms) {
+  private void showSendNotification(SMS sms) {
+    sendingNID = currentNID++;
     String ticker = String.format(
         getString(R.string.sending_progress_notification),
         shortReceiverString(sms));
-    Notification notification = new Notification(R.drawable.ic_stat_notify, 
-        ticker, System.currentTimeMillis());
-    Intent intent = new Intent(AccountService.this, ComposeActivity.class);
-    intent.setAction(Intent.ACTION_MAIN);
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | 
-        Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-    notification.setLatestEventInfo(AccountService.this,
-        AccountService.this.getString(R.string.app_name), ticker,
-        PendingIntent.getActivity(AccountService.this, 0, intent, 0));
-    notification.sound = Uri.parse(preferences.getString(
-        "notification_ringtone", "DEFAULT_RINGTONE_URI"));
-
-    String vibrate = preferences.getString("notification_vibration", "S");
-    if (vibrate.equals("A") || (vibrate.equals("S") && 
-        audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE)) {
-      long[] pattern = { 0, 200, 100, 100 };
-      notification.vibrate = pattern;
-    }
-
-    notification.flags |= Notification.FLAG_ONGOING_EVENT;
-    notification.flags |= Notification.FLAG_NO_CLEAR;
-    return notification;
+    Notification notification = createNotification(ticker, true);
+    AccountService.this.startForeground(sendingNID, notification);
   }
   
-  private Notification createSuccessfulNotification(SMS sms) {
+  private void showSuccessfulNotification(SMS sms) {
+    successfulNID = currentNID++;
     String ticker = String.format(
         getString(R.string.sending_successful_notification), 
         shortReceiverString(sms));
-    Notification notification = new Notification(R.drawable.ic_stat_notify, 
-        ticker, System.currentTimeMillis());
-    Intent intent = new Intent(AccountService.this, ComposeActivity.class);
-    intent.setAction(Intent.ACTION_MAIN);
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | 
-        Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-    notification.setLatestEventInfo(AccountService.this,
-        AccountService.this.getString(R.string.app_name), ticker,
-        PendingIntent.getActivity(AccountService.this, 0, intent, 0));
-    notification.sound = Uri.parse(preferences.getString(
-        "notification_ringtone", "DEFAULT_RINGTONE_URI"));
-
-    String vibrate = preferences.getString("notification_vibration", "S");
-    if (vibrate.equals("A") || (vibrate.equals("S") && 
-        audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE)) {
-      long[] pattern = { 0, 200, 100, 100 };
-      notification.vibrate = pattern;
-    }
-
-    notification.flags |= Notification.FLAG_AUTO_CANCEL;
-    return notification;
+    Notification notification = createNotification(ticker, false);
+    notificationManager.notify(successfulNID, notification);
   }
   
   private void showCaptchaDialog(final ComposeActivity activity, 
@@ -398,8 +321,7 @@ public class AccountService extends Service {
       @Override
       public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
         if (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
-          if (preferences.getBoolean("enable_notifications", true))
-            notificationManager.cancel(captchaNID);
+          if (notifications) notificationManager.cancel(captchaNID);
           unsuccessful.setCaptchaText(captchaText.getText().toString());
           send(activity, account, unsuccessful);
           dialog.dismiss();
@@ -412,8 +334,7 @@ public class AccountService extends Service {
     builder.setPositiveButton(R.string.ok_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
-            if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(captchaNID);
+            if (notifications) notificationManager.cancel(captchaNID);
             unsuccessful.setCaptchaText(captchaText.getText().toString());
             send(activity, account, unsuccessful);
           }
@@ -422,8 +343,7 @@ public class AccountService extends Service {
     builder.setNegativeButton(R.string.cancel_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
-            if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(captchaNID);
+            if (notifications) notificationManager.cancel(captchaNID);
             Toast.makeText(activity, R.string.sending_canceled_toast, 
                 Toast.LENGTH_LONG).show();
           }
@@ -431,8 +351,7 @@ public class AccountService extends Service {
     
     builder.setOnCancelListener(new OnCancelListener() {
           public void onCancel(DialogInterface dialog) {
-            if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(captchaNID);
+            if (notifications) notificationManager.cancel(captchaNID);
             Toast.makeText(activity, R.string.sending_canceled_toast, 
                 Toast.LENGTH_LONG).show();
           }
@@ -442,29 +361,11 @@ public class AccountService extends Service {
     captchaText.requestFocus();
   }
   
-  private Notification createCaptchaNotification() {
+  private void showCaptchaNotification() {
+    captchaNID = currentNID++;
     String ticker = getString(R.string.captcha_decode_notification);
-    Notification notification = new Notification(R.drawable.ic_stat_notify, 
-        ticker, System.currentTimeMillis());
-    Intent intent = new Intent(AccountService.this, ComposeActivity.class);
-    intent.setAction(Intent.ACTION_MAIN);
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | 
-        Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-    notification.setLatestEventInfo(AccountService.this,
-        AccountService.this.getString(R.string.app_name), ticker,
-        PendingIntent.getActivity(AccountService.this, 0, intent, 0));
-    notification.sound = Uri.parse(preferences.getString(
-        "notification_ringtone", "DEFAULT_RINGTONE_URI"));
-
-    String vibrate = preferences.getString("notification_vibration", "S");
-    if (vibrate.equals("A") || (vibrate.equals("S") && 
-        audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE)) {
-      long[] pattern = { 0, 200, 100, 100 };
-      notification.vibrate = pattern;
-    }
-
-    notification.flags |= Notification.FLAG_AUTO_CANCEL;
-    return notification;
+    Notification notification = createNotification(ticker, false);
+    notificationManager.notify(captchaNID, notification);
   }
   
   private void showNetworkDialog(final ComposeActivity activity, 
@@ -485,8 +386,7 @@ public class AccountService extends Service {
     builder.setPositiveButton(R.string.yes_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
-            if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(networkNID);
+            if (notifications) notificationManager.cancel(networkNID);
             send(activity, account, unsuccessful);
           }
         });
@@ -494,8 +394,7 @@ public class AccountService extends Service {
     builder.setNegativeButton(R.string.no_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
-            if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(networkNID);
+            if (notifications) notificationManager.cancel(networkNID);
             Toast.makeText(activity, R.string.sending_canceled_toast, 
                 Toast.LENGTH_LONG).show();
           }
@@ -504,29 +403,11 @@ public class AccountService extends Service {
     builder.show();
   }
   
-  private Notification createNetworkNotification() {
+  private void showNetworkNotification() {
+    networkNID = currentNID++;
     String ticker = getString(R.string.network_error_notification);
-    Notification notification = new Notification(R.drawable.ic_stat_notify, 
-        ticker, System.currentTimeMillis());
-    Intent intent = new Intent(AccountService.this, ComposeActivity.class);
-    intent.setAction(Intent.ACTION_MAIN);
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | 
-        Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-    notification.setLatestEventInfo(AccountService.this,
-        AccountService.this.getString(R.string.app_name), ticker,
-        PendingIntent.getActivity(AccountService.this, 0, intent, 0));
-    notification.sound = Uri.parse(preferences.getString(
-        "notification_ringtone", "DEFAULT_RINGTONE_URI"));
-
-    String vibrate = preferences.getString("notification_vibration", "S");
-    if (vibrate.equals("A") || (vibrate.equals("S") && 
-        audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE)) {
-      long[] pattern = { 0, 200, 100, 100 };
-      notification.vibrate = pattern;
-    }
-
-    notification.flags |= Notification.FLAG_AUTO_CANCEL;
-    return notification;
+    Notification notification = createNotification(ticker, false);
+    notificationManager.notify(networkNID, notification);
   }
   
   private void showAccountDialog(final Activity activity, 
@@ -547,8 +428,7 @@ public class AccountService extends Service {
     builder.setPositiveButton(R.string.yes_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
-            if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(accountNID);
+            if (notifications) notificationManager.cancel(accountNID);
             startActivity(new Intent(
                 AccountService.this, AccountDisplayActivity.class));
           }
@@ -557,8 +437,7 @@ public class AccountService extends Service {
     builder.setNegativeButton(R.string.no_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
-            if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(accountNID);
+            if (notifications) notificationManager.cancel(accountNID);
             Toast.makeText(activity, R.string.sending_canceled_toast, 
                 Toast.LENGTH_LONG).show();
           }
@@ -567,29 +446,11 @@ public class AccountService extends Service {
     builder.show();
   }
   
-  private Notification createAccountNotification() {
+  private void showAccountNotification() {
+    accountNID = currentNID++;
     String ticker = getString(R.string.account_error_notification);
-    Notification notification = new Notification(R.drawable.ic_stat_notify, 
-        ticker, System.currentTimeMillis());
-    Intent intent = new Intent(AccountService.this, ComposeActivity.class);
-    intent.setAction(Intent.ACTION_MAIN);
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | 
-        Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-    notification.setLatestEventInfo(AccountService.this,
-        AccountService.this.getString(R.string.app_name), ticker,
-        PendingIntent.getActivity(AccountService.this, 0, intent, 0));
-    notification.sound = Uri.parse(preferences.getString(
-        "notification_ringtone", "DEFAULT_RINGTONE_URI"));
-
-    String vibrate = preferences.getString("notification_vibration", "S");
-    if (vibrate.equals("A") || (vibrate.equals("S") && 
-        audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE)) {
-      long[] pattern = { 0, 200, 100, 100 };
-      notification.vibrate = pattern;
-    }
-
-    notification.flags |= Notification.FLAG_AUTO_CANCEL;
-    return notification;
+    Notification notification = createNotification(ticker, false);
+    notificationManager.notify(accountNID, notification);
   }
   
   private void showLimitDialog(final ComposeActivity activity, 
@@ -610,8 +471,7 @@ public class AccountService extends Service {
     builder.setPositiveButton(R.string.yes_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
-            if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(limitNID);
+            if (notifications) notificationManager.cancel(limitNID);
             showResendDialog(activity, unsuccessful);
           }
         });
@@ -619,8 +479,7 @@ public class AccountService extends Service {
     builder.setNegativeButton(R.string.no_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
-            if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(limitNID);
+            if (notifications) notificationManager.cancel(limitNID);
             Toast.makeText(activity, R.string.sending_canceled_toast, 
                 Toast.LENGTH_LONG).show();
           }
@@ -629,29 +488,11 @@ public class AccountService extends Service {
     builder.show();
   }
   
-  private Notification createLimitNotification() {
+  private void showLimitNotification() {
+    limitNID = currentNID++;
     String ticker = getString(R.string.limit_error_notification);
-    Notification notification = new Notification(R.drawable.ic_stat_notify, 
-        ticker, System.currentTimeMillis());
-    Intent intent = new Intent(AccountService.this, ComposeActivity.class);
-    intent.setAction(Intent.ACTION_MAIN);
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | 
-        Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-    notification.setLatestEventInfo(AccountService.this,
-        AccountService.this.getString(R.string.app_name), ticker,
-        PendingIntent.getActivity(AccountService.this, 0, intent, 0));
-    notification.sound = Uri.parse(preferences.getString(
-        "notification_ringtone", "DEFAULT_RINGTONE_URI"));
-
-    String vibrate = preferences.getString("notification_vibration", "S");
-    if (vibrate.equals("A") || (vibrate.equals("S") && 
-        audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE)) {
-      long[] pattern = { 0, 200, 100, 100 };
-      notification.vibrate = pattern;
-    }
-
-    notification.flags |= Notification.FLAG_AUTO_CANCEL;
-    return notification;
+    Notification notification = createNotification(ticker, false);
+    notificationManager.notify(limitNID, notification);
   }
   
   private void showReceiverDialog(final ComposeActivity activity, 
@@ -672,8 +513,7 @@ public class AccountService extends Service {
     builder.setPositiveButton(R.string.yes_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
-            if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(receiverNID);
+            if (notifications) notificationManager.cancel(receiverNID);
             showResendDialog(activity, unsuccessful);
           }
         });
@@ -681,8 +521,7 @@ public class AccountService extends Service {
     builder.setNegativeButton(R.string.no_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
-            if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(receiverNID);
+            if (notifications) notificationManager.cancel(receiverNID);
             Toast.makeText(activity, R.string.sending_canceled_toast, 
                 Toast.LENGTH_LONG).show();
           }
@@ -691,29 +530,11 @@ public class AccountService extends Service {
     builder.show();
   }
   
-  private Notification createReceiverNotification() {
+  private void showReceiverNotification() {
+    receiverNID = currentNID++;
     String ticker = getString(R.string.receiver_error_notification);
-    Notification notification = new Notification(R.drawable.ic_stat_notify, 
-        ticker, System.currentTimeMillis());
-    Intent intent = new Intent(AccountService.this, ComposeActivity.class);
-    intent.setAction(Intent.ACTION_MAIN);
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | 
-        Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-    notification.setLatestEventInfo(AccountService.this,
-        AccountService.this.getString(R.string.app_name), ticker,
-        PendingIntent.getActivity(AccountService.this, 0, intent, 0));
-    notification.sound = Uri.parse(preferences.getString(
-        "notification_ringtone", "DEFAULT_RINGTONE_URI"));
-
-    String vibrate = preferences.getString("notification_vibration", "S");
-    if (vibrate.equals("A") || (vibrate.equals("S") && 
-        audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE)) {
-      long[] pattern = { 0, 200, 100, 100 };
-      notification.vibrate = pattern;
-    }
-
-    notification.flags |= Notification.FLAG_AUTO_CANCEL;
-    return notification;
+    Notification notification = createNotification(ticker, false);
+    notificationManager.notify(receiverNID, notification);
   }
   
   private void showMessageDialog(final ComposeActivity activity, 
@@ -734,8 +555,7 @@ public class AccountService extends Service {
     builder.setPositiveButton(R.string.yes_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
-            if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(messageNID);
+            if (notifications) notificationManager.cancel(messageNID);
             showResendDialog(activity, unsuccessful);
           }
         });
@@ -743,8 +563,7 @@ public class AccountService extends Service {
     builder.setNegativeButton(R.string.no_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
-            if (preferences.getBoolean("enable_notifications", true))
-              notificationManager.cancel(messageNID);
+            if (notifications) notificationManager.cancel(messageNID);
             Toast.makeText(activity, R.string.sending_canceled_toast, 
                 Toast.LENGTH_LONG).show();
           }
@@ -753,29 +572,11 @@ public class AccountService extends Service {
     builder.show();
   }
   
-  private Notification createMessageNotification() {
+  private void showMessageNotification() {
+    messageNID = currentNID++;
     String ticker = getString(R.string.message_error_notification);
-    Notification notification = new Notification(R.drawable.ic_stat_notify, 
-        ticker, System.currentTimeMillis());
-    Intent intent = new Intent(AccountService.this, ComposeActivity.class);
-    intent.setAction(Intent.ACTION_MAIN);
-    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | 
-        Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
-    notification.setLatestEventInfo(AccountService.this,
-        AccountService.this.getString(R.string.app_name), ticker,
-        PendingIntent.getActivity(AccountService.this, 0, intent, 0));
-    notification.sound = Uri.parse(preferences.getString(
-        "notification_ringtone", "DEFAULT_RINGTONE_URI"));
-
-    String vibrate = preferences.getString("notification_vibration", "S");
-    if (vibrate.equals("A") || (vibrate.equals("S") && 
-        audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE)) {
-      long[] pattern = { 0, 200, 100, 100 };
-      notification.vibrate = pattern;
-    }
-
-    notification.flags |= Notification.FLAG_AUTO_CANCEL;
-    return notification;
+    Notification notification = createNotification(ticker, false);
+    notificationManager.notify(messageNID, notification);
   }
   
   private void showResendDialog(final ComposeActivity activity, final SMS sms) {
@@ -809,6 +610,41 @@ public class AccountService extends Service {
     builder.show();
   }
   
+  /**
+   * Create a simple notification
+   * @param ticker The ticket text to display.
+   * @return Notification to be shown.
+   */
+  private Notification createNotification(String ticker, boolean ongoing) {
+    Notification notification = new Notification(
+        R.drawable.ic_stat_notify, ticker, System.currentTimeMillis());
+    Intent intent = new Intent(AccountService.this, ComposeActivity.class);
+    intent.setAction(Intent.ACTION_MAIN);
+    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | 
+        Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+    notification.setLatestEventInfo(AccountService.this,
+        AccountService.this.getString(R.string.app_name), ticker,
+        PendingIntent.getActivity(AccountService.this, 0, intent, 0));
+    notification.sound = Uri.parse(preferences.getString(
+        "notification_ringtone", "DEFAULT_RINGTONE_URI"));
+
+    String vibrate = preferences.getString("notification_vibration", "S");
+    if (vibrate.equals("A") || (vibrate.equals("S") && 
+        audioManager.getRingerMode() == AudioManager.RINGER_MODE_VIBRATE)) {
+      long[] pattern = { 0, 200, 100, 100 };
+      notification.vibrate = pattern;
+    }
+
+    if (ongoing) notification.flags |= Notification.FLAG_ONGOING_EVENT;
+    notification.flags |= Notification.FLAG_NO_CLEAR;
+    return notification;
+  }
+  
+  /**
+   * Convert SMS receivers to a compact string.
+   * @param sms A message with some receivers.
+   * @return A string with at most two receivers.
+   */
   private String shortReceiverString(SMS sms) {
     String receiverString = "";
     List<Receiver> receivers = sms.getReceivers();
@@ -838,6 +674,11 @@ public class AccountService extends Service {
     return receiverString;
   }
   
+  /**
+   * Convert SMS receivers to a string. 
+   * @param sms A message with some receivers.
+   * @return A string with all the receivers.
+   */
   private String fullReceiverString(SMS sms) {
     String receiverString = "";
     List<Receiver> receivers = sms.getReceivers();
@@ -866,6 +707,12 @@ public class AccountService extends Service {
     return receiverString;
   }
 
+  /**
+   * Split an SMS in two parts, and keep the successful. 
+   * @param sms The original SMS.
+   * @param where Where things went wrong.
+   * @return A new SMS representing the successful part.
+   */
   private SMS successfulSMS(SMS sms, int where) {
     SMS successful = sms.clone();
     List<Receiver> receivers = sms.getReceivers();
@@ -874,11 +721,25 @@ public class AccountService extends Service {
     return successful;
   }
   
+  /**
+   * Split an SMS in two parts, and keep the unsuccessful. 
+   * @param sms The original SMS.
+   * @param where Where things went wrong.
+   * @return A new SMS representing the unsuccessful part.
+   */  
   private SMS unsuccessfulSMS(SMS sms, int where) {
     SMS unsuccessful = sms.clone();
     List<Receiver> receivers = sms.getReceivers();
     for (int r = 0; r < where && r < receivers.size(); ++r)
       unsuccessful.removeReceiver(receivers.get(r));
     return unsuccessful;
+  }
+  
+  private void sleep(int milliseconds) {
+    try {
+      Thread.sleep(milliseconds);
+    } catch (InterruptedException e) { 
+      e.printStackTrace();
+    }
   }
 }

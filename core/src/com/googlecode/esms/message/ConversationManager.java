@@ -24,6 +24,8 @@ package com.googlecode.esms.message;
  */
 public abstract class ConversationManager {
   // TODO change SMS to List<SMS>
+  // and add default implementation for single message
+  // like: loadDraft(String receiver) { loadDraft(receiver, 1); }
   
   /**
    * Load last draft of message for some receiver.

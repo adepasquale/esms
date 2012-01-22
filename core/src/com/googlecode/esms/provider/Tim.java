@@ -270,50 +270,7 @@ public class Tim extends Account {
     
     return results;
   }
-  
-  private String stripPrefix(String receiver) {
-    final String PREFIX = "39";
-    receiver = receiver.replaceAll("[^0-9\\+]*", "");
-    int lNumber = receiver.length();
 
-    String pPlus = "+" + PREFIX;
-    int lPlus = pPlus.length();
-    if (lNumber > lPlus && receiver.substring(0, lPlus).equals(pPlus)) {
-      return receiver.substring(lPlus);
-    }
-
-    String pZero = "00" + PREFIX;
-    int lZero = pZero.length();
-    if (lNumber > lZero && receiver.substring(0, lZero).equals(pZero)) {
-      return receiver.substring(lZero);
-    }
-    
-    return receiver;
-  }
-  
-  private List<String> findPattern(InputStream source, Pattern pattern) {
-    List<String> results = new ArrayList<String>();
-    Scanner scanner = new Scanner(source, "UTF-8");
-
-    String match = "";
-    while (match != null) {
-      match = scanner.findWithinHorizon(pattern, 0);
-      if (match != null) results.add(match);
-    }
-    
-    return results;
-  }
-
-  private byte[] toByteArray(InputStream is) throws IOException {
-    int read;
-    byte[] data = new byte[16*1024]; // 16 kB
-    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
-    while ((read = is.read(data, 0, data.length)) != -1)
-      buffer.write(data, 0, read);
-    buffer.flush();
-    return buffer.toByteArray();
-  }
-  
   private boolean doLogin() throws ClientProtocolException, IOException {
     HttpPost request = new HttpPost(DO_LOGIN);
     List<NameValuePair> requestData = new ArrayList<NameValuePair>();
@@ -548,5 +505,64 @@ public class Tim extends Account {
       results.set(0, Result.NETWORK_ERROR);
       return false;
     }
+  }
+  
+  /**
+   * Remove country code prefix, if present.
+   * @param receiver Phone number with or without CC prefix.
+   * @return Phone number without CC prefix.
+   */
+  private String stripPrefix(String receiver) {
+    final String PREFIX = "39";
+    receiver = receiver.replaceAll("[^0-9\\+]*", "");
+    int lNumber = receiver.length();
+
+    String pPlus = "+" + PREFIX;
+    int lPlus = pPlus.length();
+    if (lNumber > lPlus && receiver.substring(0, lPlus).equals(pPlus)) {
+      return receiver.substring(lPlus);
+    }
+
+    String pZero = "00" + PREFIX;
+    int lZero = pZero.length();
+    if (lNumber > lZero && receiver.substring(0, lZero).equals(pZero)) {
+      return receiver.substring(lZero);
+    }
+    
+    return receiver;
+  }
+
+  /**
+   * Search for a pattern inside a stream.
+   * @param source The stream to search into.
+   * @param pattern The pattern to match.
+   * @return List of matches found.
+   */
+  private List<String> findPattern(InputStream source, Pattern pattern) {
+    List<String> results = new ArrayList<String>();
+    Scanner scanner = new Scanner(source, "UTF-8");
+
+    String match = "";
+    while (match != null) {
+      match = scanner.findWithinHorizon(pattern, 0);
+      if (match != null) results.add(match);
+    }
+    
+    return results;
+  }
+
+  /**
+   * Perform stream to array conversion.
+   * @param is Stream to be converted.
+   * @return An array of bytes.
+   */
+  private byte[] toByteArray(InputStream is) throws IOException {
+    int read;
+    byte[] data = new byte[16*1024]; // 16 kB
+    ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+    while ((read = is.read(data, 0, data.length)) != -1)
+      buffer.write(data, 0, read);
+    buffer.flush();
+    return buffer.toByteArray();
   }
 }
