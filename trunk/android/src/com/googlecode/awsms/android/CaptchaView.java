@@ -5,6 +5,10 @@ import android.graphics.drawable.Drawable;
 import android.util.AttributeSet;
 import android.view.View;
 
+/**
+ * Image view that resizes automatically, keeping aspect ratio intact.
+ * @author Andrea De Pasquale
+ */
 public class CaptchaView extends View {
 
   private Drawable captcha = null;
@@ -33,7 +37,8 @@ public class CaptchaView extends View {
       super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     } else {
       int width = MeasureSpec.getSize(widthMeasureSpec);
-      int height = width * captcha.getIntrinsicHeight() / captcha.getIntrinsicWidth();
+      int height = // keep aspect ratio
+          width * captcha.getIntrinsicHeight() / captcha.getIntrinsicWidth();
       setMeasuredDimension(width, height);
     }
   }

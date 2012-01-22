@@ -19,6 +19,7 @@
 package com.googlecode.esms.provider;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.PushbackReader;
 import java.util.ArrayList;
@@ -274,17 +275,7 @@ public class Vodafone extends Account {
       IllegalStateException, JDOMException {
     HttpGet request = new HttpGet(CHECK_USER);
     HttpResponse response = httpClient.execute(request, httpContext);
-    
-    PushbackReader reader = new PushbackReader(
-        new InputStreamReader(response.getEntity().getContent()));
-    
-    // fix wrong XML header 
-    int first = reader.read();
-    while (first != 60)
-      first = reader.read();
-    reader.unread(first);
-    
-    Document document = new SAXBuilder().build(reader);
+    Document document = getXMLDocument(response.getEntity().getContent());
     response.getEntity().consumeContent();
     Element root = document.getRootElement();
     Element liChild = root.getChild("logged-in");
@@ -373,17 +364,7 @@ public class Vodafone extends Account {
       IOException, JDOMException {
     HttpGet request = new HttpGet(DO_PRECHECK);
     HttpResponse response = httpClient.execute(request, httpContext);
-
-    PushbackReader reader = new PushbackReader(
-        new InputStreamReader(response.getEntity().getContent()));
-    
-    // fix wrong XML header 
-    int first = reader.read();
-    while (first != 60)
-      first = reader.read();
-    reader.unread(first);
-    
-    Document document = new SAXBuilder().build(reader);
+    Document document = getXMLDocument(response.getEntity().getContent());
     response.getEntity().consumeContent();
 
     Element root = document.getRootElement();
@@ -401,26 +382,6 @@ public class Vodafone extends Account {
       return errorcode;
     return 0;
   }
-
-  private String stripPrefix(String receiver) {
-    final String PREFIX = "39";
-    receiver = receiver.replaceAll("[^0-9\\+]*", "");
-    int lNumber = receiver.length();
-
-    String pPlus = "+" + PREFIX;
-    int lPlus = pPlus.length();
-    if (lNumber > lPlus && receiver.substring(0, lPlus).equals(pPlus)) {
-      return receiver.substring(lPlus);
-    }
-
-    String pZero = "00" + PREFIX;
-    int lZero = pZero.length();
-    if (lNumber > lZero && receiver.substring(0, lZero).equals(pZero)) {
-      return receiver.substring(lZero);
-    }
-    
-    return receiver;
-  }
   
   private int doPrepare(SMS sms, int id) throws IOException, 
       IllegalStateException, JDOMException {
@@ -431,17 +392,7 @@ public class Vodafone extends Account {
     requestData.add(new BasicNameValuePair("message", sms.getMessage()));
     request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
     HttpResponse response = httpClient.execute(request, httpContext);
-    
-    PushbackReader reader = new PushbackReader(
-        new InputStreamReader(response.getEntity().getContent()));
-    
-    // fix wrong XML header 
-    int first = reader.read();
-    while (first != 60)
-      first = reader.read();
-    reader.unread(first);
-    
-    Document document = new SAXBuilder().build(reader);
+    Document document = getXMLDocument(response.getEntity().getContent());
     response.getEntity().consumeContent();
 
     Element root = document.getRootElement();
@@ -474,17 +425,7 @@ public class Vodafone extends Account {
     requestData.add(new BasicNameValuePair("message", sms.getMessage()));
     request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
     HttpResponse response = httpClient.execute(request, httpContext);
-    
-    PushbackReader reader = new PushbackReader(
-        new InputStreamReader(response.getEntity().getContent()));
-    
-    // fix wrong XML header 
-    int first = reader.read();
-    while (first != 60)
-      first = reader.read();
-    reader.unread(first);
-    
-    Document document = new SAXBuilder().build(reader);
+    Document document = getXMLDocument(response.getEntity().getContent());
     response.getEntity().consumeContent();
 
     Element root = document.getRootElement();
@@ -510,5 +451,48 @@ public class Vodafone extends Account {
     
     sms.setCaptchaArray(null);
     return 0;
+  }
+  
+  /**
+   * Remove country code prefix, if present.
+   * @param receiver Phone number with or without CC prefix.
+   * @return Phone number without CC prefix.
+   */
+  private String stripPrefix(String receiver) {
+    final String PREFIX = "39";
+    receiver = receiver.replaceAll("[^0-9\\+]*", "");
+    int lNumber = receiver.length();
+
+    String pPlus = "+" + PREFIX;
+    int lPlus = pPlus.length();
+    if (lNumber > lPlus && receiver.substring(0, lPlus).equals(pPlus)) {
+      return receiver.substring(lPlus);
+    }
+
+    String pZero = "00" + PREFIX;
+    int lZero = pZero.length();
+    if (lNumber > lZero && receiver.substring(0, lZero).equals(pZero)) {
+      return receiver.substring(lZero);
+    }
+    
+    return receiver;
+  }
+  
+  /**
+   * Get XML document, removing leading spaces. 
+   * @param input Stream to be read.
+   * @return XML document model.
+   */
+  private Document getXMLDocument(InputStream input) 
+      throws IOException, JDOMException {
+    PushbackReader reader = new PushbackReader(new InputStreamReader(input));
+    
+    // check if first char is "<"
+    int first = reader.read();
+    while (first != 60)
+      first = reader.read();
+    reader.unread(first);
+    
+    return new SAXBuilder().build(reader);
   }
 }

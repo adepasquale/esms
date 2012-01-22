@@ -19,7 +19,6 @@ package com.googlecode.awsms.android;
 
 import android.app.Activity;
 import android.content.Intent;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -34,6 +33,10 @@ import com.googlecode.awsms.account.AccountManagerAndroid;
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountManager;
 
+/**
+ * Choose a provider to create a new account. 
+ * @author Andrea De Pasquale
+ */
 public class AccountCreateActivity extends Activity {
 
   AccountManager accountManager;
@@ -64,23 +67,8 @@ public class AccountCreateActivity extends Activity {
 
       listItemProvider.setText(provider.getProvider());
       
-//      if (provider.getProvider().equals("Telefono")) {
-//        listItemLogo.setImageBitmap(
-//            BitmapFactory.decodeResource(getResources(),
-//            R.drawable.ic_logo_SIM));
-//      }
-      
-      if (provider.getProvider().equals("Vodafone")) {
-        listItemLogo.setImageBitmap(
-            BitmapFactory.decodeResource(getResources(),
-            R.drawable.ic_logo_vodafone));
-      }
-        
-      if (provider.getProvider().equals("TIM")) {
-        listItemLogo.setImageBitmap(
-            BitmapFactory.decodeResource(getResources(), 
-            R.drawable.ic_logo_tim));
-      }
+      listItemLogo.setImageBitmap(
+          AccountBitmap.getLogo(provider, getResources()));
       
       listItemLinear.setOnClickListener(new OnClickListener() {
         @Override

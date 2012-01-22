@@ -96,8 +96,10 @@ public class AccountManagerAndroid extends AccountManager {
     SQLiteQueryBuilder queryBuilder = new SQLiteQueryBuilder();
     queryBuilder.setTables(TABLE_NAME);
     SQLiteDatabase db = dbOpenHelper.getReadableDatabase();
-    String[] projection = { CLASS, LABEL, USERNAME, PASSWORD, SENDER, COUNT, COUNT_DATE };
-    Cursor c = queryBuilder.query(db, projection, null, null, null, null, null);
+    String[] projection = { 
+        CLASS, LABEL, USERNAME, PASSWORD, SENDER, COUNT, COUNT_DATE };
+    Cursor c = queryBuilder.query(
+        db, projection, null, null, null, null, null);
     c.moveToFirst();
     
     while (!c.isAfterLast()) {
@@ -114,7 +116,9 @@ public class AccountManagerAndroid extends AccountManager {
         account.setPassword(c.getString(c.getColumnIndex(PASSWORD)));
         account.setSender(c.getString(c.getColumnIndex(SENDER)));
         long countDate = c.getLong(c.getColumnIndex(COUNT_DATE));
-        account.setCount(c.getInt(c.getColumnIndex(COUNT)), new Date(countDate));
+        account.setCount(
+            c.getInt(c.getColumnIndex(COUNT)),
+            new Date(countDate));
         accounts.add(account);
         
       } catch (Exception e) {

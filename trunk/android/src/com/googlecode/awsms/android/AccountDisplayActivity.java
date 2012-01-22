@@ -25,7 +25,6 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
-import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -43,6 +42,10 @@ import com.googlecode.awsms.account.AccountManagerAndroid;
 import com.googlecode.esms.account.Account;
 import com.googlecode.esms.account.AccountManager;
 
+/**
+ * Show a list of existing accounts.
+ * @author Andrea De Pasquale
+ */
 public class AccountDisplayActivity extends Activity {
 
   AccountManager accountManager;
@@ -100,23 +103,8 @@ public class AccountDisplayActivity extends Activity {
       listItemLabel.setText(label);
       listItemSender.setText(account.getSender());
       
-//      if (account.getProvider().equals("Telefono")) {
-//        listItemLogo.setImageBitmap(
-//            BitmapFactory.decodeResource(getResources(),
-//            R.drawable.ic_logo_SIM));
-//      }
-      
-      if (account.getProvider().equals("Vodafone")) {
-        listItemLogo.setImageBitmap(
-            BitmapFactory.decodeResource(getResources(),
-            R.drawable.ic_logo_vodafone));
-      }
-        
-      if (account.getProvider().equals("TIM")) { 
-        listItemLogo.setImageBitmap(
-            BitmapFactory.decodeResource(getResources(), 
-            R.drawable.ic_logo_tim));
-      }
+      listItemLogo.setImageBitmap(
+          AccountBitmap.getLogo(account, getResources()));
       
       listItemLinear.setOnClickListener(new OnClickListener() {
         public void onClick(View v) {
