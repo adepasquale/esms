@@ -475,16 +475,12 @@ public class ComposeActivity extends Activity {
     case 1:
       listLinear.setVisibility(View.VISIBLE);
       replyLinear.setVisibility(View.GONE);
-      replyContent.setText("");
-      replyDate.setText("");
       break;
       
     case 0:
       listLinear.removeAllViews();
       listLinear.setVisibility(View.GONE);
       replyLinear.setVisibility(View.VISIBLE);
-      replyContent.setText("");
-      replyDate.setText("");
       break;
       
     default:
