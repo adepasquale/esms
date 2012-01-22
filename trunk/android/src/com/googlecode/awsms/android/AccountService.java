@@ -635,8 +635,13 @@ public class AccountService extends Service {
       notification.vibrate = pattern;
     }
 
-    if (ongoing) notification.flags |= Notification.FLAG_ONGOING_EVENT;
-    notification.flags |= Notification.FLAG_NO_CLEAR;
+    if (ongoing) {
+      notification.flags |= Notification.FLAG_ONGOING_EVENT;
+      notification.flags |= Notification.FLAG_NO_CLEAR;
+    } else {
+      notification.flags |= Notification.FLAG_AUTO_CANCEL;
+    }
+    
     return notification;
   }
   

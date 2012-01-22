@@ -20,8 +20,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     android:installLocation="auto"
     package="com.googlecode.awsms"
-    android:versionCode="18"
-    android:versionName="2.0.0-beta" >
+    android:versionCode="19"
+    android:versionName="2.0.0 (beta)" >
 
     <uses-sdk android:minSdkVersion="7" />
 
