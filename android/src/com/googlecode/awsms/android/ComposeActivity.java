@@ -599,17 +599,39 @@ public class ComposeActivity extends Activity {
       implements OnItemClickListener {
     public void onItemClick(AdapterView<?> parent, 
         View view, int position, long id) {
-      TextView receiverName = 
-          (TextView) view.findViewById(R.id.receiver_name);
-      TextView receiverNumber = 
-          (TextView) view.findViewById(R.id.receiver_number);
+
+      String name = "";
+      String number = "";
+      
+      if (view != null) {
+        TextView tvName = (TextView) view.findViewById(R.id.receiver_name);
+        TextView tvNumber = (TextView) view.findViewById(R.id.receiver_number); 
+        name = tvName.getText().toString();
+        number = tvNumber.getText().toString();
+      } else {
+        ReceiverAdapter receiverAdapter = 
+            new ReceiverAdapter(ComposeActivity.this);
+        Cursor cursor = receiverAdapter
+            .runQueryOnBackgroundThread(receiverText.getText());
+        cursor.moveToFirst();
+        if (!cursor.isAfterLast()) {
+          Spannable s = (Spannable) receiverAdapter.convertToString(cursor);
+          Annotation[] annotations = s.getSpans(0, s.length(), Annotation.class);
+          for (Annotation a : annotations) {
+            if (a.getKey().equals("name"))
+              name = a.getValue();
+            if (a.getKey().equals("number"))
+              number = a.getValue();
+          }
+        }
+      }
 
       hasAutocompleted = true;
 
       if (listSize == 0) {
         
         SMS reply = 
-          conversationManager.loadInbox(receiverNumber.getText().toString());
+          conversationManager.loadInbox(number);
         if (reply != null) {
           replyContent.setText(reply.getMessage());
           replyDate.setText(reply.getDate());
@@ -618,8 +640,6 @@ public class ComposeActivity extends Activity {
         
       } else if (listSize < MAX_LIST_SIZE) {
         
-        String name = receiverName.getText().toString();
-        String number = receiverNumber.getText().toString();
         insertReceiver(name, number);
         receiverText.setText("");
         receiverText.requestFocus();
