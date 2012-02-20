@@ -1,0 +1,4 @@
+#summary Cambiamenti introdotti con le nuove versioni
+
+= esms 2.0.0 =
+ * Rilascio iniziale
