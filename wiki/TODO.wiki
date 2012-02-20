@@ -1,0 +1,12 @@
+#summary Lista delle cose da fare
+
+= TODO =
+
+ * Personalizzazione delle impostazioni di notifica (issue 8).
+ * Caricamento dell'ultimo messaggio ricevuto anche se il destinatario non è in rubrica.
+ * Salvataggio di una bozza dell'SMS se l'invio viene cancellato.
+ * Segnalazione di errori dall'interno dell'app (Google Code API).
+ * Richiesta di conferma dell'invio se il contatore è pari a zero.
+ * Invio di fallback tramite SIM ovvero operatore telefonico.
+ * Caricamento degli ultimi N>1 messaggi ricevuti.
+ * Parser di file XML per la configurazione dei provider.
