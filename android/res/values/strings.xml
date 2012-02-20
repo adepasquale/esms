@@ -111,6 +111,6 @@
   <string name="notification_ringtone_setting">Suoneria notifiche</string>
   <string name="notification_vibration_setting">Vibrazione notifiche</string>
   <string name="conversation_settings">Conversazione</string>
-  <string name="save_message_setting">Salva messaggi inviati</string>
-  <string name="clear_message_setting">Cancella automaticamente</string>
+  <string name="save_message_setting">Salva i messaggi</string>
+  <string name="clear_message_setting">Pulisci dopo l\'invio</string>
 </resources>
