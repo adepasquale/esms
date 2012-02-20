@@ -17,82 +17,88 @@
   along with Ermete SMS.  If not, see <http://www.gnu.org/licenses/>.
 
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:padding="20dp"
-    android:orientation="vertical" >
-
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal" >
-        
-        <ImageView
-            android:layout_width="48dp"
-            android:layout_height="48dp" 
-            android:src="@drawable/ic_app" />
-        
-        <LinearLayout
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:paddingLeft="10dp" >
-            
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:textColor="@android:color/primary_text_dark"
-                android:text="@string/app_name" />
-            
-            <TextView
-                android:id="@+id/app_version"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textSize="13sp"
-                android:textStyle="normal"
-                android:textColor="@android:color/secondary_text_dark"
-                android:paddingLeft="2sp" />
-            
-        </LinearLayout>
-        
-    </LinearLayout>
-
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/primary_text_dark"
-        android:paddingTop="10dp"
-        android:text="@string/app_author_title" />
+    android:layout_height="wrap_content" >
     
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="14sp"
-        android:textStyle="normal"
-        android:textColor="@android:color/secondary_text_dark"
-        android:text="@string/app_author_value" />
-    
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="@android:color/primary_text_dark"
-        android:paddingTop="10dp"
-        android:text="@string/app_homepage_title" />
-    
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="14sp"
-        android:textStyle="normal"
-        android:textColor="@android:color/secondary_text_dark"
-        android:autoLink="web"
-        android:text="@string/app_homepage_value" />
-
-</LinearLayout>
+		<LinearLayout
+		    android:layout_width="wrap_content"
+		    android:layout_height="wrap_content"
+		    android:padding="20dp"
+		    android:orientation="vertical" >
+		
+		    <LinearLayout
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:orientation="horizontal" >
+		        
+		        <ImageView
+		            android:layout_width="48dp"
+		            android:layout_height="48dp" 
+		            android:src="@drawable/ic_app" />
+		        
+		        <LinearLayout
+		            android:layout_width="wrap_content"
+		            android:layout_height="wrap_content"
+		            android:orientation="vertical"
+		            android:paddingLeft="10dp" >
+		            
+		            <TextView
+		                android:layout_width="wrap_content"
+		                android:layout_height="wrap_content"
+		                android:textSize="24sp"
+		                android:textStyle="bold"
+		                android:textColor="@android:color/primary_text_dark"
+		                android:text="@string/app_name" />
+		            
+		            <TextView
+		                android:id="@+id/app_version"
+		                android:layout_width="wrap_content"
+		                android:layout_height="wrap_content"
+		                android:textSize="13sp"
+		                android:textStyle="normal"
+		                android:textColor="@android:color/secondary_text_dark"
+		                android:paddingLeft="2sp" />
+		            
+		        </LinearLayout>
+		        
+		    </LinearLayout>
+		
+		    <TextView
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:textSize="16sp"
+		        android:textStyle="bold"
+		        android:textColor="@android:color/primary_text_dark"
+		        android:paddingTop="10dp"
+		        android:text="@string/app_author_title" />
+		    
+		    <TextView
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:textSize="14sp"
+		        android:textStyle="normal"
+		        android:textColor="@android:color/secondary_text_dark"
+		        android:text="@string/app_author_value" />
+		    
+		    <TextView
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:textSize="16sp"
+		        android:textStyle="bold"
+		        android:textColor="@android:color/primary_text_dark"
+		        android:paddingTop="10dp"
+		        android:text="@string/app_homepage_title" />
+		    
+		    <TextView
+		        android:layout_width="wrap_content"
+		        android:layout_height="wrap_content"
+		        android:textSize="14sp"
+		        android:textStyle="normal"
+		        android:textColor="@android:color/secondary_text_dark"
+		        android:autoLink="web"
+		        android:text="@string/app_homepage_value" />
+		
+		</LinearLayout>
+		
+</ScrollView>

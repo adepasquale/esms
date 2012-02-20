@@ -64,6 +64,7 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -516,12 +517,12 @@ public class ComposeActivity extends Activity {
 
     LayoutInflater inflater = (LayoutInflater)
         this.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-    LinearLayout informationLinear = (LinearLayout) 
+    ScrollView informationView = (ScrollView) 
         inflater.inflate(R.layout.information_dialog, null);
     TextView versionText = (TextView) 
-        informationLinear.findViewById(R.id.app_version);
+        informationView.findViewById(R.id.app_version);
     
-    builder.setView(informationLinear);
+    builder.setView(informationView);
     builder.setNeutralButton(R.string.close_button,
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
