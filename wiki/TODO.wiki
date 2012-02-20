@@ -1,6 +1,4 @@
-#summary Lista delle cose da fare
-
-= TODO =
+#summary Lista di nuove funzionalità da implementare
 
  * Personalizzazione delle impostazioni di notifica (issue 8).
  * Caricamento dell'ultimo messaggio ricevuto anche se il destinatario non è in rubrica.
