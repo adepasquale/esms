@@ -429,8 +429,13 @@ public class AccountService extends Service {
         new DialogInterface.OnClickListener() {
           public void onClick(DialogInterface dialog, int which) {
             if (notifications) notificationManager.cancel(accountNID);
-            startActivity(new Intent(
-                AccountService.this, AccountDisplayActivity.class));
+            Intent intent = new Intent(
+                AccountService.this, AccountDisplayActivity.class);
+            intent.setFlags(
+                Intent.FLAG_ACTIVITY_NEW_TASK | 
+                Intent.FLAG_ACTIVITY_SINGLE_TOP | 
+                Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
           }
         });
 
