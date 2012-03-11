@@ -1,5 +1,8 @@
 #summary Cambiamenti introdotti con le nuove versioni
 
+= esms 2.0.1 =
+ * Sistemati alcuni bug nel codice.
+
 = esms 2.0.0 =
  * Nuova interfaccia grafica e nuove icone disegnate da Alberto Gasparin, con possibilità di selezionare fino a tre destinatari e di visualizzare l'ultimo messaggio ricevuto.
  * Supporto per l'invio tramite più di un account dal sito Vodafone www.190.it e dal sito TIM www.119.it.
