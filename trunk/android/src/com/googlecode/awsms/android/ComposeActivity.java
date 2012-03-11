@@ -735,7 +735,8 @@ public class ComposeActivity extends Activity {
       if (before == 1 && count == 0) {
         if (hasAutocompleted) {
           receiverText.setText("");
-          receiverText.append(receiverIncomplete);
+          if (receiverIncomplete != null)
+            receiverText.append(receiverIncomplete);
           hasAutocompleted = false;
         } else {
           receiverIncomplete = s.toString();

@@ -77,10 +77,10 @@
   <string name="limit_error_message">I messaggi disponibili per questo account sono esauriti. Ritentare l\'invio con un altro account?</string>
   <string name="limit_error_notification">Messaggi esauriti per l\'account selezionato</string>
   <string name="receiver_error_dialog">Errore destinatario</string>
-  <string name="receiver_error_message">Uno o più destinatari non sono validi per questo account. Ritentare l\'invio con un altro account?</string>
+  <string name="receiver_error_message">Questo account non supporta uno o più destinatari tra quelli selezionati. Ritentare l\'invio con un altro account?</string>
   <string name="receiver_error_notification">Errore nel destinatario del messaggio</string>
   <string name="message_error_dialog">Errore messaggio</string>
-  <string name="message_error_message">Il testo del messaggio non è valido per questo account. Ritentare l\'invio con un altro account?</string>
+  <string name="message_error_message">Questo account non supporta alcuni caratteri contenuti nel testo inserito. Ritentare l\'invio con un altro account?</string>
   <string name="message_error_notification">Errore nel testo del messaggio</string>
   <string name="account_prompt_dialog">Seleziona account:</string>
   <string name="sender_text">Seleziona SIM:</string>
