@@ -124,6 +124,8 @@ public class ReceiverAdapter extends ResourceCursorAdapter implements
     SpannableString receiver = new SpannableString(
         cursor.getString(2) + " <" + cursor.getString(3) + ">");
 
+    // FIXME may be related to issue 17
+    // http://code.google.com/p/esms/issues/detail?id=17
     receiver.setSpan(new Annotation("number", cursor.getString(3)), 0,
         receiver.length(), Spannable.SPAN_EXCLUSIVE_EXCLUSIVE);
     receiver.setSpan(new Annotation("name", cursor.getString(2)), 0,
