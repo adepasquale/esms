@@ -18,19 +18,25 @@
 
 package com.googlecode.awsms.account;
 
+import java.io.InputStream;
+import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.conn.scheme.PlainSocketFactory;
+import org.apache.http.conn.scheme.Scheme;
+import org.apache.http.conn.scheme.SchemeRegistry;
+import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.impl.conn.SingleClientConnManager;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
-
-import com.googlecode.esms.account.AccountConnector;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -38,6 +44,9 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.database.sqlite.SQLiteQueryBuilder;
+
+import com.googlecode.awsms.R;
+import com.googlecode.esms.account.AccountConnector;
 
 public class AccountConnectorAndroid extends AccountConnector {
   private static final long serialVersionUID = 1L;
@@ -49,7 +58,7 @@ public class AccountConnectorAndroid extends AccountConnector {
   }
 
   public HttpClient getHttpClient() {
-    return new DefaultHttpClient();
+    return new AndroidHttpClient(context);
   }
 
   public HttpContext getHttpContext() {
@@ -60,6 +69,44 @@ public class AccountConnectorAndroid extends AccountConnector {
     return new CookieStoreAndroid(context);
   }
 
+  class AndroidHttpClient extends DefaultHttpClient {
+    final Context context;
+
+    public AndroidHttpClient(Context context) {
+      this.context = context;
+    }
+
+    @Override
+    protected ClientConnectionManager createClientConnectionManager() {
+      SchemeRegistry registry = new SchemeRegistry();
+      registry.register(
+          new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
+      registry.register(
+          new Scheme("https", AndroidSSLSocketFactory(), 443));
+      return new SingleClientConnManager(getParams(), registry);
+    }
+
+    private SSLSocketFactory AndroidSSLSocketFactory() {
+      try {
+        KeyStore trusted = KeyStore.getInstance("BKS");
+        InputStream in = context.getResources().openRawResource(R.raw.keystore);
+
+        try {
+          trusted.load(in, "storepass".toCharArray());
+        } finally {
+          in.close();
+        }
+
+        SSLSocketFactory sf = new SSLSocketFactory(trusted);
+        sf.setHostnameVerifier(SSLSocketFactory.STRICT_HOSTNAME_VERIFIER);
+        return sf;
+
+      } catch (Exception e) {
+        throw new AssertionError(e);
+      }
+    }
+  }
+  
   class CookieStoreAndroid implements CookieStore {
 
     static final String DB_NAME = "cookies.db";
