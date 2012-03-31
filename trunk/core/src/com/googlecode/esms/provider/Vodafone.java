@@ -18,15 +18,21 @@
 
 package com.googlecode.esms.provider;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PushbackReader;
+import java.io.Reader;
+import java.io.StringReader;
+import java.io.StringWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
@@ -364,6 +370,8 @@ public class Vodafone extends Account {
       IOException, JDOMException {
     HttpGet request = new HttpGet(DO_PRECHECK);
     HttpResponse response = httpClient.execute(request, httpContext);
+//    BufferedReader testReader = new BufferedReader(new InputStreamReader(response.getEntity().getContent()));
+//    String line; while ((line = testReader.readLine()) != null) System.out.println(line);
     Document document = getXMLDocument(response.getEntity().getContent());
     response.getEntity().consumeContent();
 
@@ -479,20 +487,44 @@ public class Vodafone extends Account {
   }
   
   /**
-   * Get XML document, removing leading spaces. 
+   * Get XML document, removing leading spaces and trailing "junk". 
    * @param input Stream to be read.
    * @return XML document model.
    */
   private Document getXMLDocument(InputStream input) 
       throws IOException, JDOMException {
-    PushbackReader reader = new PushbackReader(new InputStreamReader(input));
+    Pattern pattern = Pattern.compile("<\\?xml.*<\\/root>");
+    String source = convertStreamToString(input);
+    source = source.replaceAll("\\n", "");
+    Matcher matcher = pattern.matcher(source);
     
-    // check if first char is "<"
-    int first = reader.read();
-    while (first != 60)
-      first = reader.read();
-    reader.unread(first);
-    
-    return new SAXBuilder().build(reader);
+    if (matcher.find()) {
+      return new SAXBuilder().build(
+          new StringReader(matcher.group()));
+    } else {
+      return null;
+    }
+  }
+  
+  /**
+   * Convert any stream to a string. 
+   * @param input Stream to be read.
+   * @return String representation of the stream.
+   */
+  private String convertStreamToString(InputStream input) 
+      throws IOException {
+    if (input != null) {
+      Writer writer = new StringWriter();
+      char[] buffer = new char[1024];
+      Reader reader = new BufferedReader(
+          new InputStreamReader(input, "UTF-8"));
+      int n;
+      while ((n = reader.read(buffer)) != -1)
+        writer.write(buffer, 0, n);
+      input.close();
+      return writer.toString();
+    } else {        
+      return "";
+    }
   }
 }
