@@ -1,5 +1,8 @@
 #summary Cambiamenti introdotti con le nuove versioni
 
+= esms 2.0.2 =
+ * Sistemato il problema del portale Vodafone che impediva di inviare SMS.
+
 = esms 2.0.1 =
  * Sistemati alcuni bug nel codice.
 
