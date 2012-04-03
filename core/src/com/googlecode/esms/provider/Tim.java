@@ -30,6 +30,8 @@ import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.net.ssl.SSLException;
+
 import org.apache.http.HttpResponse;
 import org.apache.http.NameValuePair;
 import org.apache.http.client.ClientProtocolException;
@@ -173,7 +175,12 @@ public class Tim extends Account {
       } else {
         return Result.LOGIN_ERROR;
       }
-      
+    
+    } catch (SSLException s) {
+      s.printStackTrace();
+      s.getCause().printStackTrace();
+      s.getCause().getCause().printStackTrace();
+      return Result.PROVIDER_ERROR;
     } catch (Exception e) {
       e.printStackTrace();
       return Result.NETWORK_ERROR;

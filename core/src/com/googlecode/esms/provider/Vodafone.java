@@ -72,6 +72,8 @@ public class Vodafone extends Account {
   static final String DO_SEND = 
     "https://www.vodafone.it/190/fsms/send.do?channel=VODAFONE_DW";
 
+  static final Pattern XML_DOCUMENT = Pattern.compile("<\\?xml.*<\\/root>");
+  
   boolean loggedIn;
   boolean isConsumer;
   boolean isCorporate;
@@ -493,16 +495,15 @@ public class Vodafone extends Account {
    */
   private Document getXMLDocument(InputStream input) 
       throws IOException, JDOMException {
-    Pattern pattern = Pattern.compile("<\\?xml.*<\\/root>");
     String source = convertStreamToString(input);
     source = source.replaceAll("\\n", "");
-    Matcher matcher = pattern.matcher(source);
+    Matcher matcher = XML_DOCUMENT.matcher(source);
     
     if (matcher.find()) {
       return new SAXBuilder().build(
           new StringReader(matcher.group()));
     } else {
-      return null;
+      throw new JDOMException();
     }
   }
   

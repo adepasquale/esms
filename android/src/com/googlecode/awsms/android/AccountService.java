@@ -222,8 +222,9 @@ public class AccountService extends Service {
             if (notifications) showCaptchaNotification();
             break;
             
-          case NETWORK_ERROR:
           case PROVIDER_ERROR:
+            // TODO showProviderDialog()
+          case NETWORK_ERROR:
           case UNKNOWN_ERROR:
             showNetworkDialog(activity, account, successful, unsuccessful);
             if (notifications) showNetworkNotification();
