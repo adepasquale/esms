@@ -70,6 +70,9 @@
   <string name="network_error_dialog">Errore di rete</string>
   <string name="network_error_message">Si è verificato un problema durante la connessione. Ritentare l\'invio?</string>
   <string name="network_error_notification">Errore durante la connessione</string>
+  <string name="provider_error_dialog">Problema del server</string>
+  <string name="provider_error_message">Si è verificato un errore nella risposta del server. Il problema potrebbe essere dovuto ad attività di manutenzione. Se l\'errore persiste contatta lo sviluppatore.</string>
+  <string name="provider_error_notification">Errore nella risposta del server</string>
   <string name="account_error_dialog">Problemi account</string>
   <string name="account_error_message">Si è verificato un errore nelle impostazioni di questo account. Aprire la schermata di configurazione?</string>
   <string name="account_error_notification">Errore nelle impostazioni dell\'account</string>
@@ -97,6 +100,8 @@
   <string name="next_button">Avanti</string>
   <string name="end_button">Fine</string>
   <string name="close_button">Chiudi</string>
+  <string name="retry_now">Riprova subito</string>
+  <string name="retry_later">Riprova più tardi</string>
   <string name="and_connector">e</string>
   <string name="or_connector">o</string>
   <string name="other_connector">altri</string>
