@@ -18,11 +18,25 @@
 
 package com.googlecode.awsms.account;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.Socket;
+import java.security.KeyManagementException;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.TrustManagerFactory;
+import javax.net.ssl.X509TrustManager;
 
 import org.apache.http.client.CookieStore;
 import org.apache.http.client.HttpClient;
@@ -33,7 +47,7 @@ import org.apache.http.conn.scheme.SchemeRegistry;
 import org.apache.http.conn.ssl.SSLSocketFactory;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.DefaultHttpClient;
-import org.apache.http.impl.conn.SingleClientConnManager;
+import org.apache.http.impl.conn.tsccm.ThreadSafeClientConnManager;
 import org.apache.http.impl.cookie.BasicClientCookie;
 import org.apache.http.protocol.BasicHttpContext;
 import org.apache.http.protocol.HttpContext;
@@ -58,7 +72,7 @@ public class AccountConnectorAndroid extends AccountConnector {
   }
 
   public HttpClient getHttpClient() {
-    return new AndroidHttpClient(context);
+    return new CustomKeyStoreHttpClient(context);
   }
 
   public HttpContext getHttpContext() {
@@ -69,10 +83,10 @@ public class AccountConnectorAndroid extends AccountConnector {
     return new CookieStoreAndroid(context);
   }
 
-  class AndroidHttpClient extends DefaultHttpClient {
+  class CustomKeyStoreHttpClient extends DefaultHttpClient {
     final Context context;
 
-    public AndroidHttpClient(Context context) {
+    public CustomKeyStoreHttpClient(Context context) {
       this.context = context;
     }
 
@@ -82,28 +96,117 @@ public class AccountConnectorAndroid extends AccountConnector {
       registry.register(
           new Scheme("http", PlainSocketFactory.getSocketFactory(), 80));
       registry.register(
-          new Scheme("https", AndroidSSLSocketFactory(), 443));
-      return new SingleClientConnManager(getParams(), registry);
+          new Scheme("https", createCustomKeyStoreSSLSocketFactory(), 443));
+//      return new SingleClientConnManager(getParams(), registry);
+      return new ThreadSafeClientConnManager(getParams(), registry);
     }
 
-    private SSLSocketFactory AndroidSSLSocketFactory() {
+    private SSLSocketFactory createCustomKeyStoreSSLSocketFactory() {
       try {
-        KeyStore trusted = KeyStore.getInstance("BKS");
+        KeyStore keystore = KeyStore.getInstance("BKS");
         InputStream in = context.getResources().openRawResource(R.raw.keystore);
 
         try {
-          trusted.load(in, "storepass".toCharArray());
+          keystore.load(in, "storepass".toCharArray());
         } finally {
           in.close();
         }
 
-        SSLSocketFactory sf = new SSLSocketFactory(trusted);
-        sf.setHostnameVerifier(SSLSocketFactory.STRICT_HOSTNAME_VERIFIER);
-        return sf;
+        return new CustomKeyStoreSSLSocketFactory(keystore);
 
       } catch (Exception e) {
         throw new AssertionError(e);
       }
+    }
+  }
+  
+  public class CustomKeyStoreSSLSocketFactory extends SSLSocketFactory {
+    protected SSLContext sslContext = SSLContext.getInstance("TLS");
+
+    public CustomKeyStoreSSLSocketFactory(KeyStore keyStore)
+        throws NoSuchAlgorithmException, KeyManagementException,
+        KeyStoreException, UnrecoverableKeyException {
+      super(null, null, null, null, null, null);
+      sslContext.init(null, new TrustManager[] { 
+          new AdditionalKeyStoresTrustManager(keyStore) }, null);
+    }
+
+    @Override
+    public Socket createSocket(Socket socket, String host, int port,
+        boolean autoClose) throws IOException {
+      return sslContext.getSocketFactory().createSocket(
+          socket, host, port, autoClose);
+    }
+
+    @Override
+    public Socket createSocket() throws IOException {
+      return sslContext.getSocketFactory().createSocket();
+    }
+  }
+  
+  public static class AdditionalKeyStoresTrustManager 
+      implements X509TrustManager {
+
+    protected ArrayList<X509TrustManager> x509TrustManagers = 
+        new ArrayList<X509TrustManager>();
+
+    protected AdditionalKeyStoresTrustManager(KeyStore... additionalkeyStores) {
+      final ArrayList<TrustManagerFactory> factories = 
+          new ArrayList<TrustManagerFactory>();
+
+      try {
+        final TrustManagerFactory original = 
+            TrustManagerFactory.getInstance(
+                TrustManagerFactory.getDefaultAlgorithm());
+        original.init((KeyStore) null);
+        factories.add(original);
+
+        for (KeyStore keyStore : additionalkeyStores) {
+          final TrustManagerFactory additionalCerts = 
+              TrustManagerFactory.getInstance(
+                  TrustManagerFactory.getDefaultAlgorithm());
+          additionalCerts.init(keyStore);
+          factories.add(additionalCerts);
+        }
+
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+
+      for (TrustManagerFactory tmf : factories)
+        for (TrustManager tm : tmf.getTrustManagers())
+          if (tm instanceof X509TrustManager)
+            x509TrustManagers.add((X509TrustManager) tm);
+
+      if (x509TrustManagers.size() == 0)
+        throw new RuntimeException("Couldn't find any X509TrustManagers");
+    }
+
+    public void checkClientTrusted(X509Certificate[] chain, String authType)
+        throws CertificateException {
+      final X509TrustManager defaultX509TrustManager = x509TrustManagers.get(0);
+      defaultX509TrustManager.checkClientTrusted(chain, authType);
+    }
+
+    public void checkServerTrusted(X509Certificate[] chain, String authType)
+        throws CertificateException {
+      for (X509TrustManager tm : x509TrustManagers) {
+        try {
+          tm.checkServerTrusted(chain, authType);
+          return;
+        } catch (CertificateException e) {
+          // ignore until the end
+        }
+      }
+      
+      throw new CertificateException();
+    }
+
+    public X509Certificate[] getAcceptedIssuers() {
+      final ArrayList<X509Certificate> list = new ArrayList<X509Certificate>();
+      for (X509TrustManager tm : x509TrustManagers)
+        list.addAll(Arrays.asList(tm.getAcceptedIssuers()));
+      return list.toArray(new X509Certificate[list.size()]);
     }
   }
   
