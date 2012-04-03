@@ -1,5 +1,8 @@
 #summary Cambiamenti introdotti con le nuove versioni
 
+= esms 2.0.3 =
+ * Sistemato l'errore con i certificati del portale TIM che impediva l'invio utilizzando quel tipo di account.
+
 = esms 2.0.2 =
  * Sistemato il problema del portale Vodafone che impediva di inviare SMS.
 
