@@ -87,6 +87,7 @@ public class AccountService extends Service {
   int successfulNID;
   int captchaNID;
   int networkNID;
+  int providerNID;
   int accountNID;
   int limitNID;
   int receiverNID;
@@ -222,12 +223,15 @@ public class AccountService extends Service {
             if (notifications) showCaptchaNotification();
             break;
             
-          case PROVIDER_ERROR:
-            // TODO showProviderDialog()
           case NETWORK_ERROR:
           case UNKNOWN_ERROR:
             showNetworkDialog(activity, account, successful, unsuccessful);
             if (notifications) showNetworkNotification();
+            break;
+            
+          case PROVIDER_ERROR:
+            showProviderDialog(activity, account, successful, unsuccessful);
+            if (notifications) showProviderNotification();
             break;
             
           case LOGIN_ERROR:
@@ -409,6 +413,48 @@ public class AccountService extends Service {
     String ticker = getString(R.string.network_error_notification);
     Notification notification = createNotification(ticker, false);
     notificationManager.notify(networkNID, notification);
+  }
+  
+  private void showProviderDialog(final ComposeActivity activity, 
+      final Account account, final SMS successful, final SMS unsuccessful) {
+    AlertDialog.Builder builder = new AlertDialog.Builder(activity);
+
+    String dialogTitle = getString(R.string.provider_error_dialog);
+    String dialogMessage = getString(R.string.provider_error_message);
+    
+    if (successful.getReceivers().size() > 0)
+      dialogMessage = String.format(getString(R.string.partial_error_message),
+          fullReceiverString(successful), fullReceiverString(unsuccessful)) + 
+          " " + dialogMessage;
+    
+    builder.setTitle(dialogTitle);
+    builder.setMessage(dialogMessage);
+
+    builder.setPositiveButton(R.string.retry_now,
+        new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int which) {
+            if (notifications) notificationManager.cancel(providerNID);
+            send(activity, account, unsuccessful);
+          }
+        });
+
+    builder.setNegativeButton(R.string.retry_later,
+        new DialogInterface.OnClickListener() {
+          public void onClick(DialogInterface dialog, int which) {
+            if (notifications) notificationManager.cancel(providerNID);
+            Toast.makeText(activity, R.string.sending_canceled_toast, 
+                Toast.LENGTH_LONG).show();
+          }
+        });
+
+    builder.show();
+  }
+  
+  private void showProviderNotification() {
+    providerNID = currentNID++;
+    String ticker = getString(R.string.provider_error_notification);
+    Notification notification = createNotification(ticker, false);
+    notificationManager.notify(providerNID, notification);
   }
   
   private void showAccountDialog(final Activity activity, 
