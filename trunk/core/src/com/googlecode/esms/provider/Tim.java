@@ -178,8 +178,6 @@ public class Tim extends Account {
     
     } catch (SSLException s) {
       s.printStackTrace();
-      s.getCause().printStackTrace();
-      s.getCause().getCause().printStackTrace();
       return Result.PROVIDER_ERROR;
     } catch (Exception e) {
       e.printStackTrace();
