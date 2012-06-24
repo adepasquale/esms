@@ -53,6 +53,8 @@ public class Tim extends Account {
   
   static final String DO_LOGIN = 
       "https://www.tim.it/authfe/login.do";
+  static final String CHECK_USER = 
+      "https://www.119selfservice.tim.it/cdas119/p2078/serv.do";
   static final String DO_LOGOUT = 
       "https://www.119selfservice.tim.it/119/logout.do";
   static final String ADD_DISPATCH_NEW =
@@ -283,8 +285,15 @@ public class Tim extends Account {
     requestData.add(new BasicNameValuePair("password", password));
     requestData.add(new BasicNameValuePair("portale", "timPortale"));
     requestData.add(new BasicNameValuePair("urlOk", 
-        "https://www.119selfservice.tim.it/119/consumerdispatcher"));
+        "http://www.tim.it/119-self-service"));
     request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
+    HttpResponse response = httpClient.execute(request, httpContext);
+    response.getEntity().consumeContent();
+    return checkUser();
+  }
+
+  private boolean checkUser() throws ClientProtocolException, IOException {
+    HttpGet request = new HttpGet(CHECK_USER);
     HttpResponse response = httpClient.execute(request, httpContext);
     List<String> strings = findPattern(
         response.getEntity().getContent(), PATTERN_LOGIN);
@@ -308,7 +317,7 @@ public class Tim extends Account {
     
     return loggedIn;
   }
-
+  
   private boolean doLogout() throws ClientProtocolException, IOException {
 //    HttpGet request = new HttpGet(DO_LOGOUT);
 //    HttpResponse response = httpClient.execute(request, httpContext);
