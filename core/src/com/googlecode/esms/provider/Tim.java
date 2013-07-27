@@ -54,9 +54,9 @@ public class Tim extends Account {
   static final String DO_LOGIN = 
       "https://www.tim.it/authfe/login.do";
   static final String CHECK_USER = 
-      "https://www.119selfservice.tim.it/cdas119/p2078/serv.do";
+      "https://www.119selfservice.tim.it/area-clienti-119/privata/opzioni";
   static final String DO_LOGOUT = 
-      "https://www.119selfservice.tim.it/119/logout.do";
+      "https://www.tim.it/authfe/logout.do";
   static final String ADD_DISPATCH_NEW =
       "https://smsweb.tim.it/sms-web/adddispatch?start=new";
   static final String ADD_DISPATCH_FORM =
@@ -67,7 +67,7 @@ public class Tim extends Account {
       "https://smsweb.tim.it/sms-web/validatecaptcha.validatecaptchaform";
   
   static final String RE_SENDER_LIST = 
-      "<option\\s+([^>]*\\s+)?value=\"([0-9]{9,10})\"\\s*([^>]*)?>";
+      "<option\\s+([^>]*\\s+)?value=\"[^0-9]*([0-9]{9,10})[^0-9]*\"\\s*([^>]*)?>";
   static final Pattern PATTERN_LOGIN = Pattern.compile(
       "("+RE_SENDER_LIST+")|("+DO_LOGOUT+")");
   
@@ -126,7 +126,7 @@ public class Tim extends Account {
     httpClient.getParams().setParameter(
         "http.protocol.allow-circular-redirects", true);
     httpClient.getParams().setParameter("http.useragent", 
-        "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1)");
+        "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)");
   }
   
   @Override
@@ -281,11 +281,10 @@ public class Tim extends Account {
   private boolean doLogin() throws ClientProtocolException, IOException {
     HttpPost request = new HttpPost(DO_LOGIN);
     List<NameValuePair> requestData = new ArrayList<NameValuePair>();
+    requestData.add(new BasicNameValuePair("portale", "timPortale"));
+    requestData.add(new BasicNameValuePair("urlOk", CHECK_USER));
     requestData.add(new BasicNameValuePair("login", username));
     requestData.add(new BasicNameValuePair("password", password));
-    requestData.add(new BasicNameValuePair("portale", "timPortale"));
-    requestData.add(new BasicNameValuePair("urlOk", 
-        "http://www.tim.it/119-self-service"));
     request.setEntity(new UrlEncodedFormEntity(requestData, HTTP.UTF_8));
     HttpResponse response = httpClient.execute(request, httpContext);
     response.getEntity().consumeContent();
@@ -307,9 +306,10 @@ public class Tim extends Account {
         Matcher m = number.matcher(s);
         if (m.find()) {
 //          senderList.add(m.group()); // TODO support other SIM
-          if (s.contains("selected=\"selected\"")) {
+          if (s.contains("class=\"whoo\"")) {
             senderList.add(m.group());
             senderCurrent = m.group();
+            break;
           }
         }
       }
@@ -562,6 +562,7 @@ public class Tim extends Account {
       if (match != null) results.add(match);
     }
     
+    scanner.close();
     return results;
   }
 
