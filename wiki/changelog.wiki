@@ -1,5 +1,8 @@
 #summary Cambiamenti introdotti con le nuove versioni
 
+= esms 2.0.5 =
+ * Sistemato problema di parsing della pagina TIM successiva al login che impediva di inviare SMS tramite quel provider.
+
 = esms 2.0.4 =
  * Sistemato il problema con il nuovo portale TIM che impediva di effettuare login e quindi di inviare SMS.
 
