@@ -261,6 +261,9 @@ public class AccountService extends Service {
             showMessageDialog(activity, account, successful, unsuccessful);
             if (notifications) showMessageNotification();
             break;
+            
+          default:
+            break;
           }
           
         }
